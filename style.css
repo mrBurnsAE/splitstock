@@ -1,0 +1,691 @@
+/* --- Шрифты --- */
+@font-face {
+    font-family: 'Gilroy';
+    src: url('fonts/Gilroy-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Gilroy';
+    src: url('fonts/Gilroy-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Gilroy';
+    src: url('fonts/Gilroy-MediumItalic.woff2') format('woff2');
+    font-weight: 500;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Gilroy';
+    src: url('fonts/Gilroy-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+:root {
+    /* Цветовая палитра из макета */
+    --bg-color: #1c1f2e;       /* Основной фон */
+    --card-bg: #25283a;        /* Фон карточек */
+    --primary-color: #6c5ce7;  /* Основной акцент (фиолетовый) */
+    --text-main: #ffffff;
+    --text-secondary: #a2a5b9;
+    --accent-gradient: linear-gradient(90deg, #7f6aff 0%, #a36aff 100%);
+    --green-gradient: linear-gradient(90deg, #00b894 0%, #00cec9 100%);
+    --red-gradient: linear-gradient(90deg, #d63031 0%, #ff7675 100%);
+    --progress-bg: #35394f;
+    
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Gilroy', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-size: 14px;
+    overflow-x: hidden;
+    padding-bottom: 80px; /* Отступ под нижнее меню */
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; padding: 0; margin: 0; }
+h1, h2, h3, p { margin: 0; }
+
+/* --- Header --- */
+.header {
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--bg-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-name {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* --- Обновленный поиск --- */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Обертка для поля ввода и иконки */
+.search-field {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    padding: 0 12px; /* Отступ слева для иконки */
+}
+
+.search-icon {
+    width: 20px; /* Визуальный размер иконки (исходник 100х100 ужмется) */
+    height: 20px;
+    opacity: 0.5; /* Делаем её чуть тусклее, как в макетах */
+    margin-right: 8px;
+}
+
+.search-input {
+    flex: 1;
+    background: transparent; /* Убираем фон у самого инпута */
+    border: none;
+    padding: 12px 0; /* Убираем боковые отступы, они теперь у search-field */
+    color: white;
+    font-family: 'Gilroy';
+    font-size: 14px;
+    outline: none; /* Убираем обводку при клике */
+}
+
+.search-input::placeholder { color: var(--text-secondary); }
+
+.filter-btn {
+    background: var(--card-bg);
+    border: none;
+    border-radius: var(--radius-md);
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* --- Sections --- */
+.section {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.link-all {
+    color: #5c87ff; /* Цвет ссылки "Смотреть все" */
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* --- Categories Grid --- */
+.categories-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.category-card {
+    background: var(--card-bg);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    color: #8e92a8; /* Цвет текста категорий как в макете */
+}
+
+/* --- Banner --- */
+.banner {
+    margin: 0 var(--spacing-md);
+    background: linear-gradient(135deg, #3b3e5b 0%, #1e1f2a 100%); /* Примерный градиент */
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-content {
+    z-index: 2;
+    max-width: 60%;
+}
+
+.banner-title {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.banner-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+}
+
+.btn-small {
+    background: var(--accent-gradient);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.banner-img {
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+    height: 90%;
+    object-fit: contain;
+}
+
+/* --- Item List (Top 5) --- */
+.item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.list-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.rank-number {
+    background: #35394f;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.list-card-info {
+    flex: 1;
+}
+
+.item-name {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.item-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* --- Tabs (Active/Completed) --- */
+.tabs {
+    display: flex;
+    background: var(--card-bg);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    margin: 0 var(--spacing-md) var(--spacing-md);
+}
+
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.tab.active {
+    background: #3d4258; /* Цвет активной вкладки */
+    color: white;
+}
+
+/* --- Big Item Card (Catalog) --- */
+.big-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--spacing-md);
+}
+
+.card-media {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    position: relative;
+}
+
+.video-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-content {
+    padding: 15px;
+}
+
+.card-tags {
+    color: #00cec9; /* Цвет тегов */
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.progress-section {
+    margin-top: 10px;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--progress-bg);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--green-gradient); /* Или желтый/красный в зависимости от логики JS */
+}
+
+.status-badge {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* --- Bottom Navigation --- */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--bg-color);
+    border-top: 1px solid #2c3e50; /* Тонкая линия */
+    padding: 10px 20px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #5c5e6e;
+    cursor: pointer;
+}
+
+.nav-item.active {
+    color: white;
+}
+
+.nav-icon {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+}
+
+/* --- Views Visibility --- */
+.view {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.view.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* --- Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(28, 31, 46, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    display: none; /* Hidden by default */
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    width: 85%;
+    max-width: 320px;
+}
+
+.modal-img {
+    width: 120px;
+    margin-bottom: 20px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.modal-text {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.btn-primary {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #3d4258;
+    color: var(--text-main);
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* --- Product Page Specifics --- */
+
+/* Скрываем нижнее меню на странице товара, если нужно (по ТЗ оно вроде не перекрывает, но у нас action bar) */
+#view-product {
+    padding-bottom: 100px; /* Место под нижнюю кнопку */
+    background: var(--bg-color);
+    min-height: 100vh;
+    position: relative;
+    z-index: 200; /* Поверх всего */
+}
+
+.product-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--bg-color);
+    gap: 15px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Video Player */
+.video-section {
+    background: #000;
+}
+
+.video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0;
+    background: #000;
+}
+
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Switchers */
+.platform-switcher {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px;
+    background: var(--card-bg);
+    border-bottom: 1px solid #2c3e50;
+}
+
+.platform-btn {
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    width: 50px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.platform-btn img {
+    max-height: 24px;
+    max-width: 24px;
+    filter: grayscale(100%); /* Серые по умолчанию */
+}
+
+.platform-btn.active {
+    border-color: #5c87ff; /* Синяя рамка для активного */
+    background: rgba(92, 135, 255, 0.1);
+}
+
+.platform-btn.active img {
+    filter: grayscale(0%); /* Цветные, если активны */
+}
+
+/* Info Block */
+.product-desc {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.product-link-external {
+    display: inline-block;
+    color: #00cec9;
+    font-size: 14px;
+    text-decoration: underline;
+    margin-bottom: 15px;
+}
+
+.tags-block {
+    margin-bottom: 15px;
+}
+
+.tag-category {
+    color: #00cec9;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.tag-list {
+    color: #00cec9;
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.price-block {
+    display: flex;
+    gap: 20px;
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+}
+
+/* Progress Bar Large */
+.progress-section-large {
+    margin-bottom: 15px;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.progress-bar.large {
+    height: 10px; /* Чуть толще */
+    background: #35394f;
+    border-radius: 5px;
+}
+
+/* Цвета прогресс бара */
+.progress-fill.green-gradient { background: var(--green-gradient); }
+.progress-fill.blue { background: #0984e3; } /* Для сбора средств */
+
+.product-status-text {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 10px;
+}
+
+/* Fixed Action Bar */
+.product-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--card-bg);
+    padding: 15px 20px;
+    padding-bottom: 30px; /* Для айфонов */
+    border-top: 1px solid #2c3e50;
+    display: flex;
+    gap: 10px;
+    z-index: 300;
+}
+
+.btn-close-square {
+    width: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}

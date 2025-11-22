@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Бот-Складчик</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+    <div id="view-home" class="view active">
+        <div class="header">
+            <div class="user-info">
+                <img src="icons/Logo Telegram.svg" alt="Avatar" class="user-avatar">
+                <div class="user-name">Username</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Категории</h2>
+                <a href="#" class="link-all" onclick="switchView('catalog')">Смотреть все</a>
+            </div>
+            <div class="categories-grid">
+                <div class="category-card">Видеошаблоны</div>
+                <div class="category-card">Футажи</div>
+                <div class="category-card">Графика</div>
+                <div class="category-card">Скрипты</div>
+            </div>
+        </div>
+
+        <div class="banner">
+            <div class="banner-content">
+                <div class="banner-title">Не забудь подписаться</div>
+                <div class="banner-subtitle">на канал с новостями</div>
+                <button class="btn-small">
+                    <img src="icons/Logo Telegram.svg" width="14" style="filter: brightness(100);"> Подписаться
+                </button>
+            </div>
+            <img src="icons/Супермэн без фона.png" alt="Robot" class="banner-img">
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Топ 5 новых складчин</h2>
+            </div>
+            <div class="item-list">
+                <div class="list-card">
+                    <div class="rank-number">1</div>
+                    <div class="list-card-info">
+                        <div class="item-name">Photo 3D Slideshow</div>
+                        <div class="item-meta">Количество участников: 20/30</div>
+                    </div>
+                </div>
+                
+                <div class="list-card">
+                    <div class="rank-number">2</div>
+                    <div class="list-card-info">
+                        <div class="item-name">Tech Sketch Action</div>
+                        <div class="item-meta">Количество участников: 5/10</div>
+                    </div>
+                </div>
+                </div>
+        </div>
+    </div>
+
+    <div id="view-catalog" class="view">
+        <div class="header">
+            <div class="search-bar">
+    <div class="search-field">
+        <img src="icons/search.svg" class="search-icon" alt="Поиск">
+        <input type="text" class="search-input" placeholder="Поиск">
+    </div>
+    <button class="filter-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+        </svg>
+    </button>
+</div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="selectTab(this)">Активные</div>
+            <div class="tab" onclick="selectTab(this)">Завершённые</div>
+            <div class="tab" onclick="selectTab(this)">Мои складчины</div>
+        </div>
+
+        <div class="section">
+            <div class="big-card" onclick="openProduct(1)">
+                <div class="card-media">
+                    <img src="icons/Ничего нет без фона.png" style="width:100%; height:100%; object-fit:cover; opacity:0.5;">
+                    <div class="video-badge">▶</div>
+                </div>
+                <div class="card-content">
+                    <div class="item-name">Photo 3D Slideshow</div>
+                    <div class="card-tags">#Videohive #AfterEffects</div>
+                    <div class="progress-section">
+                        <div class="progress-text">
+                            <span>Участников: 10/20</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                    <div class="status-badge" style="color: #00cec9;">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                        Активная складчина
+                    </div>
+                </div>
+            </div>
+
+            <div class="big-card">
+                <div class="card-media">
+                     <img src="icons/Оплата Без фона.png" style="width:100%; height:100%; object-fit:cover; opacity:0.5;">
+                </div>
+                <div class="card-content">
+                    <div class="item-name">Tech Sketch Photoshop</div>
+                    <div class="card-tags">#Graphicriver #Photoshop</div>
+                    <div class="progress-section">
+                        <div class="progress-text">
+                            <span>Участников: 20/20</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%; background: #0984e3;"></div>
+                        </div>
+                    </div>
+                    <div class="status-badge" style="color: #0984e3;">
+                        Идёт сбор средств
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-profile" class="view">
+        <div class="section" style="text-align: center; padding-top: 40px;">
+            <img src="icons/Logo Telegram.svg" class="user-avatar" style="width: 80px; height: 80px; margin-bottom: 10px;">
+            <h2 style="font-size: 22px; font-weight: 700;">Username</h2>
+            <p style="color: var(--text-secondary); font-size: 12px;">Участник с 12.12.2025</p>
+        </div>
+
+        <div class="section">
+            <div class="big-card" style="display: flex; align-items: center; padding: 20px; gap: 15px;">
+                <img src="icons/Новичок Без фона.png" width="50">
+                <div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Статус</div>
+                    <div style="font-size: 20px; font-weight: 700;">Новичок</div>
+                </div>
+            </div>
+
+            <div class="big-card" style="display: flex; align-items: center; padding: 20px; gap: 15px;">
+                <img src="icons/apps active.svg" width="40">
+                <div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Активные складчины</div>
+                    <div style="font-size: 20px; font-weight: 700;">12</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-product" class="view">
+        <div class="product-header">
+            <button class="back-btn" onclick="closeProduct()">
+                <img src="icons/undo.svg" width="24" height="24" alt="Назад">
+            </button>
+            <div class="header-title" id="product-header-title">Название складчины</div>
+        </div>
+
+        <div class="video-section">
+            <div class="video-wrapper">
+                <iframe id="main-video-frame" src="" frameborder="0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                <div id="no-video-placeholder" style="display:none;">
+                    <img id="product-cover-img" src="" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+            </div>
+            
+            <div class="platform-switcher" id="video-switchers">
+                <button class="platform-btn active" onclick="switchVideo('youtube')" id="btn-youtube">
+                    <img src="icons/youtube.svg" alt="YouTube">
+                </button>
+                <button class="platform-btn" onclick="switchVideo('vk')" id="btn-vk">
+                    <img src="icons/VKVideo.png" alt="VK">
+                </button>
+                <button class="platform-btn" onclick="switchVideo('rutube')" id="btn-rutube">
+                    <img src="icons/Rutube.png" alt="RuTube">
+                </button>
+            </div>
+        </div>
+
+        <div class="section product-info">
+            <p class="product-desc" id="product-desc">
+                Загрузка описания...
+            </p>
+            <a href="#" class="product-link-external" id="product-link-ext">🔗 Подробная информация</a>
+
+            <div class="tags-block">
+                <div id="product-category" class="tag-category">#Категория</div>
+                <div id="product-tags" class="tag-list">#Tag1 #Tag2</div>
+            </div>
+
+            <div class="price-block">
+                <div>Стоимость <span id="product-price-orig" style="color: white; font-weight: 700;">$0</span></div>
+                <div>Взнос <span id="product-price-contrib" style="color: white; font-weight: 700;">0₽</span></div>
+            </div>
+
+            <div class="progress-section-large">
+                <div class="progress-labels">
+                    <span id="participants-label">Количество участников</span>
+                    <span id="participants-count" style="font-weight: 700;">0/0</span>
+                </div>
+                <div class="progress-labels" id="fundraising-label-row" style="display:none; margin-top:4px;">
+                    <span style="color: #a2a5b9;">Прогресс сбора средств</span>
+                    <span id="fundraising-count" style="font-weight: 700;">0/0</span>
+                </div>
+
+                <div class="progress-bar large">
+                    <div class="progress-fill" id="product-progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="product-status-text" id="product-status-text">
+                Активная складчина
+            </div>
+        </div>
+
+        <div class="product-action-bar">
+            <button class="btn-primary" id="product-action-btn" onclick="handleProductAction()">
+                Записаться
+            </button>
+            <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
+                <img src="icons/cross.svg" width="24">
+            </button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item" onclick="switchView('catalog')">
+            <img src="icons/apps.svg" class="nav-icon" id="icon-catalog">
+            <span>Складчины</span>
+        </div>
+        <div class="nav-item active" onclick="switchView('home')">
+            <img src="icons/home active.svg" class="nav-icon" id="icon-home">
+            <span>Главная</span>
+        </div>
+        <div class="nav-item" onclick="switchView('profile')">
+            <img src="icons/user.svg" class="nav-icon" id="icon-profile">
+            <span>Профиль</span>
+        </div>
+    </nav>
+
+    <div class="modal-overlay" id="modal-status">
+        <div class="modal-content">
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 5px;">Ваш статус</div>
+            <img src="icons/Новичок Без фона.png" class="modal-img">
+            <div class="modal-title">Новичок</div>
+            <div class="modal-text">Для получения статуса "Опытный" осталось завершить ещё 7 складчин</div>
+            <button class="btn-primary" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
