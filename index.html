@@ -61,23 +61,23 @@
                         <div class="item-meta">Количество участников: 5/10</div>
                     </div>
                 </div>
-                </div>
+            </div>
         </div>
     </div>
 
     <div id="view-catalog" class="view">
         <div class="header">
             <div class="search-bar">
-    <div class="search-field">
-        <img src="icons/search.svg" class="search-icon" alt="Поиск">
-        <input type="text" class="search-input" placeholder="Поиск">
-    </div>
-    <button class="filter-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
-        </svg>
-    </button>
-</div>
+                <div class="search-field">
+                    <img src="icons/search.svg" class="search-icon" alt="Поиск">
+                    <input type="text" class="search-input" placeholder="Поиск">
+                </div>
+                <button class="filter-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <div class="tabs">
@@ -141,20 +141,33 @@
         </div>
 
         <div class="section">
-            <div class="big-card" style="display: flex; align-items: center; padding: 20px; gap: 15px;">
-                <img src="icons/Новичок Без фона.png" width="50">
-                <div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">Статус</div>
-                    <div style="font-size: 20px; font-weight: 700;">Новичок</div>
-                </div>
-            </div>
+            <div class="profile-menu">
+                <button class="profile-btn" onclick="openModal()">
+                    <img src="icons/status.svg" alt="Статус" class="profile-btn-icon">
+                    <div style="text-align: left;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Статус</div>
+                        <div style="font-size: 16px; font-weight: 700;">Новичок</div>
+                    </div>
+                    <img src="icons/undo.svg" alt="" class="arrow-icon" style="transform: rotate(180deg); margin-left: auto;">
+                </button>
 
-            <div class="big-card" style="display: flex; align-items: center; padding: 20px; gap: 15px;">
-                <img src="icons/apps active.svg" width="40">
-                <div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">Активные складчины</div>
-                    <div style="font-size: 20px; font-weight: 700;">12</div>
-                </div>
+                <button class="profile-btn" onclick="switchView('catalog')">
+                    <img src="icons/folder.svg" alt="Активные" class="profile-btn-icon">
+                    <div style="text-align: left;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Активные складчины</div>
+                        <div style="font-size: 16px; font-weight: 700;">12</div>
+                    </div>
+                    <img src="icons/undo.svg" alt="" class="arrow-icon" style="transform: rotate(180deg); margin-left: auto;">
+                </button>
+
+                <button class="profile-btn" onclick="switchView('catalog')">
+                    <img src="icons/archive.svg" alt="Завершенные" class="profile-btn-icon">
+                    <div style="text-align: left;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Завершённые складчины</div>
+                        <div style="font-size: 16px; font-weight: 700;">3</div>
+                    </div>
+                    <img src="icons/undo.svg" alt="" class="arrow-icon" style="transform: rotate(180deg); margin-left: auto;">
+                </button>
             </div>
         </div>
     </div>

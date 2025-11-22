@@ -689,3 +689,38 @@ h1, h2, h3, p { margin: 0; }
     justify-content: center;
     cursor: pointer;
 }
+
+/* --- Стили для кнопок меню профиля с иконками --- */
+
+.profile-btn {
+    /* Убеждаемся, что элементы внутри кнопки выровнены */
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 16px; /* Немного увеличим отступы для красоты */
+    background-color: var(--card-bg);
+    border: none;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.profile-btn:hover {
+    background-color: #3d4258;
+}
+
+/* Стиль для новой иконки слева */
+.profile-btn-icon {
+    width: 28px;  /* Визуальный размер иконки */
+    height: 28px;
+    margin-right: 16px; /* Отступ от иконки до текста */
+    /* Иконки svg, можно оставить как есть */
+}
+
+/* Иконка стрелки справа */
+.arrow-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.5;
+}
