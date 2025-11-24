@@ -1,5 +1,5 @@
 // Инициализация Telegram WebApp
-const tg = window.Telegram.WebApp;
+const API_BASE_URL = "https://api.splitstock.ru";
 tg.expand(); // Раскрыть на весь экран
 
 // Логика переключения экранов
