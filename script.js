@@ -234,8 +234,10 @@ function switchVideo(platform) {
     const placeholder = document.getElementById('no-video-placeholder');
     const btns = document.querySelectorAll('.platform-btn');
     
+    // Сброс активных кнопок
     btns.forEach(b => b.classList.remove('active'));
     
+    // Активируем нажатую
     const btn = document.getElementById(`btn-${platform}`);
     if(btn) btn.classList.add('active');
 
@@ -246,34 +248,66 @@ function switchVideo(platform) {
         if (platform === 'rutube') videoUrl = window.currentVideoLinks.rutube;
     }
     
-    // Умная замена ссылок YouTube
-    if (videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))) {
-        // Если это обычная ссылка (watch?v=), меняем на embed/
+    if (!videoUrl) {
+        // Если ссылки нет - показываем заглушку
+        showPlaceholder();
+        return;
+    }
+
+    // --- 1. Если вставили полный код <iframe>, вытаскиваем только ссылку ---
+    if (videoUrl.includes('<iframe')) {
+        const srcMatch = videoUrl.match(/src=["']([^"']+)["']/);
+        if (srcMatch && srcMatch[1]) {
+            videoUrl = srcMatch[1];
+        }
+    }
+    
+    // --- 2. Логика для YouTube ---
+    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
         if (videoUrl.includes('watch?v=')) {
             videoUrl = videoUrl.replace('watch?v=', 'embed/');
-            // Удаляем лишние параметры (&t=...)
             if (videoUrl.includes('&')) videoUrl = videoUrl.split('&')[0];
-        } 
-        // Если это короткая ссылка (youtu.be/), меняем на embed/
-        else if (videoUrl.includes('youtu.be/')) {
+        } else if (videoUrl.includes('youtu.be/')) {
             videoUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
         }
     }
     
-    // Для VK и Rutube пользователи должны вставлять ссылки на embed (iframe src), 
-    // так как их API сложнее конвертировать автоматически. 
-    // Но на всякий случай очистим от пробелов.
-    if(videoUrl) videoUrl = videoUrl.trim();
+    // --- 3. Логика для VK Видео ---
+    // Превращаем https://vk.com/video-196495662_456245129 
+    // В https://vk.com/video_ext.php?oid=-196495662&id=456245129
+    else if (videoUrl.includes('vk.com/video')) {
+        // Ищем ID видео (цифры с минусом или без)
+        const match = videoUrl.match(/video(-?\d+)_(\d+)/);
+        if (match) {
+            const oid = match[1]; // ID группы/человека
+            const vid = match[2]; // ID видео
+            videoUrl = `https://vk.com/video_ext.php?oid=${oid}&id=${vid}&hd=2`;
+        }
+    }
 
-    if (videoUrl && platform !== 'none') {
+    // --- 4. Логика для RuTube ---
+    // Превращаем https://rutube.ru/video/ID/
+    // В https://rutube.ru/play/embed/ID/
+    else if (videoUrl.includes('rutube.ru/video/')) {
+        videoUrl = videoUrl.replace('rutube.ru/video/', 'rutube.ru/play/embed/');
+    }
+
+    // Финальная проверка и отображение
+    if (platform !== 'none') {
         iframe.style.display = 'block';
         placeholder.style.display = 'none';
         iframe.src = videoUrl;
     } else {
-        iframe.style.display = 'none';
-        placeholder.style.display = 'block';
-        iframe.src = "";
+        showPlaceholder();
     }
+}
+
+function showPlaceholder() {
+    const iframe = document.getElementById('main-video-frame');
+    const placeholder = document.getElementById('no-video-placeholder');
+    iframe.style.display = 'none';
+    placeholder.style.display = 'block';
+    iframe.src = "";
 }
 
 function updateProductStatusUI(status) {
