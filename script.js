@@ -65,7 +65,7 @@ function selectTab(tabElement) {
 
 // Форматирование даты
 function formatDate(isoString) {
-    if (!isoString) return "...";
+    if (!isoString) return "";
     try {
         const date = new Date(isoString);
         return date.toLocaleString('ru-RU', {
@@ -73,7 +73,8 @@ function formatDate(isoString) {
             hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
         }) + " (МСК)";
     } catch (e) {
-        return isoString;
+        console.error("Date error", e);
+        return "";
     }
 }
 
@@ -375,19 +376,20 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     else if (status === 'fundraising_scheduled') {
         progressBar.classList.add('blue');
         
-        // Отображение даты
         const dateStr = formatDate(startAt);
-        statusText.innerText = `Сбор средств назначен на ${dateStr}`;
+        // Если дата есть - показываем, иначе заглушку
+        if (dateStr) {
+            statusText.innerText = `Сбор средств назначен на ${dateStr}`;
+        } else {
+            statusText.innerText = `Сбор средств скоро начнётся`;
+        }
         
         if (isJoined) {
             actionBtn.innerText = "Вы записаны";
             actionBtn.disabled = true;
             actionBtn.style.opacity = "0.7";
-            // Показываем кнопку "Выйти", но она выдаст ошибку при нажатии (по ТЗ)
-            // Либо можно скрыть её, но пользователь просил "уведомление при попытке выйти"
             leaveBtn.style.display = 'flex';
         } else {
-            // --- ИСПРАВЛЕНИЕ: Разрешаем запись до начала сбора ---
             actionBtn.innerText = "Записаться";
             actionBtn.disabled = false;
         }
