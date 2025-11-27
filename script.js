@@ -1,33 +1,19 @@
-// --- ИЗМЕНЕННЫЙ БЛОК ОПРЕДЕЛЕНИЯ ID ---
+// --- НАСТРОЙКИ ---
+const API_BASE_URL = "https://api.splitstock.ru";
 
-// 1. Пробуем получить ID штатным способом
+// Инициализация Telegram WebApp
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+// 1. Пытаемся получить ID честно
 let USER_ID = tg.initDataUnsafe?.user?.id;
 
-// 2. Если Телеграм не отдал ID (или мы в браузере), берем твой Админский ID
+// 2. Если ID нет (глюк Телеграма или запуск в браузере), ставим 0 (Гость), чтобы скрипт НЕ ПАДАЛ
 if (!USER_ID) {
-    USER_ID = 481180155; // <-- Твой реальный ID из базы
-    console.warn("ID не получен от Telegram, используем запасной:", USER_ID);
-}
-
-// ---------------------------------------
-
-// --- ОТЛАДКА ---
-// Если мы не в Telegram (или ID не получен), пробуем взять из URL (для тестов в браузере)
-// Пример: index.html?user_id=ТВОЙ_РЕАЛЬНЫЙ_ID
-if (!USER_ID) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlId = urlParams.get('user_id');
-    if (urlId) {
-        USER_ID = parseInt(urlId);
-        console.log("User ID taken from URL:", USER_ID);
-    } else {
-        // Если совсем ничего нет - ставим твой админский ID для теста (чтобы ты видел себя)
-        // ЗАМЕНИ НА СВОЙ РЕАЛЬНЫЙ ID, который выдает /userinfo в боте
-        USER_ID = 5938914251; // <-- Впиши сюда свой ID
-        console.warn("User ID not found, using fallback/debug ID:", USER_ID);
-    }
-} else {
-    console.log("User ID from Telegram:", USER_ID);
+    console.warn("Telegram User ID not found. Using Guest mode (0).");
+    // Можно раскомментировать для отладки, чтобы видеть, когда ID не пришел
+    // alert("Внимание: Ваш ID не определен. Функции оплаты могут быть недоступны.");
+    USER_ID = 0;
 }
 
 // Глобальные переменные
@@ -36,15 +22,23 @@ window.currentItemId = null;
 window.currentItemStatus = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadUserProfile();
-    loadCategories();
-    loadItems('active');
+    // Безопасный запуск
+    try {
+        loadUserProfile();
+        loadCategories();
+        loadItems('active');
+    } catch (e) {
+        console.error("Init error:", e);
+        // alert("Ошибка запуска: " + e.message); // Для отладки
+    }
 });
 
 function getHeaders() {
+    // Безопасное преобразование в строку
+    const uidStr = USER_ID ? USER_ID.toString() : "0";
     return {
         'Content-Type': 'application/json',
-        'X-Telegram-User-Id': USER_ID.toString()
+        'X-Telegram-User-Id': uidStr
     };
 }
 
@@ -52,28 +46,36 @@ function getHeaders() {
 
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById(`view-${viewName}`).classList.add('active');
+    const view = document.getElementById(`view-${viewName}`);
+    if (view) view.classList.add('active');
+    
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) bottomNav.style.display = 'flex';
+    
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     
+    // Безопасное получение иконок
+    const iconHome = document.getElementById('icon-home');
+    const iconCatalog = document.getElementById('icon-catalog');
+    const iconProfile = document.getElementById('icon-profile');
+
     if(viewName === 'home') {
-        document.querySelector('.nav-item:nth-child(2)').classList.add('active');
-        document.getElementById('icon-home').src = 'icons/home active.svg';
-        document.getElementById('icon-catalog').src = 'icons/apps.svg';
-        document.getElementById('icon-profile').src = 'icons/user.svg';
+        document.querySelector('.nav-item:nth-child(2)')?.classList.add('active');
+        if(iconHome) iconHome.src = 'icons/home active.svg';
+        if(iconCatalog) iconCatalog.src = 'icons/apps.svg';
+        if(iconProfile) iconProfile.src = 'icons/user.svg';
     } else if(viewName === 'catalog') {
-        document.querySelector('.nav-item:nth-child(1)').classList.add('active');
-        document.getElementById('icon-home').src = 'icons/home.svg';
-        document.getElementById('icon-catalog').src = 'icons/apps active.svg';
-        document.getElementById('icon-profile').src = 'icons/user.svg';
+        document.querySelector('.nav-item:nth-child(1)')?.classList.add('active');
+        if(iconHome) iconHome.src = 'icons/home.svg';
+        if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
+        if(iconProfile) iconProfile.src = 'icons/user.svg';
         const activeTab = document.querySelector('.tab.active');
         if(activeTab) selectTab(activeTab);
     } else if(viewName === 'profile') {
-        document.querySelector('.nav-item:nth-child(3)').classList.add('active');
-        document.getElementById('icon-home').src = 'icons/home.svg';
-        document.getElementById('icon-catalog').src = 'icons/apps.svg';
-        document.getElementById('icon-profile').src = 'icons/user active.svg';
+        document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
+        if(iconHome) iconHome.src = 'icons/home.svg';
+        if(iconCatalog) iconCatalog.src = 'icons/apps.svg';
+        if(iconProfile) iconProfile.src = 'icons/user active.svg';
         loadUserProfile(); 
     }
 }
@@ -87,9 +89,8 @@ function selectTab(tabElement) {
     else if (tabName.includes("Мои")) loadItems('active'); 
 }
 
-// Форматирование даты
 function formatDate(isoString) {
-    if (!isoString) return "";
+    if (!isoString) return "...";
     try {
         const date = new Date(isoString);
         return date.toLocaleString('ru-RU', {
@@ -97,32 +98,43 @@ function formatDate(isoString) {
             hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
         }) + " (МСК)";
     } catch (e) {
-        console.error("Date error", e);
-        return "";
+        return isoString;
     }
 }
 
 // --- API ---
 
 async function loadUserProfile() {
+    // Если мы Гость (ID=0), не пытаемся грузить профиль, чтобы не получать 404
+    if (USER_ID === 0) {
+        document.querySelectorAll('.user-name').forEach(el => el.innerText = "Гость");
+        return;
+    }
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
+        if (!response.ok) throw new Error("API Error");
         const user = await response.json();
+        
         document.querySelectorAll('.user-name').forEach(el => {
             el.innerText = user.first_name || user.username || "User";
         });
+        
         const dateEl = document.querySelector('#view-profile p');
         if(dateEl && user.registration_date) {
             const dateStr = user.registration_date.split(' ')[0]; 
             dateEl.innerText = `Участник с ${dateStr}`;
         }
+        
         const stats = document.querySelectorAll('.profile-menu .profile-btn div div:last-child');
         if(stats.length >= 3) {
             stats[0].innerText = user.status;
             stats[1].innerText = user.active_count;
             stats[2].innerText = user.completed_count;
         }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+        console.error("Profile load error:", error); 
+    }
 }
 
 async function loadCategories() {
@@ -130,6 +142,8 @@ async function loadCategories() {
         const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
         const categories = await response.json();
         const container = document.querySelector('.categories-grid');
+        if (!container) return;
+        
         container.innerHTML = '';
         categories.forEach(cat => {
             const div = document.createElement('div');
@@ -145,18 +159,26 @@ async function loadItems(type, categoryId = null) {
     try {
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
         if (categoryId) url += `&cat=${categoryId}`;
+        
+        // Анти-кэш
+        url += `&t=${Date.now()}`;
+
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
+        
         const catalogView = document.getElementById('view-catalog');
         let container = catalogView.querySelector('.item-container'); 
+        
         if (!container) {
             const oldCards = catalogView.querySelectorAll('.big-card');
             oldCards.forEach(c => c.remove());
             container = document.createElement('div');
             container.className = 'item-container';
-            catalogView.querySelector('.section').appendChild(container);
+            const section = catalogView.querySelector('.section');
+            if(section) section.appendChild(container);
         }
         container.innerHTML = '';
+        
         if (items.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding:20px; color:#a2a5b9;">Здесь пока ничего нет...</div>';
             return;
@@ -185,7 +207,7 @@ async function loadItems(type, categoryId = null) {
                 barColor = "background: #0984e3;";
                 badgeColor = "#0984e3";
             } else if (item.status === 'fundraising_scheduled') {
-                statusText = "Сбор назначен"; // В каталоге кратко
+                statusText = "Сбор назначен";
                 barColor = "background: #0984e3;"; 
                 badgeColor = "#0984e3";
             } else if (item.status === 'completed') {
@@ -223,11 +245,13 @@ async function loadItems(type, categoryId = null) {
             `;
             container.appendChild(card);
         });
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error("Load Items Error:", error); }
 }
 
 async function openProduct(id) {
-    document.querySelector('.bottom-nav').style.display = 'none';
+    const bottomNav = document.querySelector('.bottom-nav');
+    if(bottomNav) bottomNav.style.display = 'none';
+    
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-product').classList.add('active');
     
@@ -254,30 +278,25 @@ async function openProduct(id) {
         linkEl.innerText = "🔗 Подробная информация";
 
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
-        document.getElementById('product-tags').innerText = item.tags.map(t => "#" + t).join(" ");
+        document.getElementById('product-tags').innerText = (item.tags || []).map(t => "#" + t).join(" ");
         document.getElementById('product-price-orig').innerText = "$" + item.price;
         
         let contribution = "100₽"; 
         if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // --- ЛОГИКА ПРОГРЕССА (ОБНОВЛЕНА) ---
-        // 1. Общий счетчик участников
+        // Логика прогресса
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
         
-        // 2. Счетчик сбора средств (тот самый 0/0)
-        // Если поле paid_participants пришло undefined (старый кэш API), ставим 0
         const paidCount = item.paid_participants || 0;
-        document.getElementById('fundraising-count').innerText = `${paidCount}/${item.needed_participants}`;
+        const fundCountEl = document.getElementById('fundraising-count');
+        if(fundCountEl) fundCountEl.innerText = `${paidCount}/${item.needed_participants}`;
 
-        // 3. Полоска прогресса
         let percent = 0;
         if (item.needed_participants > 0) {
             if (item.status === 'fundraising') {
-                // Если идет сбор - считаем от ОПЛАТИВШИХ
                 percent = (paidCount / item.needed_participants) * 100;
             } else {
-                // Иначе от записавшихся
                 percent = (item.current_participants / item.needed_participants) * 100;
             }
         }
@@ -310,7 +329,7 @@ async function openProduct(id) {
 
     } catch (error) {
         console.error(error);
-        alert("Не удалось загрузить товар");
+        alert("Не удалось загрузить товар. Проверьте интернет.");
         closeProduct();
     }
 }
@@ -365,9 +384,9 @@ function switchVideo(platform) {
     }
 
     if (platform !== 'none') {
-        iframe.style.display = 'block';
-        placeholder.style.display = 'none';
-        iframe.src = videoUrl;
+        if (iframe) iframe.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        if (iframe) iframe.src = videoUrl;
     } else {
         showPlaceholder();
     }
@@ -376,12 +395,10 @@ function switchVideo(platform) {
 function showPlaceholder() {
     const iframe = document.getElementById('main-video-frame');
     const placeholder = document.getElementById('no-video-placeholder');
-    iframe.style.display = 'none';
-    placeholder.style.display = 'block';
-    iframe.src = "";
+    if (iframe) iframe.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'block';
+    if (iframe) iframe.src = "";
 }
-
-// --- УПРАВЛЕНИЕ СТАТУСАМИ (Logic Fixes Here) ---
 
 function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     const progressBar = document.getElementById('product-progress-fill');
@@ -390,78 +407,92 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     const fundraisingRow = document.getElementById('fundraising-label-row');
     const leaveBtn = document.getElementById('product-leave-btn');
 
-    progressBar.className = 'progress-fill'; 
-    fundraisingRow.style.display = 'none';
-    leaveBtn.style.display = 'none'; // По умолчанию скрыта
+    if (progressBar) progressBar.className = 'progress-fill'; 
+    if (fundraisingRow) fundraisingRow.style.display = 'none';
+    if (leaveBtn) leaveBtn.style.display = 'none';
     
-    actionBtn.disabled = false;
-    actionBtn.style.opacity = "1";
-    actionBtn.onclick = handleProductAction;
+    if (actionBtn) {
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = "1";
+        actionBtn.style.backgroundColor = ""; // Сброс цвета
+        actionBtn.onclick = handleProductAction;
+    }
 
     // 1. АКТИВНАЯ (Набор)
     if (status === 'published' || status === 'active' || status === 'scheduled') {
-        progressBar.classList.add('green-gradient');
-        statusText.innerText = "Активная складчина";
+        if(progressBar) progressBar.classList.add('green-gradient');
+        if(statusText) statusText.innerText = "Активная складчина";
         
         if (isJoined) {
-            actionBtn.innerText = "Вы записаны";
-            actionBtn.disabled = true;
-            actionBtn.style.opacity = "0.7";
-            leaveBtn.style.display = 'flex'; // ТУТ МОЖНО ВЫЙТИ
+            if(actionBtn) {
+                actionBtn.innerText = "Вы записаны";
+                actionBtn.disabled = true;
+                actionBtn.style.opacity = "0.7";
+            }
+            if(leaveBtn) leaveBtn.style.display = 'flex'; 
         } else {
-            actionBtn.innerText = "Записаться";
+            if(actionBtn) actionBtn.innerText = "Записаться";
         }
     } 
     // 2. СБОР НАЗНАЧЕН
     else if (status === 'fundraising_scheduled') {
-        progressBar.classList.add('blue');
+        if(progressBar) progressBar.classList.add('blue');
         
         const dateStr = formatDate(startAt);
-        if (dateStr) {
-            statusText.innerText = `Сбор средств назначен на ${dateStr}`;
-        } else {
-            statusText.innerText = `Сбор средств скоро начнётся`;
+        if(statusText) {
+            if (dateStr) statusText.innerText = `Сбор средств назначен на ${dateStr}`;
+            else statusText.innerText = `Сбор средств скоро начнётся`;
         }
         
         if (isJoined) {
-            actionBtn.innerText = "Вы записаны";
-            actionBtn.disabled = true;
-            actionBtn.style.opacity = "0.7";
-            // В этом статусе кнопку выхода тоже скрываем, чтобы не путать
-            leaveBtn.style.display = 'none'; 
+            if(actionBtn) {
+                actionBtn.innerText = "Вы записаны";
+                actionBtn.disabled = true;
+                actionBtn.style.opacity = "0.7";
+            }
+            if(leaveBtn) leaveBtn.style.display = 'none'; 
         } else {
-            actionBtn.innerText = "Записаться";
-            actionBtn.disabled = false;
+            if(actionBtn) {
+                actionBtn.innerText = "Записаться";
+                actionBtn.disabled = false;
+            }
         }
     }
     // 3. ИДЁТ СБОР СРЕДСТВ
     else if (status === 'fundraising') {
-        progressBar.classList.add('blue');
-        statusText.innerText = "Идёт сбор средств";
-        fundraisingRow.style.display = 'flex';
+        if(progressBar) progressBar.classList.add('blue');
+        if(statusText) statusText.innerText = "Идёт сбор средств";
+        if(fundraisingRow) fundraisingRow.style.display = 'flex';
         
         if (isJoined) {
             if (paymentStatus === 'paid') {
-                actionBtn.innerText = "✅ Оплачено";
-                actionBtn.disabled = true;
-                actionBtn.style.opacity = "1";
-                actionBtn.style.backgroundColor = "#2ecc71"; // Зеленый цвет для оплаченного
+                if(actionBtn) {
+                    actionBtn.innerText = "✅ Оплачено";
+                    actionBtn.disabled = true;
+                    actionBtn.style.opacity = "1";
+                    actionBtn.style.backgroundColor = "#2ecc71";
+                }
             } else {
-                actionBtn.innerText = "Оплатить взнос";
-                actionBtn.onclick = () => { tg.close(); };
+                if(actionBtn) {
+                    actionBtn.innerText = "Оплатить взнос";
+                    actionBtn.onclick = () => { tg.close(); };
+                }
             }
-            // КНОПКУ ВЫХОДА СКРЫВАЕМ (как ты и просил)
-            leaveBtn.style.display = 'none';
+            if(leaveBtn) leaveBtn.style.display = 'none';
         } else {
-            actionBtn.innerText = "Набор закрыт";
-            actionBtn.disabled = true;
+            if(actionBtn) {
+                actionBtn.innerText = "Набор закрыт";
+                actionBtn.disabled = true;
+            }
         }
     } 
     // 4. ЗАВЕРШЕНА
     else if (status === 'completed') {
-        actionBtn.innerText = "Завершена";
-        actionBtn.disabled = true;
-        statusText.innerText = "Складчина завершена";
+        if(actionBtn) {
+            actionBtn.innerText = "Завершена";
+            actionBtn.disabled = true;
+        }
+        if(statusText) statusText.innerText = "Складчина завершена";
     }
 }
 
@@ -518,7 +549,6 @@ async function leaveProduct() {
         if (result.success) {
             openProduct(window.currentItemId);
         } else {
-            // --- ИСПРАВЛЕНИЕ: Обработка запрета на выход ---
             if (result.error === 'locked') {
                 tg.showPopup({
                     title: 'Внимание',
