@@ -352,7 +352,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
 
     progressBar.className = 'progress-fill'; 
     fundraisingRow.style.display = 'none';
-    leaveBtn.style.display = 'none';
+    leaveBtn.style.display = 'none'; // По умолчанию скрыта
     
     actionBtn.disabled = false;
     actionBtn.style.opacity = "1";
@@ -367,17 +367,16 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             actionBtn.innerText = "Вы записаны";
             actionBtn.disabled = true;
             actionBtn.style.opacity = "0.7";
-            leaveBtn.style.display = 'flex'; // Можно выйти
+            leaveBtn.style.display = 'flex'; // ТУТ МОЖНО ВЫЙТИ
         } else {
             actionBtn.innerText = "Записаться";
         }
     } 
-    // 2. СБОР НАЗНАЧЕН (Fundraising Scheduled)
+    // 2. СБОР НАЗНАЧЕН
     else if (status === 'fundraising_scheduled') {
         progressBar.classList.add('blue');
         
         const dateStr = formatDate(startAt);
-        // Если дата есть - показываем, иначе заглушку
         if (dateStr) {
             statusText.innerText = `Сбор средств назначен на ${dateStr}`;
         } else {
@@ -388,7 +387,8 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             actionBtn.innerText = "Вы записаны";
             actionBtn.disabled = true;
             actionBtn.style.opacity = "0.7";
-            leaveBtn.style.display = 'flex';
+            // В этом статусе кнопку выхода тоже скрываем, чтобы не путать
+            leaveBtn.style.display = 'none'; 
         } else {
             actionBtn.innerText = "Записаться";
             actionBtn.disabled = false;
@@ -402,15 +402,16 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
         
         if (isJoined) {
             if (paymentStatus === 'paid') {
-                actionBtn.innerText = "Оплачено";
+                actionBtn.innerText = "✅ Оплачено";
                 actionBtn.disabled = true;
+                actionBtn.style.opacity = "1";
+                actionBtn.style.backgroundColor = "#2ecc71"; // Зеленый цвет для оплаченного
             } else {
                 actionBtn.innerText = "Оплатить взнос";
                 actionBtn.onclick = () => { tg.close(); };
             }
-            // Кнопка выхода скрыта или вызывает алерт? Обычно в сборе уже нет кнопки.
-            // Но если по ТЗ "при попытке выйти...", значит кнопку можно оставить
-            leaveBtn.style.display = 'flex'; 
+            // КНОПКУ ВЫХОДА СКРЫВАЕМ (как ты и просил)
+            leaveBtn.style.display = 'none';
         } else {
             actionBtn.innerText = "Набор закрыт";
             actionBtn.disabled = true;
