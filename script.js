@@ -278,13 +278,14 @@ async function loadItems(type, categoryId = null) {
 }
 
 async function openProduct(id) {
+    // UI Cleanup
     const bottomNav = document.querySelector('.bottom-nav');
     if(bottomNav) bottomNav.style.display = 'none';
     
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-product').classList.add('active');
     
-    document.getElementById('product-header-title').innerText = "Загрузка...";
+    document.getElementById('product-header-title').innerText = "Loading...";
     document.getElementById('product-desc').innerText = "...";
     
     const buttonsContainer = document.getElementById('video-switchers');
@@ -299,12 +300,13 @@ async function openProduct(id) {
         
         window.currentItemStatus = item.status;
 
+        // Basic Info
         document.getElementById('product-header-title').innerText = item.name;
-        document.getElementById('product-desc').innerText = item.description || "Описание отсутствует";
+        document.getElementById('product-desc').innerText = item.description || "No description";
         
         const linkEl = document.getElementById('product-link-ext');
         linkEl.href = item.link;
-        linkEl.innerText = "🔗 Подробная информация";
+        linkEl.innerText = "🔗 Detailed Information";
 
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
         document.getElementById('product-tags').innerText = (item.tags || []).map(t => "#" + t).join(" ");
@@ -314,25 +316,41 @@ async function openProduct(id) {
         if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // --- ЛОГИКА ПРОГРЕССА ---
+        // --- PROGRESS BAR LOGIC FIX ---
+        
+        // 1. Participant count (People who joined)
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
         
+        // 2. Fundraising Progress (Money collected)
+        // Use paid_participants from API. Default to 0 if missing.
         const paidCount = item.paid_participants || 0;
+        
+        // 3. Update the text label for fundraising progress
         const fundCountEl = document.getElementById('fundraising-count');
-        if(fundCountEl) fundCountEl.innerText = `${paidCount}/${item.needed_participants}`;
+        if(fundCountEl) {
+            fundCountEl.innerText = `${paidCount}/${item.needed_participants}`;
+        }
 
+        // 4. Calculate Percentage
         let percent = 0;
         if (item.needed_participants > 0) {
             if (item.status === 'fundraising') {
+                // If fundraising is active, progress is based on PAYMENTS
                 percent = (paidCount / item.needed_participants) * 100;
             } else {
+                // Otherwise (Active/Draft), progress is based on JOINED users
                 percent = (item.current_participants / item.needed_participants) * 100;
             }
         }
+        // Cap at 100% just in case
+        if (percent > 100) percent = 100;
+        
         document.getElementById('product-progress-fill').style.width = percent + "%";
         
+        // Update Buttons
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at);
         
+        // Cover Image
         const coverImg = document.getElementById('product-cover-img');
         coverImg.src = item.cover_url || "";
         coverImg.onerror = function() {
@@ -340,6 +358,7 @@ async function openProduct(id) {
             this.onerror = null;
         };
 
+        // Video Handling
         window.currentVideoLinks = item.videos || {};
         const hasYoutube = window.currentVideoLinks.youtube && window.currentVideoLinks.youtube.length > 5;
         const hasVk = window.currentVideoLinks.vk && window.currentVideoLinks.vk.length > 5;
@@ -358,7 +377,7 @@ async function openProduct(id) {
 
     } catch (error) {
         console.error(error);
-        alert("Не удалось загрузить товар. Проверьте интернет.");
+        alert("Failed to load item. Check internet connection.");
         closeProduct();
     }
 }
