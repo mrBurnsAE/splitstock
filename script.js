@@ -218,12 +218,16 @@ async function openProduct(id) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-product').classList.add('active');
     
-    // Сброс данных перед загрузкой
+    // Сброс данных
     document.getElementById('product-header-title').innerText = "Загрузка...";
     document.getElementById('product-desc').innerText = "...";
-    // Сбрасываем отображение кнопок видео и плеера на время загрузки
-    const buttonsContainerInit = document.querySelector('.video-platforms');
-    if(buttonsContainerInit) buttonsContainerInit.style.display = 'none';
+    
+    // Скрываем кнопки переключения видео пока грузится
+    // --- ИСПРАВЛЕНИЕ: Используем getElementById, так надежнее ---
+    const buttonsContainer = document.getElementById('video-switchers');
+    if(buttonsContainer) buttonsContainer.style.display = 'none';
+    
+    // Скрываем плеер и показываем плейсхолдер (или картинку)
     switchVideo('none');
 
     window.currentItemId = id;
@@ -237,7 +241,6 @@ async function openProduct(id) {
         document.getElementById('product-header-title').innerText = item.name;
         document.getElementById('product-desc').innerText = item.description || "Описание отсутствует";
         
-        // Ссылка на донора
         const linkEl = document.getElementById('product-link-ext');
         linkEl.href = item.link;
         linkEl.innerText = "🔗 Подробная информация";
@@ -246,51 +249,45 @@ async function openProduct(id) {
         document.getElementById('product-tags').innerText = item.tags.map(t => "#" + t).join(" ");
         document.getElementById('product-price-orig').innerText = "$" + item.price;
         
-        // Цена взноса
         let contribution = "100₽"; 
         if (item.status === 'completed') {
             contribution = "200₽"; 
         }
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // Участники
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
         let percent = 0;
         if (item.needed_participants > 0) percent = (item.current_participants / item.needed_participants) * 100;
         document.getElementById('product-progress-fill').style.width = percent + "%";
         
-        // Обновление кнопок (Записаться / Оплатить / Выйти)
         updateProductStatusUI(item.status, item.is_joined, item.payment_status);
         
-        // --- ИЗМЕНЕНИЕ 1: Обработка обложки (Cover) ---
+        // --- ОБЛОЖКА ---
         const coverImg = document.getElementById('product-cover-img');
-        // Пытаемся установить URL, если он пришел с сервера. Если null/пусто, ставим пустую строку.
+        // Теперь API вернет ссылку на картинку даже если нет видео
         coverImg.src = item.cover_url || "";
-        // Добавляем обработчик ошибки: если src пустой или ссылка битая (404), браузер вызовет эту функцию
         coverImg.onerror = function() {
-            this.src = "icons/Ничего нет без фона.png"; // Подставь сюда точное имя своего файла-заглушки
-            this.onerror = null; // Убираем обработчик, чтобы не зациклить, если и заглушка не найдется
+            this.src = "icons/Ничего нет без фона.png"; 
+            this.onerror = null;
         };
 
-        // --- ИЗМЕНЕНИЕ 2: Логика видео и скрытие кнопок ---
+        // --- ВИДЕО КНОПКИ ---
         window.currentVideoLinks = item.videos || {};
-        // Проверяем, есть ли хоть одна непустая ссылка на видео
+        
+        // Проверяем, есть ли хоть одна ссылка
         const hasAnyVideo = window.currentVideoLinks.youtube || window.currentVideoLinks.vk || window.currentVideoLinks.rutube;
-        // Находим контейнер с кнопками в HTML
-        const buttonsContainer = document.querySelector('.video-platforms');
 
         if (hasAnyVideo) {
-            // Если видео есть, показываем панель кнопок (возвращаем display: flex, как в CSS)
+            // Если видео есть, показываем кнопки (flex)
             if(buttonsContainer) buttonsContainer.style.display = 'flex';
 
-            // Включаем первое найденное видео по приоритету
             if (window.currentVideoLinks.youtube) switchVideo('youtube');
             else if (window.currentVideoLinks.vk) switchVideo('vk');
             else if (window.currentVideoLinks.rutube) switchVideo('rutube');
         } else {
-            // Если видео нет совсем, скрываем панель кнопок
+            // Если видео нет, кнопки остаются скрытыми (display: none)
             if(buttonsContainer) buttonsContainer.style.display = 'none';
-            // И показываем заглушку вместо плеера
+            // И включаем режим "без видео" (покажет картинку)
             switchVideo('none'); 
         }
 
