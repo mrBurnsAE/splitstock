@@ -218,9 +218,14 @@ async function openProduct(id) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-product').classList.add('active');
     
-    // Сброс данных
+    // Сброс данных перед загрузкой
     document.getElementById('product-header-title').innerText = "Загрузка...";
     document.getElementById('product-desc').innerText = "...";
+    // Сбрасываем отображение кнопок видео и плеера на время загрузки
+    const buttonsContainerInit = document.querySelector('.video-platforms');
+    if(buttonsContainerInit) buttonsContainerInit.style.display = 'none';
+    switchVideo('none');
+
     window.currentItemId = id;
     
     try {
@@ -257,16 +262,37 @@ async function openProduct(id) {
         // Обновление кнопок (Записаться / Оплатить / Выйти)
         updateProductStatusUI(item.status, item.is_joined, item.payment_status);
         
-        // Видео
-        window.currentVideoLinks = item.videos || {};
+        // --- ИЗМЕНЕНИЕ 1: Обработка обложки (Cover) ---
         const coverImg = document.getElementById('product-cover-img');
-        if (item.cover_url) coverImg.src = item.cover_url;
-        else coverImg.src = "icons/Ничего нет без фона.png";
+        // Пытаемся установить URL, если он пришел с сервера. Если null/пусто, ставим пустую строку.
+        coverImg.src = item.cover_url || "";
+        // Добавляем обработчик ошибки: если src пустой или ссылка битая (404), браузер вызовет эту функцию
+        coverImg.onerror = function() {
+            this.src = "icons/Ничего нет без фона.png"; // Подставь сюда точное имя своего файла-заглушки
+            this.onerror = null; // Убираем обработчик, чтобы не зациклить, если и заглушка не найдется
+        };
 
-        if (item.videos && item.videos.youtube) switchVideo('youtube');
-        else if (item.videos && item.videos.vk) switchVideo('vk');
-        else if (item.videos && item.videos.rutube) switchVideo('rutube');
-        else switchVideo('none'); 
+        // --- ИЗМЕНЕНИЕ 2: Логика видео и скрытие кнопок ---
+        window.currentVideoLinks = item.videos || {};
+        // Проверяем, есть ли хоть одна непустая ссылка на видео
+        const hasAnyVideo = window.currentVideoLinks.youtube || window.currentVideoLinks.vk || window.currentVideoLinks.rutube;
+        // Находим контейнер с кнопками в HTML
+        const buttonsContainer = document.querySelector('.video-platforms');
+
+        if (hasAnyVideo) {
+            // Если видео есть, показываем панель кнопок (возвращаем display: flex, как в CSS)
+            if(buttonsContainer) buttonsContainer.style.display = 'flex';
+
+            // Включаем первое найденное видео по приоритету
+            if (window.currentVideoLinks.youtube) switchVideo('youtube');
+            else if (window.currentVideoLinks.vk) switchVideo('vk');
+            else if (window.currentVideoLinks.rutube) switchVideo('rutube');
+        } else {
+            // Если видео нет совсем, скрываем панель кнопок
+            if(buttonsContainer) buttonsContainer.style.display = 'none';
+            // И показываем заглушку вместо плеера
+            switchVideo('none'); 
+        }
 
     } catch (error) {
         console.error(error);
