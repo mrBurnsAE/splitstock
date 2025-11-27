@@ -237,12 +237,28 @@ async function openProduct(id) {
         if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
+        // --- ЛОГИКА ПРОГРЕССА (ОБНОВЛЕНА) ---
+        // 1. Общий счетчик участников
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
+        
+        // 2. Счетчик сбора средств (тот самый 0/0)
+        // Если поле paid_participants пришло undefined (старый кэш API), ставим 0
+        const paidCount = item.paid_participants || 0;
+        document.getElementById('fundraising-count').innerText = `${paidCount}/${item.needed_participants}`;
+
+        // 3. Полоска прогресса
         let percent = 0;
-        if (item.needed_participants > 0) percent = (item.current_participants / item.needed_participants) * 100;
+        if (item.needed_participants > 0) {
+            if (item.status === 'fundraising') {
+                // Если идет сбор - считаем от ОПЛАТИВШИХ
+                percent = (paidCount / item.needed_participants) * 100;
+            } else {
+                // Иначе от записавшихся
+                percent = (item.current_participants / item.needed_participants) * 100;
+            }
+        }
         document.getElementById('product-progress-fill').style.width = percent + "%";
         
-        // --- ИСПРАВЛЕНИЕ: Передаем дату ---
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at);
         
         const coverImg = document.getElementById('product-cover-img');
