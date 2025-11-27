@@ -136,7 +136,6 @@ async function loadItems(type, categoryId = null) {
         let container = catalogView.querySelector('.item-container'); 
         
         if (!container) {
-            // Если контейнера нет, удаляем старые карточки и создаем контейнер
             const oldCards = catalogView.querySelectorAll('.big-card');
             oldCards.forEach(c => c.remove());
             container = document.createElement('div');
@@ -168,9 +167,14 @@ async function loadItems(type, categoryId = null) {
                 statusText = "Активная складчина";
                 barColor = "background: linear-gradient(90deg, #00b894 0%, #00cec9 100%);";
                 badgeColor = "#00cec9";
-            } else if (item.status === 'fundraising' || item.status === 'fundraising_scheduled') {
+            } else if (item.status === 'fundraising') {
                 statusText = "Идёт сбор средств";
                 barColor = "background: #0984e3;";
+                badgeColor = "#0984e3";
+            } else if (item.status === 'fundraising_scheduled') {
+                // --- ИЗМЕНЕНИЕ: Обработка запланированного сбора ---
+                statusText = "Сбор назначен";
+                barColor = "background: #0984e3;"; 
                 badgeColor = "#0984e3";
             } else if (item.status === 'completed') {
                 statusText = "Завершена";
@@ -179,7 +183,6 @@ async function loadItems(type, categoryId = null) {
                 percent = 100;
             }
 
-            // Если пользователь записан, добавляем метку
             if (item.is_joined) {
                 statusText = "✅ Вы участвуете";
             }
@@ -218,22 +221,17 @@ async function openProduct(id) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-product').classList.add('active');
     
-    // Сброс данных
     document.getElementById('product-header-title').innerText = "Загрузка...";
     document.getElementById('product-desc').innerText = "...";
     
-    // Скрываем кнопки переключения видео пока грузится
-    // --- ИСПРАВЛЕНИЕ: Используем getElementById, так надежнее ---
     const buttonsContainer = document.getElementById('video-switchers');
     if(buttonsContainer) buttonsContainer.style.display = 'none';
-    
-    // Скрываем плеер и показываем плейсхолдер (или картинку)
     switchVideo('none');
 
     window.currentItemId = id;
     
     try {
-        const response = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: getHeaders() });
+        const response = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: getHeaders() });
         const item = await response.json();
         
         window.currentItemStatus = item.status;
@@ -250,9 +248,7 @@ async function openProduct(id) {
         document.getElementById('product-price-orig').innerText = "$" + item.price;
         
         let contribution = "100₽"; 
-        if (item.status === 'completed') {
-            contribution = "200₽"; 
-        }
+        if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
@@ -260,34 +256,30 @@ async function openProduct(id) {
         if (item.needed_participants > 0) percent = (item.current_participants / item.needed_participants) * 100;
         document.getElementById('product-progress-fill').style.width = percent + "%";
         
-        updateProductStatusUI(item.status, item.is_joined, item.payment_status);
+        // --- ИЗМЕНЕНИЕ: Передаем item.start_at в функцию обновления UI ---
+        updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at);
         
-        // --- ОБЛОЖКА ---
         const coverImg = document.getElementById('product-cover-img');
-        // Теперь API вернет ссылку на картинку даже если нет видео
         coverImg.src = item.cover_url || "";
         coverImg.onerror = function() {
             this.src = "icons/Ничего нет без фона.png"; 
             this.onerror = null;
         };
 
-        // --- ВИДЕО КНОПКИ ---
         window.currentVideoLinks = item.videos || {};
         
-        // Проверяем, есть ли хоть одна ссылка
-        const hasAnyVideo = window.currentVideoLinks.youtube || window.currentVideoLinks.vk || window.currentVideoLinks.rutube;
+        const hasYoutube = window.currentVideoLinks.youtube && window.currentVideoLinks.youtube.length > 5;
+        const hasVk = window.currentVideoLinks.vk && window.currentVideoLinks.vk.length > 5;
+        const hasRutube = window.currentVideoLinks.rutube && window.currentVideoLinks.rutube.length > 5;
+        const hasAnyVideo = hasYoutube || hasVk || hasRutube;
 
         if (hasAnyVideo) {
-            // Если видео есть, показываем кнопки (flex)
             if(buttonsContainer) buttonsContainer.style.display = 'flex';
-
-            if (window.currentVideoLinks.youtube) switchVideo('youtube');
-            else if (window.currentVideoLinks.vk) switchVideo('vk');
-            else if (window.currentVideoLinks.rutube) switchVideo('rutube');
+            if (hasYoutube) switchVideo('youtube');
+            else if (hasVk) switchVideo('vk');
+            else if (hasRutube) switchVideo('rutube');
         } else {
-            // Если видео нет, кнопки остаются скрытыми (display: none)
             if(buttonsContainer) buttonsContainer.style.display = 'none';
-            // И включаем режим "без видео" (покажет картинку)
             switchVideo('none'); 
         }
 
@@ -373,7 +365,8 @@ function showPlaceholder() {
 
 // --- УПРАВЛЕНИЕ СТАТУСАМИ И КНОПКАМИ ---
 
-function updateProductStatusUI(status, isJoined, paymentStatus) {
+// --- ИЗМЕНЕНИЕ: Добавили аргумент startAt ---
+function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     const progressBar = document.getElementById('product-progress-fill');
     const actionBtn = document.getElementById('product-action-btn');
     const statusText = document.getElementById('product-status-text');
@@ -386,6 +379,9 @@ function updateProductStatusUI(status, isJoined, paymentStatus) {
     
     actionBtn.disabled = false;
     actionBtn.style.opacity = "1";
+    
+    // Сбрасываем обработчики
+    actionBtn.onclick = handleProductAction;
 
     // 1. АКТИВНАЯ (Набор)
     if (status === 'published' || status === 'active' || status === 'scheduled') {
@@ -396,15 +392,37 @@ function updateProductStatusUI(status, isJoined, paymentStatus) {
             actionBtn.innerText = "Вы записаны";
             actionBtn.disabled = true;
             actionBtn.style.opacity = "0.7";
-            // Показываем кнопку выхода (крестик)
             leaveBtn.style.display = 'flex';
         } else {
             actionBtn.innerText = "Записаться";
-            actionBtn.onclick = handleProductAction; // Запись
         }
     } 
-    // 2. СБОР СРЕДСТВ
-    else if (status === 'fundraising' || status === 'fundraising_scheduled') {
+    // 2. СБОР НАЗНАЧЕН (Новое условие)
+    else if (status === 'fundraising_scheduled') {
+        progressBar.classList.add('blue'); // Синий бар, но ещё не заполняется
+        
+        // Показываем дату
+        const dateStr = formatDate(startAt);
+        statusText.innerText = `Сбор средств назначен на ${dateStr}`;
+        
+        if (isJoined) {
+            // Если записан - показываем неактивную кнопку "Вы записаны"
+            actionBtn.innerText = "Вы записаны";
+            actionBtn.disabled = true;
+            actionBtn.style.opacity = "0.7";
+            
+            // Важно: По ТЗ из такой складчины выйти уже нельзя (или можно? в ТЗ: "Выйти из складчины во время сбора средств уже нельзя"). 
+            // "Сбор средств назначен" - это промежуточный этап. Давай оставим возможность выйти, пока не начался реальный сбор.
+            // Если нужно запретить выход уже сейчас - удали строчку ниже.
+            leaveBtn.style.display = 'flex'; 
+        } else {
+            // Если не записан - скорее всего набор закрыт
+            actionBtn.innerText = "Набор закрыт";
+            actionBtn.disabled = true;
+        }
+    }
+    // 3. ИДЁТ СБОР СРЕДСТВ
+    else if (status === 'fundraising') {
         progressBar.classList.add('blue');
         statusText.innerText = "Идёт сбор средств";
         fundraisingRow.style.display = 'flex';
@@ -416,23 +434,19 @@ function updateProductStatusUI(status, isJoined, paymentStatus) {
             } else {
                 actionBtn.innerText = "Оплатить взнос";
                 actionBtn.onclick = () => {
-                    tg.close(); // Закрываем WebApp, чтобы юзер увидел сообщение от бота
+                    tg.close();
                 };
             }
         } else {
-            // Если не записан, но сбор уже идет - обычно вступать нельзя (по ТЗ "Выйти нельзя", про вход не сказано, но логично закрыть)
             actionBtn.innerText = "Набор закрыт";
             actionBtn.disabled = true;
         }
     } 
-    // 3. ЗАВЕРШЕНА
+    // 4. ЗАВЕРШЕНА
     else if (status === 'completed') {
         actionBtn.innerText = "Завершена";
         actionBtn.disabled = true;
         statusText.innerText = "Складчина завершена";
-        
-        // Логика для Опытных (покупка после завершения) пока через бота
-        // Если это нужно в WebApp, потребуется доработка
     }
 }
 
@@ -500,6 +514,17 @@ async function leaveProduct() {
         alert("Ошибка соединения");
         btn.disabled = false;
     }
+}
+
+function formatDate(isoString) {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    // Форматируем дату в читаемый вид (попытка вывести МСК)
+    // Используем 'ru-RU', чтобы получить ДД.ММ.ГГГГ ЧЧ:ММ
+    return date.toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
+    }) + " (МСК)";
 }
 
 function openModal() { document.getElementById('modal-status').classList.add('open'); }
