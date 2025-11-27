@@ -662,6 +662,11 @@ h1, h2, h3, p { margin: 0; }
     font-size: 14px;
     color: var(--text-secondary);
     margin-top: 10px;
+    /* --- ДОБАВЛЕНО ДЛЯ ПЕРЕНОСА --- */
+    white-space: normal;       /* Разрешает перенос */
+    word-wrap: break-word;     /* Ломает длинные слова, если надо */
+    max-width: 100%;           /* Ограничивает ширину контейнером */
+    line-height: 1.4;          /* Чуть больше воздуха между строками */
 }
 
 /* Fixed Action Bar */
