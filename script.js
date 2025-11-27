@@ -113,16 +113,48 @@ async function loadUserProfile() {
         if (!response.ok) throw new Error("API Error");
         const user = await response.json();
         
-        document.querySelectorAll('.user-name').forEach(el => {
-            el.innerText = user.first_name || user.username || "User";
-        });
+        // 1. Определяем имя для отображения (Имя или @username)
+        // Логика: если есть First Name - берем его, иначе Username
+        const displayName = user.first_name || (user.username ? `@${user.username}` : "Пользователь");
         
+        // Обновляем имя в шапке (на главной)
+        document.querySelectorAll('.user-name').forEach(el => {
+            el.innerText = displayName;
+        });
+
+        // Обновляем имя на странице профиля (там тег h2)
+        const profileNameEl = document.querySelector('#view-profile h2');
+        if (profileNameEl) profileNameEl.innerText = displayName;
+        
+        // 2. Аватарка (берем из Telegram WebApp API, так как в базе мы фото не храним)
+        // tg.initDataUnsafe.user.photo_url доступен только если открыто внутри Telegram
+        const telegramPhotoUrl = tg.initDataUnsafe?.user?.photo_url;
+        if (telegramPhotoUrl) {
+            document.querySelectorAll('.user-avatar').forEach(img => {
+                img.src = telegramPhotoUrl;
+            });
+        }
+
+        // 3. Форматирование даты (YYYY-MM-DD -> DD.MM.YYYY)
         const dateEl = document.querySelector('#view-profile p');
         if(dateEl && user.registration_date) {
-            const dateStr = user.registration_date.split(' ')[0]; 
-            dateEl.innerText = `Участник с ${dateStr}`;
+            try {
+                // Обычно дата приходит как "2025-11-24 12:00:00" или "2025-11-24"
+                const datePart = user.registration_date.split(' ')[0]; // Берем часть до пробела
+                const [year, month, day] = datePart.split('-'); // Разбиваем по тире
+                
+                if (year && month && day) {
+                    dateEl.innerText = `Участник с ${day}.${month}.${year}`;
+                } else {
+                    dateEl.innerText = `Участник с ${datePart}`;
+                }
+            } catch (e) {
+                console.error("Date parse error", e);
+                dateEl.innerText = `Участник с ${user.registration_date}`;
+            }
         }
         
+        // 4. Статистика
         const stats = document.querySelectorAll('.profile-menu .profile-btn div div:last-child');
         if(stats.length >= 3) {
             stats[0].innerText = user.status;
