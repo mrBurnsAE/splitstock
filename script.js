@@ -5,10 +5,8 @@ const API_BASE_URL = "https://api.splitstock.ru";
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// Получаем ID пользователя (или тестовый ID для браузера)
 const USER_ID = tg.initDataUnsafe?.user?.id || 123456789; 
 
-// Глобальные переменные для текущего открытого товара
 window.currentVideoLinks = {};
 window.currentItemId = null;
 window.currentItemStatus = null;
@@ -19,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadItems('active');
 });
 
-// Вспомогательная функция для заголовков (авторизация по ID)
 function getHeaders() {
     return {
         'Content-Type': 'application/json',
@@ -27,15 +24,13 @@ function getHeaders() {
     };
 }
 
-// --- ЛОГИКА UI (Переключение экранов) ---
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(`view-${viewName}`).classList.add('active');
-
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) bottomNav.style.display = 'flex';
-    
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     
     if(viewName === 'home') {
@@ -48,7 +43,6 @@ function switchView(viewName) {
         document.getElementById('icon-home').src = 'icons/home.svg';
         document.getElementById('icon-catalog').src = 'icons/apps active.svg';
         document.getElementById('icon-profile').src = 'icons/user.svg';
-        // Обновляем список при переходе
         const activeTab = document.querySelector('.tab.active');
         if(activeTab) selectTab(activeTab);
     } else if(viewName === 'profile') {
@@ -63,44 +57,47 @@ function switchView(viewName) {
 function selectTab(tabElement) {
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
     tabElement.classList.add('active');
-    
     const tabName = tabElement.innerText;
     if (tabName.includes("Активные")) loadItems('active');
     else if (tabName.includes("Завершённые")) loadItems('completed');
-    else if (tabName.includes("Мои")) {
-        // Для "Мои складчины" пока грузим активные, но фильтруем визуально (в будущем можно сделать отдельный эндпоинт)
-        // Пока что просто покажем активные
-        loadItems('active'); 
-        // Можно добавить уведомление, что раздел в разработке, или реализовать фильтр на клиенте
+    else if (tabName.includes("Мои")) loadItems('active'); 
+}
+
+// Форматирование даты
+function formatDate(isoString) {
+    if (!isoString) return "...";
+    try {
+        const date = new Date(isoString);
+        return date.toLocaleString('ru-RU', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
+        }) + " (МСК)";
+    } catch (e) {
+        return isoString;
     }
 }
 
-// --- API ФУНКЦИИ ---
+// --- API ---
 
 async function loadUserProfile() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
         const user = await response.json();
-        
         document.querySelectorAll('.user-name').forEach(el => {
             el.innerText = user.first_name || user.username || "User";
         });
-        
         const dateEl = document.querySelector('#view-profile p');
         if(dateEl && user.registration_date) {
-            const dateStr = user.registration_date.split(' ')[0]; // Берем только дату
+            const dateStr = user.registration_date.split(' ')[0]; 
             dateEl.innerText = `Участник с ${dateStr}`;
         }
-
-        // Обновляем статистику в профиле
         const stats = document.querySelectorAll('.profile-menu .profile-btn div div:last-child');
         if(stats.length >= 3) {
-            stats[0].innerText = user.status; // Статус
-            stats[1].innerText = user.active_count; // Активные
-            stats[2].innerText = user.completed_count; // Завершенные
+            stats[0].innerText = user.status;
+            stats[1].innerText = user.active_count;
+            stats[2].innerText = user.completed_count;
         }
-
-    } catch (error) { console.error("Ошибка загрузки профиля:", error); }
+    } catch (error) { console.error(error); }
 }
 
 async function loadCategories() {
@@ -109,32 +106,24 @@ async function loadCategories() {
         const categories = await response.json();
         const container = document.querySelector('.categories-grid');
         container.innerHTML = '';
-        
         categories.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'category-card';
             div.innerText = cat.name;
-            // При клике на категорию переходим в каталог с фильтром
-            div.onclick = () => { 
-                switchView('catalog'); 
-                loadItems('active', cat.id); 
-            };
+            div.onclick = () => { switchView('catalog'); loadItems('active', cat.id); };
             container.appendChild(div);
         });
-    } catch (error) { console.error("Ошибка загрузки категорий:", error); }
+    } catch (error) { console.error(error); }
 }
 
 async function loadItems(type, categoryId = null) {
     try {
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
         if (categoryId) url += `&cat=${categoryId}`;
-        
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
-        
         const catalogView = document.getElementById('view-catalog');
         let container = catalogView.querySelector('.item-container'); 
-        
         if (!container) {
             const oldCards = catalogView.querySelectorAll('.big-card');
             oldCards.forEach(c => c.remove());
@@ -143,7 +132,6 @@ async function loadItems(type, categoryId = null) {
             catalogView.querySelector('.section').appendChild(container);
         }
         container.innerHTML = '';
-        
         if (items.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding:20px; color:#a2a5b9;">Здесь пока ничего нет...</div>';
             return;
@@ -172,8 +160,7 @@ async function loadItems(type, categoryId = null) {
                 barColor = "background: #0984e3;";
                 badgeColor = "#0984e3";
             } else if (item.status === 'fundraising_scheduled') {
-                // --- ИЗМЕНЕНИЕ: Обработка запланированного сбора ---
-                statusText = "Сбор назначен";
+                statusText = "Сбор назначен"; // В каталоге кратко
                 barColor = "background: #0984e3;"; 
                 badgeColor = "#0984e3";
             } else if (item.status === 'completed') {
@@ -211,10 +198,8 @@ async function loadItems(type, categoryId = null) {
             `;
             container.appendChild(card);
         });
-    } catch (error) { console.error("Ошибка загрузки товаров:", error); }
+    } catch (error) { console.error(error); }
 }
-
-// --- ОТКРЫТИЕ ТОВАРА ---
 
 async function openProduct(id) {
     document.querySelector('.bottom-nav').style.display = 'none';
@@ -256,7 +241,7 @@ async function openProduct(id) {
         if (item.needed_participants > 0) percent = (item.current_participants / item.needed_participants) * 100;
         document.getElementById('product-progress-fill').style.width = percent + "%";
         
-        // --- ИЗМЕНЕНИЕ: Передаем item.start_at в функцию обновления UI ---
+        // --- ИСПРАВЛЕНИЕ: Передаем дату ---
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at);
         
         const coverImg = document.getElementById('product-cover-img');
@@ -267,7 +252,6 @@ async function openProduct(id) {
         };
 
         window.currentVideoLinks = item.videos || {};
-        
         const hasYoutube = window.currentVideoLinks.youtube && window.currentVideoLinks.youtube.length > 5;
         const hasVk = window.currentVideoLinks.vk && window.currentVideoLinks.vk.length > 5;
         const hasRutube = window.currentVideoLinks.rutube && window.currentVideoLinks.rutube.length > 5;
@@ -292,19 +276,15 @@ async function openProduct(id) {
 
 function closeProduct() {
     document.getElementById('main-video-frame').src = "";
-    // При закрытии обновляем список, чтобы актуализировать статусы
     loadItems('active');
     switchView('catalog');
 }
 
-// --- ЛОГИКА ВИДЕО ---
 function switchVideo(platform) {
     const iframe = document.getElementById('main-video-frame');
     const placeholder = document.getElementById('no-video-placeholder');
     const btns = document.querySelectorAll('.platform-btn');
-    
     btns.forEach(b => b.classList.remove('active'));
-    
     const btn = document.getElementById(`btn-${platform}`);
     if(btn) btn.classList.add('active');
 
@@ -316,11 +296,9 @@ function switchVideo(platform) {
     }
     
     if (!videoUrl) {
-        showPlaceholder();
-        return;
+        showPlaceholder(); return;
     }
 
-    // Парсинг ссылок (превращаем обычные ссылки в Embed)
     if (videoUrl.includes('<iframe')) {
         const srcMatch = videoUrl.match(/src=["']([^"']+)["']/);
         if (srcMatch && srcMatch[1]) videoUrl = srcMatch[1];
@@ -337,8 +315,7 @@ function switchVideo(platform) {
     else if (videoUrl.includes('vk.com/video')) {
         const match = videoUrl.match(/video(-?\d+)_(\d+)/);
         if (match) {
-            const oid = match[1]; 
-            const vid = match[2];
+            const oid = match[1]; const vid = match[2];
             videoUrl = `https://vk.com/video_ext.php?oid=${oid}&id=${vid}&hd=2`;
         }
     }
@@ -363,9 +340,8 @@ function showPlaceholder() {
     iframe.src = "";
 }
 
-// --- УПРАВЛЕНИЕ СТАТУСАМИ И КНОПКАМИ ---
+// --- УПРАВЛЕНИЕ СТАТУСАМИ (Logic Fixes Here) ---
 
-// --- ИЗМЕНЕНИЕ: Добавили аргумент startAt ---
 function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     const progressBar = document.getElementById('product-progress-fill');
     const actionBtn = document.getElementById('product-action-btn');
@@ -379,8 +355,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     
     actionBtn.disabled = false;
     actionBtn.style.opacity = "1";
-    
-    // Сбрасываем обработчики
     actionBtn.onclick = handleProductAction;
 
     // 1. АКТИВНАЯ (Набор)
@@ -392,33 +366,30 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             actionBtn.innerText = "Вы записаны";
             actionBtn.disabled = true;
             actionBtn.style.opacity = "0.7";
-            leaveBtn.style.display = 'flex';
+            leaveBtn.style.display = 'flex'; // Можно выйти
         } else {
             actionBtn.innerText = "Записаться";
         }
     } 
-    // 2. СБОР НАЗНАЧЕН (Новое условие)
+    // 2. СБОР НАЗНАЧЕН (Fundraising Scheduled)
     else if (status === 'fundraising_scheduled') {
-        progressBar.classList.add('blue'); // Синий бар, но ещё не заполняется
+        progressBar.classList.add('blue');
         
-        // Показываем дату
+        // Отображение даты
         const dateStr = formatDate(startAt);
         statusText.innerText = `Сбор средств назначен на ${dateStr}`;
         
         if (isJoined) {
-            // Если записан - показываем неактивную кнопку "Вы записаны"
             actionBtn.innerText = "Вы записаны";
             actionBtn.disabled = true;
             actionBtn.style.opacity = "0.7";
-            
-            // Важно: По ТЗ из такой складчины выйти уже нельзя (или можно? в ТЗ: "Выйти из складчины во время сбора средств уже нельзя"). 
-            // "Сбор средств назначен" - это промежуточный этап. Давай оставим возможность выйти, пока не начался реальный сбор.
-            // Если нужно запретить выход уже сейчас - удали строчку ниже.
-            leaveBtn.style.display = 'flex'; 
+            // Показываем кнопку "Выйти", но она выдаст ошибку при нажатии (по ТЗ)
+            // Либо можно скрыть её, но пользователь просил "уведомление при попытке выйти"
+            leaveBtn.style.display = 'flex';
         } else {
-            // Если не записан - скорее всего набор закрыт
-            actionBtn.innerText = "Набор закрыт";
-            actionBtn.disabled = true;
+            // --- ИСПРАВЛЕНИЕ: Разрешаем запись до начала сбора ---
+            actionBtn.innerText = "Записаться";
+            actionBtn.disabled = false;
         }
     }
     // 3. ИДЁТ СБОР СРЕДСТВ
@@ -433,10 +404,11 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
                 actionBtn.disabled = true;
             } else {
                 actionBtn.innerText = "Оплатить взнос";
-                actionBtn.onclick = () => {
-                    tg.close();
-                };
+                actionBtn.onclick = () => { tg.close(); };
             }
+            // Кнопка выхода скрыта или вызывает алерт? Обычно в сборе уже нет кнопки.
+            // Но если по ТЗ "при попытке выйти...", значит кнопку можно оставить
+            leaveBtn.style.display = 'flex'; 
         } else {
             actionBtn.innerText = "Набор закрыт";
             actionBtn.disabled = true;
@@ -449,8 +421,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
         statusText.innerText = "Складчина завершена";
     }
 }
-
-// --- ДЕЙСТВИЯ (JOIN / LEAVE) ---
 
 async function handleProductAction() {
     const btn = document.getElementById('product-action-btn');
@@ -468,7 +438,6 @@ async function handleProductAction() {
         const result = await response.json();
         
         if (result.success) {
-            // Обновляем UI товара
             openProduct(window.currentItemId);
         } else {
             if (result.error === 'penalty') {
@@ -506,7 +475,16 @@ async function leaveProduct() {
         if (result.success) {
             openProduct(window.currentItemId);
         } else {
-            alert("Ошибка: " + (result.error || "Не удалось выйти"));
+            // --- ИСПРАВЛЕНИЕ: Обработка запрета на выход ---
+            if (result.error === 'locked') {
+                tg.showPopup({
+                    title: 'Внимание',
+                    message: 'После объявления сбора средств, покинуть складчину невозможно.',
+                    buttons: [{type: 'ok'}]
+                });
+            } else {
+                alert("Ошибка: " + (result.error || "Не удалось выйти"));
+            }
             btn.disabled = false;
         }
     } catch (error) {
@@ -514,17 +492,6 @@ async function leaveProduct() {
         alert("Ошибка соединения");
         btn.disabled = false;
     }
-}
-
-function formatDate(isoString) {
-    if (!isoString) return "";
-    const date = new Date(isoString);
-    // Форматируем дату в читаемый вид (попытка вывести МСК)
-    // Используем 'ru-RU', чтобы получить ДД.ММ.ГГГГ ЧЧ:ММ
-    return date.toLocaleString('ru-RU', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
-    }) + " (МСК)";
 }
 
 function openModal() { document.getElementById('modal-status').classList.add('open'); }
