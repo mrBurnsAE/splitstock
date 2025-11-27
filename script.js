@@ -5,8 +5,29 @@ const API_BASE_URL = "https://api.splitstock.ru";
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-const USER_ID = tg.initDataUnsafe?.user?.id || 123456789; 
+// Получаем ID пользователя
+let USER_ID = tg.initDataUnsafe?.user?.id;
 
+// --- ОТЛАДКА ---
+// Если мы не в Telegram (или ID не получен), пробуем взять из URL (для тестов в браузере)
+// Пример: index.html?user_id=ТВОЙ_РЕАЛЬНЫЙ_ID
+if (!USER_ID) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlId = urlParams.get('user_id');
+    if (urlId) {
+        USER_ID = parseInt(urlId);
+        console.log("User ID taken from URL:", USER_ID);
+    } else {
+        // Если совсем ничего нет - ставим твой админский ID для теста (чтобы ты видел себя)
+        // ЗАМЕНИ НА СВОЙ РЕАЛЬНЫЙ ID, который выдает /userinfo в боте
+        USER_ID = 5938914251; // <-- Впиши сюда свой ID
+        console.warn("User ID not found, using fallback/debug ID:", USER_ID);
+    }
+} else {
+    console.log("User ID from Telegram:", USER_ID);
+}
+
+// Глобальные переменные
 window.currentVideoLinks = {};
 window.currentItemId = null;
 window.currentItemStatus = null;
