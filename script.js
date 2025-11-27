@@ -3,17 +3,25 @@ const API_BASE_URL = "https://api.splitstock.ru";
 
 // Инициализация Telegram WebApp
 const tg = window.Telegram.WebApp;
+tg.ready(); // Сообщаем Телеграму, что приложение готово
 tg.expand();
 
-// 1. Пытаемся получить ID честно
+// 1. Пытаемся получить ID от Телеграма (штатный режим)
 let USER_ID = tg.initDataUnsafe?.user?.id;
 
-// 2. Если ID нет (глюк Телеграма или запуск в браузере), ставим 0 (Гость), чтобы скрипт НЕ ПАДАЛ
+// 2. РЕЖИМ РАЗРАБОТЧИКА: Если ID нет, ищем его в ссылке (?uid=...)
+// Это нужно для тестов, если десктопная версия не передает данные
+const urlParams = new URLSearchParams(window.location.search);
+const debugId = urlParams.get('uid');
+if (debugId) {
+    USER_ID = parseInt(debugId);
+    console.log("Debug User ID set:", USER_ID);
+}
+
+// 3. Если всё равно нет ID - включаем режим Гостя (чтобы не падало)
 if (!USER_ID) {
-    console.warn("Telegram User ID not found. Using Guest mode (0).");
-    // Можно раскомментировать для отладки, чтобы видеть, когда ID не пришел
-    // alert("Внимание: Ваш ID не определен. Функции оплаты могут быть недоступны.");
     USER_ID = 0;
+    console.warn("User ID not found. Guest mode activated.");
 }
 
 // Глобальные переменные
@@ -22,23 +30,15 @@ window.currentItemId = null;
 window.currentItemStatus = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Безопасный запуск
-    try {
-        loadUserProfile();
-        loadCategories();
-        loadItems('active');
-    } catch (e) {
-        console.error("Init error:", e);
-        // alert("Ошибка запуска: " + e.message); // Для отладки
-    }
+    loadUserProfile();
+    loadCategories();
+    loadItems('active');
 });
 
 function getHeaders() {
-    // Безопасное преобразование в строку
-    const uidStr = USER_ID ? USER_ID.toString() : "0";
     return {
         'Content-Type': 'application/json',
-        'X-Telegram-User-Id': uidStr
+        'X-Telegram-User-Id': USER_ID.toString()
     };
 }
 
@@ -46,15 +46,13 @@ function getHeaders() {
 
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    const view = document.getElementById(`view-${viewName}`);
-    if (view) view.classList.add('active');
+    document.getElementById(`view-${viewName}`).classList.add('active');
     
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) bottomNav.style.display = 'flex';
     
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     
-    // Безопасное получение иконок
     const iconHome = document.getElementById('icon-home');
     const iconCatalog = document.getElementById('icon-catalog');
     const iconProfile = document.getElementById('icon-profile');
@@ -105,7 +103,6 @@ function formatDate(isoString) {
 // --- API ---
 
 async function loadUserProfile() {
-    // Если мы Гость (ID=0), не пытаемся грузить профиль, чтобы не получать 404
     if (USER_ID === 0) {
         document.querySelectorAll('.user-name').forEach(el => el.innerText = "Гость");
         return;
@@ -159,8 +156,6 @@ async function loadItems(type, categoryId = null) {
     try {
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
         if (categoryId) url += `&cat=${categoryId}`;
-        
-        // Анти-кэш
         url += `&t=${Date.now()}`;
 
         const response = await fetch(url, { headers: getHeaders() });
@@ -195,6 +190,8 @@ async function loadItems(type, categoryId = null) {
             let percent = 0;
             
             if (item.needed_participants > 0) {
+                // Если идет сбор средств, показываем процент ОПЛАТИВШИХ (если такие данные пришли в списке)
+                // Но api_get_items не возвращает paid_participants, поэтому в списке показываем общую заполненность
                 percent = (item.current_participants / item.needed_participants) * 100;
             }
 
@@ -285,7 +282,7 @@ async function openProduct(id) {
         if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // Логика прогресса
+        // --- ЛОГИКА ПРОГРЕССА ---
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
         
         const paidCount = item.paid_participants || 0;
@@ -414,7 +411,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     if (actionBtn) {
         actionBtn.disabled = false;
         actionBtn.style.opacity = "1";
-        actionBtn.style.backgroundColor = ""; // Сброс цвета
+        actionBtn.style.backgroundColor = ""; 
         actionBtn.onclick = handleProductAction;
     }
 
