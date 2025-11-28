@@ -3,14 +3,13 @@ const API_BASE_URL = "https://api.splitstock.ru";
 
 // Инициализация Telegram WebApp
 const tg = window.Telegram.WebApp;
-tg.ready(); // Сообщаем Телеграму, что приложение готово
+tg.ready();
 tg.expand();
 
-// 1. Пытаемся получить ID от Телеграма (штатный режим)
+// 1. Пытаемся получить ID от Телеграма
 let USER_ID = tg.initDataUnsafe?.user?.id;
 
-// 2. РЕЖИМ РАЗРАБОТЧИКА: Если ID нет, ищем его в ссылке (?uid=...)
-// Это нужно для тестов, если десктопная версия не передает данные
+// 2. РЕЖИМ РАЗРАБОТЧИКА: Ищем в ссылке (?uid=...)
 const urlParams = new URLSearchParams(window.location.search);
 const debugId = urlParams.get('uid');
 if (debugId) {
@@ -18,7 +17,7 @@ if (debugId) {
     console.log("Debug User ID set:", USER_ID);
 }
 
-// 3. Если всё равно нет ID - включаем режим Гостя (чтобы не падало)
+// 3. Если всё равно нет ID - включаем режим Гостя
 if (!USER_ID) {
     USER_ID = 0;
     console.warn("User ID not found. Guest mode activated.");
@@ -30,15 +29,20 @@ window.currentItemId = null;
 window.currentItemStatus = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadUserProfile();
-    loadCategories();
-    loadItems('active');
+    try {
+        loadUserProfile();
+        loadCategories();
+        loadItems('active');
+    } catch (e) {
+        console.error("Init error:", e);
+    }
 });
 
 function getHeaders() {
+    const uidStr = USER_ID ? USER_ID.toString() : "0";
     return {
         'Content-Type': 'application/json',
-        'X-Telegram-User-Id': USER_ID.toString()
+        'X-Telegram-User-Id': uidStr
     };
 }
 
@@ -46,7 +50,8 @@ function getHeaders() {
 
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById(`view-${viewName}`).classList.add('active');
+    const view = document.getElementById(`view-${viewName}`);
+    if (view) view.classList.add('active');
     
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) bottomNav.style.display = 'flex';
@@ -113,21 +118,14 @@ async function loadUserProfile() {
         if (!response.ok) throw new Error("API Error");
         const user = await response.json();
         
-        // 1. Определяем имя для отображения (Имя или @username)
-        // Логика: если есть First Name - берем его, иначе Username
         const displayName = user.first_name || (user.username ? `@${user.username}` : "Пользователь");
-        
-        // Обновляем имя в шапке (на главной)
         document.querySelectorAll('.user-name').forEach(el => {
             el.innerText = displayName;
         });
 
-        // Обновляем имя на странице профиля (там тег h2)
         const profileNameEl = document.querySelector('#view-profile h2');
         if (profileNameEl) profileNameEl.innerText = displayName;
         
-        // 2. Аватарка (берем из Telegram WebApp API, так как в базе мы фото не храним)
-        // tg.initDataUnsafe.user.photo_url доступен только если открыто внутри Telegram
         const telegramPhotoUrl = tg.initDataUnsafe?.user?.photo_url;
         if (telegramPhotoUrl) {
             document.querySelectorAll('.user-avatar').forEach(img => {
@@ -135,26 +133,21 @@ async function loadUserProfile() {
             });
         }
 
-        // 3. Форматирование даты (YYYY-MM-DD -> DD.MM.YYYY)
         const dateEl = document.querySelector('#view-profile p');
         if(dateEl && user.registration_date) {
             try {
-                // Обычно дата приходит как "2025-11-24 12:00:00" или "2025-11-24"
-                const datePart = user.registration_date.split(' ')[0]; // Берем часть до пробела
-                const [year, month, day] = datePart.split('-'); // Разбиваем по тире
-                
+                const datePart = user.registration_date.split(' ')[0]; 
+                const [year, month, day] = datePart.split('-');
                 if (year && month && day) {
                     dateEl.innerText = `Участник с ${day}.${month}.${year}`;
                 } else {
                     dateEl.innerText = `Участник с ${datePart}`;
                 }
             } catch (e) {
-                console.error("Date parse error", e);
                 dateEl.innerText = `Участник с ${user.registration_date}`;
             }
         }
         
-        // 4. Статистика
         const stats = document.querySelectorAll('.profile-menu .profile-btn div div:last-child');
         if(stats.length >= 3) {
             stats[0].innerText = user.status;
@@ -222,8 +215,9 @@ async function loadItems(type, categoryId = null) {
             let percent = 0;
             
             if (item.needed_participants > 0) {
-                // Если идет сбор средств, показываем процент ОПЛАТИВШИХ (если такие данные пришли в списке)
-                // Но api_get_items не возвращает paid_participants, поэтому в списке показываем общую заполненность
+                // Если сбор средств - показываем процент оплативших (если сервер поддерживает)
+                // Иначе показываем процент записавшихся
+                // (В списке мы пока используем упрощенную логику, точные данные внутри карточки)
                 percent = (item.current_participants / item.needed_participants) * 100;
             }
 
@@ -278,14 +272,13 @@ async function loadItems(type, categoryId = null) {
 }
 
 async function openProduct(id) {
-    // UI Cleanup
     const bottomNav = document.querySelector('.bottom-nav');
     if(bottomNav) bottomNav.style.display = 'none';
     
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-product').classList.add('active');
     
-    document.getElementById('product-header-title').innerText = "Loading...";
+    document.getElementById('product-header-title').innerText = "Загрузка...";
     document.getElementById('product-desc').innerText = "...";
     
     const buttonsContainer = document.getElementById('video-switchers');
@@ -297,21 +290,15 @@ async function openProduct(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: getHeaders() });
         const item = await response.json();
-
-        alert("DEBUG INFO:\n" +
-              "Статус: " + item.status + "\n" +
-              "Оплатило (paid_participants): " + item.paid_participants + "\n" +
-              "Всего мест: " + item.needed_participants);
         
         window.currentItemStatus = item.status;
 
-        // Basic Info
         document.getElementById('product-header-title').innerText = item.name;
-        document.getElementById('product-desc').innerText = item.description || "No description";
+        document.getElementById('product-desc').innerText = item.description || "Описание отсутствует";
         
         const linkEl = document.getElementById('product-link-ext');
         linkEl.href = item.link;
-        linkEl.innerText = "🔗 Detailed Information";
+        linkEl.innerText = "🔗 Подробная информация";
 
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
         document.getElementById('product-tags').innerText = (item.tags || []).map(t => "#" + t).join(" ");
@@ -321,41 +308,27 @@ async function openProduct(id) {
         if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // --- PROGRESS BAR LOGIC FIX ---
-        
-        // 1. Participant count (People who joined)
+        // --- ЛОГИКА ПРОГРЕССА ---
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
         
-        // 2. Fundraising Progress (Money collected)
-        // Use paid_participants from API. Default to 0 if missing.
         const paidCount = item.paid_participants || 0;
-        
-        // 3. Update the text label for fundraising progress
         const fundCountEl = document.getElementById('fundraising-count');
-        if(fundCountEl) {
-            fundCountEl.innerText = `${paidCount}/${item.needed_participants}`;
-        }
+        if(fundCountEl) fundCountEl.innerText = `${paidCount}/${item.needed_participants}`;
 
-        // 4. Calculate Percentage
         let percent = 0;
         if (item.needed_participants > 0) {
             if (item.status === 'fundraising') {
-                // If fundraising is active, progress is based on PAYMENTS
                 percent = (paidCount / item.needed_participants) * 100;
             } else {
-                // Otherwise (Active/Draft), progress is based on JOINED users
                 percent = (item.current_participants / item.needed_participants) * 100;
             }
         }
-        // Cap at 100% just in case
+        // Ограничиваем 100%
         if (percent > 100) percent = 100;
-        
         document.getElementById('product-progress-fill').style.width = percent + "%";
         
-        // Update Buttons
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at);
         
-        // Cover Image
         const coverImg = document.getElementById('product-cover-img');
         coverImg.src = item.cover_url || "";
         coverImg.onerror = function() {
@@ -363,7 +336,6 @@ async function openProduct(id) {
             this.onerror = null;
         };
 
-        // Video Handling
         window.currentVideoLinks = item.videos || {};
         const hasYoutube = window.currentVideoLinks.youtube && window.currentVideoLinks.youtube.length > 5;
         const hasVk = window.currentVideoLinks.vk && window.currentVideoLinks.vk.length > 5;
@@ -382,7 +354,7 @@ async function openProduct(id) {
 
     } catch (error) {
         console.error(error);
-        alert("Failed to load item. Check internet connection.");
+        alert("Не удалось загрузить товар. Проверьте интернет.");
         closeProduct();
     }
 }
