@@ -297,6 +297,11 @@ async function openProduct(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: getHeaders() });
         const item = await response.json();
+
+        alert("DEBUG INFO:\n" +
+              "Статус: " + item.status + "\n" +
+              "Оплатило (paid_participants): " + item.paid_participants + "\n" +
+              "Всего мест: " + item.needed_participants);
         
         window.currentItemStatus = item.status;
 
