@@ -210,32 +210,36 @@ async function loadItems(type, categoryId = null) {
             card.onclick = () => openProduct(item.id);
             
             let statusText = "";
-            let barColor = "";
+            let barClass = ""; // gradient or blue
             let badgeColor = "";
             let percent = 0;
             
             if (item.needed_participants > 0) {
-                // Если сбор средств - показываем процент оплативших (если сервер поддерживает)
-                // Иначе показываем процент записавшихся
-                // (В списке мы пока используем упрощенную логику, точные данные внутри карточки)
-                percent = (item.current_participants / item.needed_participants) * 100;
+                // Если сбор средств - показываем процент оплативших
+                if (item.status === 'fundraising') {
+                    // API списка пока не возвращает paid_participants, 
+                    // поэтому в списке будет общая заполненность (записавшиеся)
+                    percent = (item.current_participants / item.needed_participants) * 100;
+                } else {
+                    percent = (item.current_participants / item.needed_participants) * 100;
+                }
             }
 
             if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
                 statusText = "Активная складчина";
-                barColor = "background: linear-gradient(90deg, #00b894 0%, #00cec9 100%);";
+                barClass = "gradient"; // Красный-Желтый-Зеленый
                 badgeColor = "#00cec9";
             } else if (item.status === 'fundraising') {
                 statusText = "Идёт сбор средств";
-                barColor = "background: #0984e3;";
+                barClass = "blue";
                 badgeColor = "#0984e3";
             } else if (item.status === 'fundraising_scheduled') {
                 statusText = "Сбор назначен";
-                barColor = "background: #0984e3;"; 
+                barClass = "blue";
                 badgeColor = "#0984e3";
             } else if (item.status === 'completed') {
                 statusText = "Завершена";
-                barColor = "background: #a2a5b9;";
+                barClass = "blue"; // Или серый, если захочешь
                 badgeColor = "#a2a5b9";
                 percent = 100;
             }
@@ -258,7 +262,7 @@ async function loadItems(type, categoryId = null) {
                             <span>Участников: ${item.current_participants}/${item.needed_participants}</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${percent}%; ${barColor}"></div>
+                            <div class="progress-fill ${barClass}" style="width: ${percent}%;"></div>
                         </div>
                     </div>
                     <div class="status-badge" style="color: ${badgeColor};">
@@ -294,11 +298,16 @@ async function openProduct(id) {
         window.currentItemStatus = item.status;
 
         document.getElementById('product-header-title').innerText = item.name;
+        
+        // --- ВОЗВРАЩАЕМ ОПИСАНИЕ ---
         document.getElementById('product-desc').innerText = item.description || "Описание отсутствует";
         
+        // --- КРАСИВАЯ КНОПКА ССЫЛКИ ---
         const linkEl = document.getElementById('product-link-ext');
         linkEl.href = item.link;
-        linkEl.innerText = "🔗 Подробная информация";
+        // Заменяем текст на HTML с иконкой (класс btn-subtle уже настроен в CSS)
+        linkEl.className = "btn-subtle";
+        linkEl.innerHTML = '<img src="icons/link.svg"> Подробная информация';
 
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
         document.getElementById('product-tags').innerText = (item.tags || []).map(t => "#" + t).join(" ");
@@ -308,7 +317,7 @@ async function openProduct(id) {
         if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // --- ЛОГИКА ПРОГРЕССА ---
+        // --- ЛОГИКА ПРОГРЕССА + ЦВЕТА ---
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
         
         const paidCount = item.paid_participants || 0;
@@ -316,16 +325,21 @@ async function openProduct(id) {
         if(fundCountEl) fundCountEl.innerText = `${paidCount}/${item.needed_participants}`;
 
         let percent = 0;
+        const bar = document.getElementById('product-progress-fill');
+        // Сбрасываем классы
+        bar.className = 'progress-fill';
+
         if (item.needed_participants > 0) {
             if (item.status === 'fundraising') {
                 percent = (paidCount / item.needed_participants) * 100;
+                bar.classList.add('blue'); // Синий для денег
             } else {
                 percent = (item.current_participants / item.needed_participants) * 100;
+                bar.classList.add('gradient'); // Градиент для участников
             }
         }
-        // Ограничиваем 100%
         if (percent > 100) percent = 100;
-        document.getElementById('product-progress-fill').style.width = percent + "%";
+        bar.style.width = percent + "%";
         
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at);
         
@@ -432,7 +446,9 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     const fundraisingRow = document.getElementById('fundraising-label-row');
     const leaveBtn = document.getElementById('product-leave-btn');
 
-    if (progressBar) progressBar.className = 'progress-fill'; 
+    // Сброс цвета бара (в openProduct устанавливается точнее)
+    // if (progressBar) progressBar.className = 'progress-fill'; 
+    
     if (fundraisingRow) fundraisingRow.style.display = 'none';
     if (leaveBtn) leaveBtn.style.display = 'none';
     
@@ -445,7 +461,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
 
     // 1. АКТИВНАЯ (Набор)
     if (status === 'published' || status === 'active' || status === 'scheduled') {
-        if(progressBar) progressBar.classList.add('green-gradient');
         if(statusText) statusText.innerText = "Активная складчина";
         
         if (isJoined) {
@@ -461,8 +476,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     } 
     // 2. СБОР НАЗНАЧЕН
     else if (status === 'fundraising_scheduled') {
-        if(progressBar) progressBar.classList.add('blue');
-        
+        // Цвет бара меняется в openProduct
         const dateStr = formatDate(startAt);
         if(statusText) {
             if (dateStr) statusText.innerText = `Сбор средств назначен на ${dateStr}`;
@@ -485,14 +499,14 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     }
     // 3. ИДЁТ СБОР СРЕДСТВ
     else if (status === 'fundraising') {
-        if(progressBar) progressBar.classList.add('blue');
         if(statusText) statusText.innerText = "Идёт сбор средств";
         if(fundraisingRow) fundraisingRow.style.display = 'flex';
         
         if (isJoined) {
             if (paymentStatus === 'paid') {
                 if(actionBtn) {
-                    actionBtn.innerText = "✅ Оплачено";
+                    // --- УБРАЛИ ГАЛОЧКУ ---
+                    actionBtn.innerText = "Оплачено";
                     actionBtn.disabled = true;
                     actionBtn.style.opacity = "1";
                     actionBtn.style.backgroundColor = "#2ecc71";
