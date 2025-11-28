@@ -70,7 +70,12 @@ h1, h2, h3, p { margin: 0; }
 .big-card { background: var(--card-bg); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
 .card-media { width: 100%; height: 200px; object-fit: cover; position: relative; }
 .card-content { padding: 18px; }
-.item-name { font-weight: 600; font-size: 17px; margin-bottom: 6px; line-height: 1.3; }
+.item-name { 
+    font-weight: 600; 
+    font-size: 15px; /* Было 17px */
+    margin-bottom: 6px; 
+    line-height: 1.3; 
+}
 .card-tags { color: #00cec9; font-size: 13px; font-weight: 500; margin-bottom: 12px; }
 
 /* --- ПРОГРЕСС БАРЫ --- */
@@ -100,7 +105,16 @@ h1, h2, h3, p { margin: 0; }
     box-shadow: 0 0 15px rgba(0, 206, 201, 0.5);
 }
 
-.status-badge { margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.status-badge { 
+    margin-top: 12px; 
+    font-size: 12px; /* Чуть меньше для вместимости */
+    font-weight: 600; 
+    color: var(--text-secondary); 
+    display: flex; 
+    align-items: flex-start; /* Выравнивание по верху, если текст в 2 строки */
+    gap: 6px;
+    line-height: 1.4; /* Воздух между строками */
+}
 
 /* --- Bottom Nav --- */
 .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-color); border-top: 1px solid #2c3e50; padding: 12px 20px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }

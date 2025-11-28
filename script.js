@@ -210,63 +210,89 @@ async function loadItems(type, categoryId = null) {
             card.onclick = () => openProduct(item.id);
             
             let statusText = "";
-            let barClass = ""; // gradient or blue
+            let barColor = "";
             let badgeColor = "";
             let percent = 0;
             
             if (item.needed_participants > 0) {
-                // Если сбор средств - показываем процент оплативших
-                if (item.status === 'fundraising') {
-                    // API списка пока не возвращает paid_participants, 
-                    // поэтому в списке будет общая заполненность (записавшиеся)
-                    percent = (item.current_participants / item.needed_participants) * 100;
-                } else {
-                    percent = (item.current_participants / item.needed_participants) * 100;
-                }
+                percent = (item.current_participants / item.needed_participants) * 100;
             }
 
+            // --- НОВАЯ ЛОГИКА СТАТУСОВ ---
+            
+            // 1. АКТИВНАЯ
             if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
-                statusText = "Активная складчина";
-                barClass = "gradient"; // Красный-Желтый-Зеленый
+                barColor = "background: linear-gradient(90deg, #00b894 0%, #00cec9 100%);";
                 badgeColor = "#00cec9";
-            } else if (item.status === 'fundraising') {
-                statusText = "Идёт сбор средств";
-                barClass = "blue";
+                
+                if (item.is_joined) statusText = "✅ Вы участвуете";
+                else statusText = "Активная складчина";
+            } 
+            // 2. СБОР НАЗНАЧЕН
+            else if (item.status === 'fundraising_scheduled') {
+                barColor = "background: #0984e3;"; 
                 badgeColor = "#0984e3";
-            } else if (item.status === 'fundraising_scheduled') {
-                statusText = "Сбор назначен";
-                barClass = "blue";
-                badgeColor = "#0984e3";
-            } else if (item.status === 'completed') {
+                
+                // Форматируем дату (только ДД.ММ) для краткости в списке, или полную
+                const dateStr = formatDate(item.start_at);
+                
+                if (!item.is_joined) {
+                    statusText = `Объявлен сбор средств с ${dateStr}`;
+                } else {
+                    statusText = `✅ Вы участвуете.<br><span style="color:#ff7675">❗️ Объявлен сбор средств с ${dateStr}</span>`;
+                }
+            } 
+            // 3. ИДЁТ СБОР
+            else if (item.status === 'fundraising') {
+                barColor = "background: #0984e3;";
+                
+                if (!item.is_joined) {
+                    statusText = "Идёт сбор средств";
+                    badgeColor = "#0984e3";
+                } else {
+                    if (item.payment_status === 'paid') {
+                        statusText = "✅ Взнос оплачен";
+                        badgeColor = "#2ecc71"; // Зеленый
+                    } else {
+                        statusText = "❗️ Взнос не оплачен";
+                        badgeColor = "#ff7675"; // Красный
+                    }
+                }
+            } 
+            // 4. ЗАВЕРШЕНА
+            else if (item.status === 'completed') {
                 statusText = "Завершена";
-                barClass = "blue"; // Или серый, если захочешь
+                barColor = "background: #a2a5b9;";
                 badgeColor = "#a2a5b9";
                 percent = 100;
-            }
-
-            if (item.is_joined) {
-                statusText = "✅ Вы участвуете";
+                
+                // Для завершенных тоже можно показать, купил ли человек
+                if (item.payment_status === 'paid') {
+                    statusText = "✅ Доступно (Куплено)";
+                    badgeColor = "#2ecc71";
+                }
             }
 
             const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
 
+            // --- HTML КАРТОЧКИ (Без цены, с новым текстом) ---
             card.innerHTML = `
                 <div class="card-media">
                     <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
                 </div>
                 <div class="card-content">
                     <div class="item-name">${item.name}</div>
-                    <div class="card-tags">$${item.price}</div>
+                    
                     <div class="progress-section">
                         <div class="progress-text">
-                            <span>Участников: ${item.current_participants}/${item.needed_participants}</span>
+                            <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill ${barClass}" style="width: ${percent}%;"></div>
+                            <div class="progress-fill" style="width: ${percent}%; ${barColor}"></div>
                         </div>
                     </div>
                     <div class="status-badge" style="color: ${badgeColor};">
-                        ${statusText}
+                        <div>${statusText}</div>
                     </div>
                 </div>
             `;
