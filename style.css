@@ -130,10 +130,10 @@ h1, h2, h3, p { margin: 0; }
 
 .product-header { display: flex; align-items: center; padding: 15px 20px; background: var(--bg-color); gap: 15px; position: sticky; top: 0; z-index: 50; }
 
-/* --- ИСПРАВЛЕННАЯ КНОПКА НАЗАД (Только иконка) --- */
+/* КНОПКА НАЗАД (Только иконка) */
 .back-btn {
-    background: transparent; /* Убрали фон */
-    border: none;            /* Убрали рамку */
+    background: transparent;
+    border: none;
     padding: 0;
     cursor: pointer;
     width: 40px; 
@@ -142,14 +142,20 @@ h1, h2, h3, p { margin: 0; }
     align-items: center;
     justify-content: center;
 }
-/* Немного увеличим иконку для удобства нажатия */
 .back-btn img { 
     width: 28px; 
     height: 28px; 
     display: block; 
 }
 
-.header-title { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* --- ИСПРАВЛЕНИЕ: Уменьшен шрифт заголовка --- */
+.header-title { 
+    font-size: 17px; /* Было 20px */
+    font-weight: 700; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
 
 /* Video */
 .video-section { background: #000; position: relative; }
@@ -162,9 +168,11 @@ h1, h2, h3, p { margin: 0; }
 .platform-btn.active { border-color: #5c87ff; background: rgba(92, 135, 255, 0.1); }
 .platform-btn.active img { filter: grayscale(0%); }
 
-/* --- Product Info --- */
-/* Увеличили padding-top, чтобы текст не лез под картинку */
-.product-info { padding: 24px 20px 20px 20px; }
+/* --- ИСПРАВЛЕНИЕ: Отступ для описания --- */
+.product-info { 
+    padding: 32px 20px 20px 20px; /* Увеличен верхний отступ с 20px до 32px */
+    background: var(--bg-color);
+}
 
 .product-desc { font-size: 16px; line-height: 1.6; color: #d1d3e0; margin-bottom: 20px; }
 
