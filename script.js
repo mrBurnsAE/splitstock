@@ -304,7 +304,16 @@ async function openProduct(id) {
         
         // --- КРАСИВАЯ КНОПКА ССЫЛКИ ---
         const linkEl = document.getElementById('product-link-ext');
-        linkEl.href = item.link;
+        
+        // Ставим класс кнопки
+        linkEl.className = "btn-subtle";
+        linkEl.innerHTML = '<img src="icons/link.svg"> Подробная информация';
+        
+        // Делаем открытие во внешнем браузере
+        linkEl.onclick = (e) => {
+            e.preventDefault(); // Запрещаем стандартный переход
+            tg.openLink(item.link); // Открываем через Telegram SDK (внешний браузер)
+        };
         // Заменяем текст на HTML с иконкой (класс btn-subtle уже настроен в CSS)
         linkEl.className = "btn-subtle";
         linkEl.innerHTML = '<img src="icons/link.svg"> Подробная информация';
