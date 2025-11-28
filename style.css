@@ -82,17 +82,16 @@ h1, h2, h3, p { margin: 0; }
 .progress-fill { height: 100%; transition: width 0.5s ease; border-radius: 4px; position: relative; }
 
 /* 1. ГРАДИЕНТ (Маска) */
-/* Мы растягиваем фон на ширину контейнера, чтобы цвета были фиксированы */
 .progress-fill.gradient {
     background-image: var(--heat-gradient);
-    background-size: 100vw; /* Растягиваем градиент на ширину экрана */
-    box-shadow: 0 0 15px rgba(255, 165, 2, 0.5), 0 0 5px rgba(46, 204, 113, 0.3); /* Сильное свечение */
+    background-size: 100vw;
+    box-shadow: 0 0 15px rgba(255, 165, 2, 0.5), 0 0 5px rgba(46, 204, 113, 0.3);
 }
 
 /* 2. СИНИЙ (Оплата) */
 .progress-fill.blue {
     background-color: var(--blue-solid);
-    box-shadow: 0 0 15px rgba(9, 132, 227, 0.7); /* Сильное синее свечение */
+    box-shadow: 0 0 15px rgba(9, 132, 227, 0.7);
 }
 
 /* 3. ЗЕЛЕНЫЙ (Обычный) */
@@ -131,25 +130,26 @@ h1, h2, h3, p { margin: 0; }
 
 .product-header { display: flex; align-items: center; padding: 15px 20px; background: var(--bg-color); gap: 15px; position: sticky; top: 0; z-index: 50; }
 
-/* ИСПРАВЛЕННАЯ КНОПКА НАЗАД */
+/* --- ИСПРАВЛЕННАЯ КНОПКА НАЗАД (Только иконка) --- */
 .back-btn {
-    background: rgba(255, 255, 255, 0.1); /* Полупрозрачный фон */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая рамка */
+    background: transparent; /* Убрали фон */
+    border: none;            /* Убрали рамку */
     padding: 0;
     cursor: pointer;
     width: 40px; 
     height: 40px;
-    border-radius: 50%; /* Круглая */
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(5px);
-    transition: background 0.2s;
 }
-.back-btn:active { background: rgba(255, 255, 255, 0.2); }
-.back-btn img { width: 20px; height: 20px; display: block; }
+/* Немного увеличим иконку для удобства нажатия */
+.back-btn img { 
+    width: 28px; 
+    height: 28px; 
+    display: block; 
+}
 
-.header-title { font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-title { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Video */
 .video-section { background: #000; position: relative; }
@@ -162,8 +162,9 @@ h1, h2, h3, p { margin: 0; }
 .platform-btn.active { border-color: #5c87ff; background: rgba(92, 135, 255, 0.1); }
 .platform-btn.active img { filter: grayscale(0%); }
 
-/* Product Info */
-.product-info { padding: 20px; margin-top: 10px; /* Отступ от картинки */ }
+/* --- Product Info --- */
+/* Увеличили padding-top, чтобы текст не лез под картинку */
+.product-info { padding: 24px 20px 20px 20px; }
 
 .product-desc { font-size: 16px; line-height: 1.6; color: #d1d3e0; margin-bottom: 20px; }
 
