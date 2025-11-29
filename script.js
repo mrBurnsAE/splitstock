@@ -243,13 +243,17 @@ async function loadItems(type, categoryId = null) {
                 barColor = "background: #0984e3;";
             } else if (item.status === 'fundraising_scheduled') {
                 const dateStr = formatDate(item.start_at);
-                if (!item.is_joined) {
-                    statusText = `Объявлен сбор средств с ${dateStr}`;
-                } else {
-                    statusText = `✅ Вы участвуете.<br><span style="color:#ff7675">❗️ Объявлен сбор средств с ${dateStr}</span>`;
-                }
                 barColor = "background: #0984e3;"; 
-                badgeColor = "#0984e3";
+                
+                if (!item.is_joined) {
+                    // КРАСНЫЙ
+                    statusText = `⚠️ Объявлен сбор средств с ${dateStr}`;
+                    badgeColor = "#ff7675";
+                } else {
+                    // ЗЕЛЕНЫЙ
+                    statusText = `✅ Объявлен сбор средств с ${dateStr}`;
+                    badgeColor = "#2ecc71";
+                }
             } else if (item.status === 'completed') {
                 statusText = "Завершена";
                 barColor = "background: #a2a5b9;";
@@ -269,6 +273,7 @@ async function loadItems(type, categoryId = null) {
                 </div>
                 <div class="card-content">
                     <div class="item-name">${item.name}</div>
+                    
                     <div class="progress-section">
                         <div class="progress-text">
                             <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
@@ -298,7 +303,6 @@ async function openProduct(id) {
     document.getElementById('product-header-title').innerText = "Загрузка...";
     document.getElementById('product-desc').innerText = "...";
     
-    // Сброс медиа
     const buttonsContainer = document.getElementById('video-switchers');
     if(buttonsContainer) buttonsContainer.style.display = 'none';
     switchVideo('none');
@@ -391,7 +395,6 @@ function closeProduct() {
     switchView('catalog');
 }
 
-// --- ЛОГИКА ПЛЕЕРА (Обновлена для CSS) ---
 function switchVideo(platform) {
     const wrapper = document.getElementById('video-wrapper-el');
     const iframe = document.getElementById('main-video-frame');
@@ -442,8 +445,6 @@ function switchVideo(platform) {
         if (iframe) iframe.style.display = 'block';
         if (placeholder) placeholder.style.display = 'none';
         if (iframe) iframe.src = videoUrl;
-        
-        // Включаем видео-режим (высота 16:9)
         if (wrapper) wrapper.classList.add('video-mode');
     } else {
         showPlaceholder();
@@ -454,12 +455,9 @@ function showPlaceholder() {
     const wrapper = document.getElementById('video-wrapper-el');
     const iframe = document.getElementById('main-video-frame');
     const placeholder = document.getElementById('no-video-placeholder');
-    
     if (iframe) iframe.style.display = 'none';
     if (placeholder) placeholder.style.display = 'block';
     if (iframe) iframe.src = "";
-    
-    // Выключаем видео-режим (высота по картинке)
     if (wrapper) wrapper.classList.remove('video-mode');
 }
 
@@ -472,6 +470,9 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     if (fundraisingRow) fundraisingRow.style.display = 'none';
     if (leaveBtn) leaveBtn.style.display = 'none';
     
+    // Сброс цвета статуса (по умолчанию)
+    statusText.style.color = "";
+
     if (actionBtn) {
         actionBtn.disabled = false;
         actionBtn.style.opacity = "1";
@@ -497,12 +498,13 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     // 2. СБОР НАЗНАЧЕН
     else if (status === 'fundraising_scheduled') {
         const dateStr = formatDate(startAt);
-        if(statusText) {
-            if (dateStr) statusText.innerText = `Сбор средств назначен на ${dateStr}`;
-            else statusText.innerText = `Сбор средств скоро начнётся`;
-        }
+        const text = dateStr ? `Объявлен сбор средств с ${dateStr}` : `Сбор средств скоро начнётся`;
         
         if (isJoined) {
+            if(statusText) {
+                statusText.innerText = "✅ " + text;
+                statusText.style.color = "#2ecc71"; // Зеленый
+            }
             if(actionBtn) {
                 actionBtn.innerText = "Вы записаны";
                 actionBtn.disabled = true;
@@ -510,6 +512,10 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             }
             if(leaveBtn) leaveBtn.style.display = 'none'; 
         } else {
+            if(statusText) {
+                statusText.innerText = "⚠️ " + text;
+                statusText.style.color = "#ff7675"; // Красный
+            }
             if(actionBtn) {
                 actionBtn.innerText = "Записаться";
                 actionBtn.disabled = false;
@@ -524,7 +530,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
         if (isJoined) {
             if (paymentStatus === 'paid') {
                 if(actionBtn) {
-                    actionBtn.innerText = "Оплачено"; // Убрали галочку
+                    actionBtn.innerText = "Оплачено";
                     actionBtn.disabled = true;
                     actionBtn.style.opacity = "1";
                     actionBtn.style.backgroundColor = "#2ecc71";
