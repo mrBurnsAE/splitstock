@@ -245,12 +245,11 @@ async function loadItems(type, categoryId = null) {
                 const dateStr = formatDate(item.start_at);
                 barColor = "background: #0984e3;"; 
                 
+                // Здесь (в списке) оставляем цветное с эмодзи
                 if (!item.is_joined) {
-                    // КРАСНЫЙ
                     statusText = `⚠️ Объявлен сбор средств с ${dateStr}`;
                     badgeColor = "#ff7675";
                 } else {
-                    // ЗЕЛЕНЫЙ
                     statusText = `✅ Объявлен сбор средств с ${dateStr}`;
                     badgeColor = "#2ecc71";
                 }
@@ -273,7 +272,6 @@ async function loadItems(type, categoryId = null) {
                 </div>
                 <div class="card-content">
                     <div class="item-name">${item.name}</div>
-                    
                     <div class="progress-section">
                         <div class="progress-text">
                             <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
@@ -495,16 +493,16 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             if(actionBtn) actionBtn.innerText = "Записаться";
         }
     } 
-    // 2. СБОР НАЗНАЧЕН
+    // 2. СБОР НАЗНАЧЕН (ВОТ ТУТ ИСПРАВЛЕНО)
     else if (status === 'fundraising_scheduled') {
         const dateStr = formatDate(startAt);
-        const text = dateStr ? `Объявлен сбор средств с ${dateStr}` : `Сбор средств скоро начнётся`;
+        // В карточке - просто серый текст
+        if(statusText) {
+            if (dateStr) statusText.innerText = `Сбор средств назначен на ${dateStr}`;
+            else statusText.innerText = `Сбор средств скоро начнётся`;
+        }
         
         if (isJoined) {
-            if(statusText) {
-                statusText.innerText = "✅ " + text;
-                statusText.style.color = "#2ecc71"; // Зеленый
-            }
             if(actionBtn) {
                 actionBtn.innerText = "Вы записаны";
                 actionBtn.disabled = true;
@@ -512,10 +510,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             }
             if(leaveBtn) leaveBtn.style.display = 'none'; 
         } else {
-            if(statusText) {
-                statusText.innerText = "⚠️ " + text;
-                statusText.style.color = "#ff7675"; // Красный
-            }
             if(actionBtn) {
                 actionBtn.innerText = "Записаться";
                 actionBtn.disabled = false;
