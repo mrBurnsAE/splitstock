@@ -93,7 +93,7 @@ function selectTab(tabElement) {
 }
 
 function formatDate(isoString) {
-    if (!isoString) return "...";
+    if (!isoString) return "";
     try {
         const date = new Date(isoString);
         return date.toLocaleString('ru-RU', {
@@ -228,6 +228,9 @@ async function loadItems(type, categoryId = null) {
                 badgeColor = "#00cec9";
                 if (item.is_joined) statusText = "✅ Вы участвуете";
             } else if (item.status === 'fundraising') {
+                // --- ИЗМЕНЕНИЕ: Логика статусов с датой (Список) ---
+                const endDate = formatDate(item.end_at);
+                
                 if (!item.is_joined) {
                     statusText = "Идёт сбор средств";
                     badgeColor = "#0984e3";
@@ -236,7 +239,8 @@ async function loadItems(type, categoryId = null) {
                         statusText = "✅ Взнос оплачен";
                         badgeColor = "#2ecc71";
                     } else {
-                        statusText = "❗️ Взнос не оплачен";
+                        // Если записан, но не оплатил -> Красный с датой
+                        statusText = `⚠️ Оплатить до ${endDate}`;
                         badgeColor = "#ff7675";
                     }
                 }
@@ -245,7 +249,6 @@ async function loadItems(type, categoryId = null) {
                 const dateStr = formatDate(item.start_at);
                 barColor = "background: #0984e3;"; 
                 
-                // Здесь (в списке) оставляем цветное с эмодзи
                 if (!item.is_joined) {
                     statusText = `⚠️ Объявлен сбор средств с ${dateStr}`;
                     badgeColor = "#ff7675";
@@ -272,6 +275,7 @@ async function loadItems(type, categoryId = null) {
                 </div>
                 <div class="card-content">
                     <div class="item-name">${item.name}</div>
+                    
                     <div class="progress-section">
                         <div class="progress-text">
                             <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
@@ -355,7 +359,8 @@ async function openProduct(id) {
         if (percent > 100) percent = 100;
         bar.style.width = percent + "%";
         
-        updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at);
+        // --- ИЗМЕНЕНИЕ: Передаем end_at для карточки ---
+        updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at, item.end_at);
         
         const coverImg = document.getElementById('product-cover-img');
         coverImg.src = item.cover_url || "";
@@ -459,7 +464,8 @@ function showPlaceholder() {
     if (wrapper) wrapper.classList.remove('video-mode');
 }
 
-function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
+// --- ИЗМЕНЕНИЕ: Добавили endAt аргумент ---
+function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) {
     const actionBtn = document.getElementById('product-action-btn');
     const statusText = document.getElementById('product-status-text');
     const fundraisingRow = document.getElementById('fundraising-label-row');
@@ -493,10 +499,9 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             if(actionBtn) actionBtn.innerText = "Записаться";
         }
     } 
-    // 2. СБОР НАЗНАЧЕН (ВОТ ТУТ ИСПРАВЛЕНО)
+    // 2. СБОР НАЗНАЧЕН
     else if (status === 'fundraising_scheduled') {
         const dateStr = formatDate(startAt);
-        // В карточке - просто серый текст
         if(statusText) {
             if (dateStr) statusText.innerText = `Сбор средств назначен на ${dateStr}`;
             else statusText.innerText = `Сбор средств скоро начнётся`;
@@ -518,8 +523,14 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     }
     // 3. ИДЁТ СБОР
     else if (status === 'fundraising') {
-        if(statusText) statusText.innerText = "Идёт сбор средств";
-        if(fundraisingRow) fundraisingRow.style.display = 'flex';
+        // --- ИЗМЕНЕНИЕ: Статус внутри карточки (серый, без эмодзи) ---
+        const endDate = formatDate(endAt);
+        if(statusText) {
+            if(endDate) statusText.innerText = `Идёт сбор средств до ${endDate}`;
+            else statusText.innerText = "Идёт сбор средств";
+        }
+
+        if (fundraisingRow) fundraisingRow.style.display = 'flex';
         
         if (isJoined) {
             if (paymentStatus === 'paid') {
