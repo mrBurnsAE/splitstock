@@ -9,7 +9,7 @@ tg.expand();
 // 1. Пытаемся получить ID от Телеграма
 let USER_ID = tg.initDataUnsafe?.user?.id;
 
-// 2. РЕЖИМ РАЗРАБОТЧИКА: Ищем в ссылке (?uid=...)
+// 2. РЕЖИМ РАЗРАБОТЧИКА
 const urlParams = new URLSearchParams(window.location.search);
 const debugId = urlParams.get('uid');
 if (debugId) {
@@ -17,7 +17,7 @@ if (debugId) {
     console.log("Debug User ID set:", USER_ID);
 }
 
-// 3. Если всё равно нет ID - включаем режим Гостя
+// 3. Режим Гостя
 if (!USER_ID) {
     USER_ID = 0;
     console.warn("User ID not found. Guest mode activated.");
@@ -215,58 +215,46 @@ async function loadItems(type, categoryId = null) {
             let percent = 0;
             
             if (item.needed_participants > 0) {
-                percent = (item.current_participants / item.needed_participants) * 100;
+                if (item.status === 'fundraising') {
+                    percent = (item.current_participants / item.needed_participants) * 100;
+                } else {
+                    percent = (item.current_participants / item.needed_participants) * 100;
+                }
             }
 
-            // --- НОВАЯ ЛОГИКА СТАТУСОВ ---
-            
-            // 1. АКТИВНАЯ
             if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
+                statusText = "Активная складчина";
                 barColor = "background: linear-gradient(90deg, #00b894 0%, #00cec9 100%);";
                 badgeColor = "#00cec9";
-                
                 if (item.is_joined) statusText = "✅ Вы участвуете";
-                else statusText = "Активная складчина";
-            } 
-            // 2. СБОР НАЗНАЧЕН
-            else if (item.status === 'fundraising_scheduled') {
-                barColor = "background: #0984e3;"; 
-                badgeColor = "#0984e3";
-                
-                // Форматируем дату (только ДД.ММ) для краткости в списке, или полную
-                const dateStr = formatDate(item.start_at);
-                
-                if (!item.is_joined) {
-                    statusText = `Объявлен сбор средств с ${dateStr}`;
-                } else {
-                    statusText = `✅ Вы участвуете.<br><span style="color:#ff7675">❗️ Объявлен сбор средств с ${dateStr}</span>`;
-                }
-            } 
-            // 3. ИДЁТ СБОР
-            else if (item.status === 'fundraising') {
-                barColor = "background: #0984e3;";
-                
+            } else if (item.status === 'fundraising') {
                 if (!item.is_joined) {
                     statusText = "Идёт сбор средств";
                     badgeColor = "#0984e3";
                 } else {
                     if (item.payment_status === 'paid') {
                         statusText = "✅ Взнос оплачен";
-                        badgeColor = "#2ecc71"; // Зеленый
+                        badgeColor = "#2ecc71";
                     } else {
                         statusText = "❗️ Взнос не оплачен";
-                        badgeColor = "#ff7675"; // Красный
+                        badgeColor = "#ff7675";
                     }
                 }
-            } 
-            // 4. ЗАВЕРШЕНА
-            else if (item.status === 'completed') {
+                barColor = "background: #0984e3;";
+            } else if (item.status === 'fundraising_scheduled') {
+                const dateStr = formatDate(item.start_at);
+                if (!item.is_joined) {
+                    statusText = `Объявлен сбор средств с ${dateStr}`;
+                } else {
+                    statusText = `✅ Вы участвуете.<br><span style="color:#ff7675">❗️ Объявлен сбор средств с ${dateStr}</span>`;
+                }
+                barColor = "background: #0984e3;"; 
+                badgeColor = "#0984e3";
+            } else if (item.status === 'completed') {
                 statusText = "Завершена";
                 barColor = "background: #a2a5b9;";
                 badgeColor = "#a2a5b9";
                 percent = 100;
-                
-                // Для завершенных тоже можно показать, купил ли человек
                 if (item.payment_status === 'paid') {
                     statusText = "✅ Доступно (Куплено)";
                     badgeColor = "#2ecc71";
@@ -275,14 +263,12 @@ async function loadItems(type, categoryId = null) {
 
             const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
 
-            // --- HTML КАРТОЧКИ (Без цены, с новым текстом) ---
             card.innerHTML = `
                 <div class="card-media">
                     <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
                 </div>
                 <div class="card-content">
                     <div class="item-name">${item.name}</div>
-                    
                     <div class="progress-section">
                         <div class="progress-text">
                             <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
@@ -306,11 +292,13 @@ async function openProduct(id) {
     if(bottomNav) bottomNav.style.display = 'none';
     
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById('view-product').classList.add('active');
+    const productView = document.getElementById('view-product');
+    productView.classList.add('active');
     
     document.getElementById('product-header-title').innerText = "Загрузка...";
     document.getElementById('product-desc').innerText = "...";
     
+    // Сброс медиа
     const buttonsContainer = document.getElementById('video-switchers');
     if(buttonsContainer) buttonsContainer.style.display = 'none';
     switchVideo('none');
@@ -324,25 +312,16 @@ async function openProduct(id) {
         window.currentItemStatus = item.status;
 
         document.getElementById('product-header-title').innerText = item.name;
-        
-        // --- ВОЗВРАЩАЕМ ОПИСАНИЕ ---
         document.getElementById('product-desc').innerText = item.description || "Описание отсутствует";
         
-        // --- КРАСИВАЯ КНОПКА ССЫЛКИ ---
         const linkEl = document.getElementById('product-link-ext');
-        
-        // Ставим класс кнопки
+        linkEl.href = item.link;
         linkEl.className = "btn-subtle";
         linkEl.innerHTML = '<img src="icons/link.svg"> Подробная информация';
-        
-        // Делаем открытие во внешнем браузере
         linkEl.onclick = (e) => {
-            e.preventDefault(); // Запрещаем стандартный переход
-            tg.openLink(item.link); // Открываем через Telegram SDK (внешний браузер)
+            e.preventDefault();
+            tg.openLink(item.link);
         };
-        // Заменяем текст на HTML с иконкой (класс btn-subtle уже настроен в CSS)
-        linkEl.className = "btn-subtle";
-        linkEl.innerHTML = '<img src="icons/link.svg"> Подробная информация';
 
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
         document.getElementById('product-tags').innerText = (item.tags || []).map(t => "#" + t).join(" ");
@@ -352,7 +331,6 @@ async function openProduct(id) {
         if (item.status === 'completed') contribution = "200₽"; 
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // --- ЛОГИКА ПРОГРЕССА + ЦВЕТА ---
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
         
         const paidCount = item.paid_participants || 0;
@@ -361,16 +339,15 @@ async function openProduct(id) {
 
         let percent = 0;
         const bar = document.getElementById('product-progress-fill');
-        // Сбрасываем классы
         bar.className = 'progress-fill';
 
         if (item.needed_participants > 0) {
             if (item.status === 'fundraising') {
                 percent = (paidCount / item.needed_participants) * 100;
-                bar.classList.add('blue'); // Синий для денег
+                bar.classList.add('blue');
             } else {
                 percent = (item.current_participants / item.needed_participants) * 100;
-                bar.classList.add('gradient'); // Градиент для участников
+                bar.classList.add('gradient');
             }
         }
         if (percent > 100) percent = 100;
@@ -414,11 +391,15 @@ function closeProduct() {
     switchView('catalog');
 }
 
+// --- ЛОГИКА ПЛЕЕРА (Обновлена для CSS) ---
 function switchVideo(platform) {
+    const wrapper = document.getElementById('video-wrapper-el');
     const iframe = document.getElementById('main-video-frame');
     const placeholder = document.getElementById('no-video-placeholder');
+    
     const btns = document.querySelectorAll('.platform-btn');
     btns.forEach(b => b.classList.remove('active'));
+    
     const btn = document.getElementById(`btn-${platform}`);
     if(btn) btn.classList.add('active');
 
@@ -461,29 +442,33 @@ function switchVideo(platform) {
         if (iframe) iframe.style.display = 'block';
         if (placeholder) placeholder.style.display = 'none';
         if (iframe) iframe.src = videoUrl;
+        
+        // Включаем видео-режим (высота 16:9)
+        if (wrapper) wrapper.classList.add('video-mode');
     } else {
         showPlaceholder();
     }
 }
 
 function showPlaceholder() {
+    const wrapper = document.getElementById('video-wrapper-el');
     const iframe = document.getElementById('main-video-frame');
     const placeholder = document.getElementById('no-video-placeholder');
+    
     if (iframe) iframe.style.display = 'none';
     if (placeholder) placeholder.style.display = 'block';
     if (iframe) iframe.src = "";
+    
+    // Выключаем видео-режим (высота по картинке)
+    if (wrapper) wrapper.classList.remove('video-mode');
 }
 
 function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
-    const progressBar = document.getElementById('product-progress-fill');
     const actionBtn = document.getElementById('product-action-btn');
     const statusText = document.getElementById('product-status-text');
     const fundraisingRow = document.getElementById('fundraising-label-row');
     const leaveBtn = document.getElementById('product-leave-btn');
 
-    // Сброс цвета бара (в openProduct устанавливается точнее)
-    // if (progressBar) progressBar.className = 'progress-fill'; 
-    
     if (fundraisingRow) fundraisingRow.style.display = 'none';
     if (leaveBtn) leaveBtn.style.display = 'none';
     
@@ -494,7 +479,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
         actionBtn.onclick = handleProductAction;
     }
 
-    // 1. АКТИВНАЯ (Набор)
+    // 1. АКТИВНАЯ
     if (status === 'published' || status === 'active' || status === 'scheduled') {
         if(statusText) statusText.innerText = "Активная складчина";
         
@@ -511,7 +496,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
     } 
     // 2. СБОР НАЗНАЧЕН
     else if (status === 'fundraising_scheduled') {
-        // Цвет бара меняется в openProduct
         const dateStr = formatDate(startAt);
         if(statusText) {
             if (dateStr) statusText.innerText = `Сбор средств назначен на ${dateStr}`;
@@ -532,7 +516,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
             }
         }
     }
-    // 3. ИДЁТ СБОР СРЕДСТВ
+    // 3. ИДЁТ СБОР
     else if (status === 'fundraising') {
         if(statusText) statusText.innerText = "Идёт сбор средств";
         if(fundraisingRow) fundraisingRow.style.display = 'flex';
@@ -540,8 +524,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt) {
         if (isJoined) {
             if (paymentStatus === 'paid') {
                 if(actionBtn) {
-                    // --- УБРАЛИ ГАЛОЧКУ ---
-                    actionBtn.innerText = "Оплачено";
+                    actionBtn.innerText = "Оплачено"; // Убрали галочку
                     actionBtn.disabled = true;
                     actionBtn.style.opacity = "1";
                     actionBtn.style.backgroundColor = "#2ecc71";
