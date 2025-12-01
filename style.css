@@ -220,57 +220,85 @@ h1, h2, h3, p { margin: 0; }
 
 /* ... (предыдущий код для video-section и video-wrapper оставляем без изменений) ... */
 
+/* ... (video-section и video-wrapper оставляем как были) ... */
+
 .platform-switcher { 
     display: flex; 
     justify-content: center; 
-    gap: 16px; /* Чуть плотнее */
+    gap: 12px; /* Чуть меньше отступ, так как кнопки станут шире */
     padding: 16px; 
-    background: var(--card-bg); /* Тот же фон, что и у карточки */
-    /* Убрали жесткую линию снизу, заменили на отступ */
+    background: var(--card-bg); 
     border-bottom: none; 
-    margin-bottom: -10px; /* Визуально притягиваем к инфо-блоку */
+    margin-bottom: -10px; 
     position: relative;
     z-index: 10;
 }
 
 .platform-btn { 
-    background: rgba(255, 255, 255, 0.03); /* Еле заметный фон для неактивных */
-    border: 1px solid rgba(255, 255, 255, 0.05); /* Тонкая рамка */
-    border-radius: 14px; /* Более скругленные углы */
-    width: 56px; 
+    background: rgba(255, 255, 255, 0.03); 
+    border: 1px solid rgba(255, 255, 255, 0.05); 
+    border-radius: 14px; 
+    /* Убираем фиксированную ширину, ставим минимальную под иконку */
+    min-width: 52px; 
     height: 48px; 
+    padding: 0 14px; /* Отступы внутри кнопки */
     display: flex; 
     align-items: center; 
     justify-content: center; 
     cursor: pointer; 
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Плавная анимация */
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Плавная анимация */
+    overflow: hidden; /* Чтобы текст не вылезал при сворачивании */
 }
 
 .platform-btn img { 
-    max-height: 24px; 
-    max-width: 24px; 
+    width: 24px; 
+    height: 24px; 
+    object-fit: contain;
     filter: grayscale(100%); 
     opacity: 0.5; 
     transition: all 0.3s;
+    flex-shrink: 0; /* Чтобы иконка не сжималась */
 }
 
-/* Активное состояние - Красота */
+/* Стили для текста внутри кнопки */
+.platform-btn span {
+    max-width: 0; /* Скрыт по ширине */
+    opacity: 0;   /* Прозрачен */
+    margin-left: 0;
+    white-space: nowrap; /* Текст в одну строку */
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    transition: all 0.4s ease; /* Анимация появления */
+    transform: translateX(-10px); /* Небольшой сдвиг для эффекта выезда */
+}
+
+/* --- АКТИВНОЕ СОСТОЯНИЕ --- */
 .platform-btn.active { 
-    background: linear-gradient(135deg, rgba(92, 135, 255, 0.15), rgba(156, 89, 255, 0.15)); /* Легкий фиолетовый градиент */
-    border-color: rgba(108, 92, 231, 0.5); /* Цвет primary с прозрачностью */
-    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25); /* Красивое свечение */
-    transform: translateY(-2px); /* Легкий подъем вверх */
+    background: linear-gradient(135deg, rgba(92, 135, 255, 0.15), rgba(156, 89, 255, 0.15)); 
+    border-color: rgba(108, 92, 231, 0.5); 
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25); 
+    /* Ширина подстраивается под контент */
+    padding-right: 20px; /* Чуть больше места справа для текста */
 }
 
 .platform-btn.active img { 
     filter: grayscale(0%); 
     opacity: 1; 
-    transform: scale(1.1); /* Чуть увеличиваем иконку */
+    transform: scale(1.1); 
+}
+
+/* Раскрываем текст при активности */
+.platform-btn.active span {
+    max-width: 100px; /* Достаточно места для текста */
+    opacity: 1;
+    margin-left: 10px; /* Отступ от иконки */
+    transform: translateX(0);
 }
 
 /* Эффект нажатия */
 .platform-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }
 
 /* --- INFO BLOCK --- */
