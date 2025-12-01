@@ -276,3 +276,27 @@ h1, h2, h3, p { margin: 0; }
     box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
     border-color: #3498db;
 }
+
+.payment-cancel-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 40px; /* Ширина задается отступами, а не % */
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 24px;
+    margin-bottom: 0;
+    transition: background 0.2s;
+    
+    /* Центрирование текста внутри кнопки */
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.payment-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
