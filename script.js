@@ -6,18 +6,13 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// 1. Пытаемся получить ID от Телеграма
 let USER_ID = tg.initDataUnsafe?.user?.id;
-
-// 2. РЕЖИМ РАЗРАБОТЧИКА
 const urlParams = new URLSearchParams(window.location.search);
 const debugId = urlParams.get('uid');
 if (debugId) {
     USER_ID = parseInt(debugId);
     console.log("Debug User ID set:", USER_ID);
 }
-
-// 3. Режим Гостя
 if (!USER_ID) {
     USER_ID = 0;
     console.warn("User ID not found. Guest mode activated.");
@@ -27,6 +22,7 @@ if (!USER_ID) {
 window.currentVideoLinks = {};
 window.currentItemId = null;
 window.currentItemStatus = null;
+window.pendingPaymentType = null; // 'item' или 'penalty'
 
 document.addEventListener("DOMContentLoaded", () => {
     try {
@@ -46,8 +42,7 @@ function getHeaders() {
     };
 }
 
-// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
-
+// --- UI NAVIGATION ---
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     const view = document.getElementById(`view-${viewName}`);
@@ -93,7 +88,7 @@ function selectTab(tabElement) {
 }
 
 function formatDate(isoString) {
-    if (!isoString) return "";
+    if (!isoString) return "...";
     try {
         const date = new Date(isoString);
         return date.toLocaleString('ru-RU', {
@@ -105,7 +100,55 @@ function formatDate(isoString) {
     }
 }
 
-// --- API ---
+// --- PAYMENT MODAL LOGIC ---
+
+function openPaymentModal(type) {
+    window.pendingPaymentType = type; // 'item' или 'penalty'
+    document.getElementById('modal-payment').classList.add('open');
+}
+
+function closePaymentModal() {
+    document.getElementById('modal-payment').classList.remove('open');
+    window.pendingPaymentType = null;
+}
+
+async function selectPaymentMethod(method) {
+    if (!window.pendingPaymentType) return;
+    
+    // Показываем лоадер или меняем текст кнопок, чтобы юзер понял, что идет процесс
+    const modalContent = document.querySelector('#modal-payment .modal-content');
+    modalContent.style.opacity = '0.5';
+    
+    try {
+        const body = {
+            user_id: USER_ID,
+            method: method,
+            type: window.pendingPaymentType,
+            item_id: (window.pendingPaymentType === 'item') ? window.currentItemId : 0
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/payment/init`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(body)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            tg.close(); // Закрываем WebApp, так как бот прислал сообщение
+        } else {
+            alert("Ошибка создания счета: " + (result.error || "Unknown"));
+            modalContent.style.opacity = '1';
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Ошибка соединения");
+        modalContent.style.opacity = '1';
+    }
+}
+
+// --- API FUNCTIONS ---
 
 async function loadUserProfile() {
     if (USER_ID === 0) {
@@ -154,6 +197,21 @@ async function loadUserProfile() {
             stats[1].innerText = user.active_count;
             stats[2].innerText = user.completed_count;
         }
+        
+        // --- Обработка клика на СТАТУС (Штраф) ---
+        const statusBtn = document.querySelector('.profile-menu .profile-btn:nth-child(1)');
+        // Клонируем, чтобы убрать старые обработчики
+        const newStatusBtn = statusBtn.cloneNode(true);
+        statusBtn.parentNode.replaceChild(newStatusBtn, statusBtn);
+        
+        newStatusBtn.onclick = () => {
+            if (user.status === 'Штрафник') {
+                openPaymentModal('penalty');
+            } else {
+                openModal(); // Обычное инфо окно
+            }
+        };
+
     } catch (error) { 
         console.error("Profile load error:", error); 
     }
@@ -210,26 +268,21 @@ async function loadItems(type, categoryId = null) {
             card.onclick = () => openProduct(item.id);
             
             let statusText = "";
+            let barColor = "";
             let badgeColor = "";
-            
-            // --- ЛОГИКА ПРОГРЕССА И ЦВЕТА (Исправлена) ---
             let percent = 0;
-            let barClass = "progress-fill"; // Базовый класс
-
+            
             if (item.needed_participants > 0) {
-                // Если ИДЁТ СБОР -> Считаем деньги (paid / needed)
                 if (item.status === 'fundraising') {
                     const paidCount = item.paid_participants || 0;
                     percent = (paidCount / item.needed_participants) * 100;
-                    barClass += " blue"; // Синяя полоска
+                    barColor = "background: #0984e3;";
                 } else {
-                    // Иначе -> Считаем людей (current / needed)
                     percent = (item.current_participants / item.needed_participants) * 100;
-                    barClass += " gradient"; // Градиентная полоска
+                    barColor = "background: linear-gradient(90deg, #ff4757 0%, #ffa502 50%, #2ecc71 100%);";
                 }
             }
 
-            // --- СТАТУСЫ ---
             if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
                 statusText = "Активная складчина";
                 badgeColor = "#00cec9";
@@ -248,15 +301,9 @@ async function loadItems(type, categoryId = null) {
                         badgeColor = "#ff7675";
                     }
                 }
-                // Если статус 'fundraising', бар уже стал blue выше
             } else if (item.status === 'fundraising_scheduled') {
                 const dateStr = formatDate(item.start_at);
-                barClass = "progress-fill blue"; // Здесь пока синяя, но пустая (или полная по участникам?)
-                // По логике: сбор назначен -> денег 0 -> полоска пустая синяя.
-                // Или оставим градиент (люди), пока сбор не начался?
-                // Давай оставим blue и 0%, так понятнее, что денег пока нет.
-                percent = 0; 
-
+                barColor = "background: #0984e3;"; 
                 if (!item.is_joined) {
                     statusText = `⚠️ Объявлен сбор средств с ${dateStr}`;
                     badgeColor = "#ff7675";
@@ -266,7 +313,7 @@ async function loadItems(type, categoryId = null) {
                 }
             } else if (item.status === 'completed') {
                 statusText = "Завершена";
-                barClass = "progress-fill blue"; 
+                barColor = "background: #a2a5b9;";
                 badgeColor = "#a2a5b9";
                 percent = 100;
                 if (item.payment_status === 'paid') {
@@ -274,7 +321,7 @@ async function loadItems(type, categoryId = null) {
                     badgeColor = "#2ecc71";
                 }
             }
-
+            
             if (percent > 100) percent = 100;
             const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
 
@@ -284,13 +331,12 @@ async function loadItems(type, categoryId = null) {
                 </div>
                 <div class="card-content">
                     <div class="item-name">${item.name}</div>
-                    
                     <div class="progress-section">
                         <div class="progress-text">
                             <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="${barClass}" style="width: ${percent}%;"></div>
+                            <div class="progress-fill" style="width: ${percent}%; ${barColor}"></div>
                         </div>
                     </div>
                     <div class="status-badge" style="color: ${badgeColor};">
@@ -368,7 +414,6 @@ async function openProduct(id) {
         if (percent > 100) percent = 100;
         bar.style.width = percent + "%";
         
-        // --- ИЗМЕНЕНИЕ: Передаем end_at для карточки ---
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at, item.end_at);
         
         const coverImg = document.getElementById('product-cover-img');
@@ -473,7 +518,6 @@ function showPlaceholder() {
     if (wrapper) wrapper.classList.remove('video-mode');
 }
 
-// --- ИЗМЕНЕНИЕ: Добавили endAt аргумент ---
 function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) {
     const actionBtn = document.getElementById('product-action-btn');
     const statusText = document.getElementById('product-status-text');
@@ -483,7 +527,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
     if (fundraisingRow) fundraisingRow.style.display = 'none';
     if (leaveBtn) leaveBtn.style.display = 'none';
     
-    // Сброс цвета статуса (по умолчанию)
     statusText.style.color = "";
 
     if (actionBtn) {
@@ -530,15 +573,13 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
             }
         }
     }
-    // 3. ИДЁТ СБОР
+    // 3. ИДЁТ СБОР (ВОТ ТУТ ИЗМЕНЕНИЯ)
     else if (status === 'fundraising') {
-        // --- ИЗМЕНЕНИЕ: Статус внутри карточки (серый, без эмодзи) ---
         const endDate = formatDate(endAt);
         if(statusText) {
             if(endDate) statusText.innerText = `Идёт сбор средств до ${endDate}`;
             else statusText.innerText = "Идёт сбор средств";
         }
-
         if (fundraisingRow) fundraisingRow.style.display = 'flex';
         
         if (isJoined) {
@@ -552,7 +593,8 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
             } else {
                 if(actionBtn) {
                     actionBtn.innerText = "Оплатить взнос";
-                    actionBtn.onclick = () => { tg.close(); };
+                    // --- ОТКРЫВАЕМ МОДАЛКУ ВМЕСТО ЗАКРЫТИЯ ---
+                    actionBtn.onclick = () => openPaymentModal('item');
                 }
             }
             if(leaveBtn) leaveBtn.style.display = 'none';
@@ -592,8 +634,9 @@ async function handleProductAction() {
             openProduct(window.currentItemId);
         } else {
             if (result.error === 'penalty') {
-                alert("Вы Штрафник! Оплатите штраф в боте.");
-                tg.close();
+                alert("Вы Штрафник! Оплатите штраф в профиле.");
+                // Можно сразу открыть модалку штрафа
+                // openPaymentModal('penalty');
             } else {
                 alert("Ошибка: " + (result.message || "Не удалось записаться"));
             }
@@ -646,3 +689,49 @@ async function leaveProduct() {
 
 function openModal() { document.getElementById('modal-status').classList.add('open'); }
 function closeModal() { document.getElementById('modal-status').classList.remove('open'); }
+
+// --- PAYMENT FUNCTIONS ---
+function openPaymentModal(type) {
+    window.pendingPaymentType = type; // 'item' или 'penalty'
+    document.getElementById('modal-payment').classList.add('open');
+}
+
+function closePaymentModal() {
+    document.getElementById('modal-payment').classList.remove('open');
+    window.pendingPaymentType = null;
+}
+
+async function selectPaymentMethod(method) {
+    if (!window.pendingPaymentType) return;
+    
+    const modalContent = document.querySelector('#modal-payment .modal-content');
+    modalContent.style.opacity = '0.5';
+    
+    try {
+        const body = {
+            user_id: USER_ID,
+            method: method,
+            type: window.pendingPaymentType,
+            item_id: (window.pendingPaymentType === 'item') ? window.currentItemId : 0
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/payment/init`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(body)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            tg.close(); 
+        } else {
+            alert("Ошибка создания счета: " + (result.error || "Unknown"));
+            modalContent.style.opacity = '1';
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Ошибка соединения");
+        modalContent.style.opacity = '1';
+    }
+}
