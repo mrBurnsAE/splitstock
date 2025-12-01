@@ -210,27 +210,32 @@ async function loadItems(type, categoryId = null) {
             card.onclick = () => openProduct(item.id);
             
             let statusText = "";
-            let barColor = "";
             let badgeColor = "";
-            let percent = 0;
             
+            // --- ЛОГИКА ПРОГРЕССА И ЦВЕТА (Исправлена) ---
+            let percent = 0;
+            let barClass = "progress-fill"; // Базовый класс
+
             if (item.needed_participants > 0) {
+                // Если ИДЁТ СБОР -> Считаем деньги (paid / needed)
                 if (item.status === 'fundraising') {
-                    percent = (item.current_participants / item.needed_participants) * 100;
+                    const paidCount = item.paid_participants || 0;
+                    percent = (paidCount / item.needed_participants) * 100;
+                    barClass += " blue"; // Синяя полоска
                 } else {
+                    // Иначе -> Считаем людей (current / needed)
                     percent = (item.current_participants / item.needed_participants) * 100;
+                    barClass += " gradient"; // Градиентная полоска
                 }
             }
 
+            // --- СТАТУСЫ ---
             if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
                 statusText = "Активная складчина";
-                barColor = "background: linear-gradient(90deg, #00b894 0%, #00cec9 100%);";
                 badgeColor = "#00cec9";
                 if (item.is_joined) statusText = "✅ Вы участвуете";
             } else if (item.status === 'fundraising') {
-                // --- ИЗМЕНЕНИЕ: Логика статусов с датой (Список) ---
                 const endDate = formatDate(item.end_at);
-                
                 if (!item.is_joined) {
                     statusText = "Идёт сбор средств";
                     badgeColor = "#0984e3";
@@ -239,16 +244,19 @@ async function loadItems(type, categoryId = null) {
                         statusText = "✅ Взнос оплачен";
                         badgeColor = "#2ecc71";
                     } else {
-                        // Если записан, но не оплатил -> Красный с датой
                         statusText = `⚠️ Оплатить до ${endDate}`;
                         badgeColor = "#ff7675";
                     }
                 }
-                barColor = "background: #0984e3;";
+                // Если статус 'fundraising', бар уже стал blue выше
             } else if (item.status === 'fundraising_scheduled') {
                 const dateStr = formatDate(item.start_at);
-                barColor = "background: #0984e3;"; 
-                
+                barClass = "progress-fill blue"; // Здесь пока синяя, но пустая (или полная по участникам?)
+                // По логике: сбор назначен -> денег 0 -> полоска пустая синяя.
+                // Или оставим градиент (люди), пока сбор не начался?
+                // Давай оставим blue и 0%, так понятнее, что денег пока нет.
+                percent = 0; 
+
                 if (!item.is_joined) {
                     statusText = `⚠️ Объявлен сбор средств с ${dateStr}`;
                     badgeColor = "#ff7675";
@@ -258,7 +266,7 @@ async function loadItems(type, categoryId = null) {
                 }
             } else if (item.status === 'completed') {
                 statusText = "Завершена";
-                barColor = "background: #a2a5b9;";
+                barClass = "progress-fill blue"; 
                 badgeColor = "#a2a5b9";
                 percent = 100;
                 if (item.payment_status === 'paid') {
@@ -267,6 +275,7 @@ async function loadItems(type, categoryId = null) {
                 }
             }
 
+            if (percent > 100) percent = 100;
             const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
 
             card.innerHTML = `
@@ -281,7 +290,7 @@ async function loadItems(type, categoryId = null) {
                             <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${percent}%; ${barColor}"></div>
+                            <div class="${barClass}" style="width: ${percent}%;"></div>
                         </div>
                     </div>
                     <div class="status-badge" style="color: ${badgeColor};">

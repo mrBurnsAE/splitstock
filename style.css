@@ -119,11 +119,47 @@ h1, h2, h3, p { margin: 0; }
 }
 
 /* --- Bottom Nav --- */
-.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-color); border-top: 1px solid #2c3e50; padding: 12px 20px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
-.nav-item { display: flex; flex-direction: column; align-items: center; color: #5c5e6e; cursor: pointer; }
-.nav-item span { font-size: 11px; margin-top: 4px; }
-.nav-item.active { color: white; }
-.nav-icon { width: 26px; height: 26px; }
+.bottom-nav { 
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    background: var(--bg-color); 
+    border-top: 1px solid #2c3e50; 
+    padding: 10px 30px 30px; /* Чуть изменили отступы */
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    z-index: 1000; 
+}
+
+.nav-item { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; /* Центрируем */
+    color: #5c5e6e; 
+    cursor: pointer; 
+    width: 44px; /* Фикс ширина для клика */
+    height: 44px;
+}
+
+/* Скрываем текст */
+.nav-item span { 
+    display: none; 
+}
+
+.nav-item.active { 
+    color: white; 
+    /* Можно добавить подсветку фона активной иконки, если хочешь */
+    /* background: rgba(255,255,255,0.05); */
+    /* border-radius: 12px; */
+}
+
+.nav-icon { 
+    width: 28px; /* Чуть крупнее иконки */
+    height: 28px; 
+}
 
 /* --- Views --- */
 .view { display: none; animation: fadeIn 0.3s ease; }
