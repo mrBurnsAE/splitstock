@@ -205,3 +205,74 @@ h1, h2, h3, p { margin: 0; }
 .profile-btn:hover { background-color: #3d4258; }
 .profile-btn-icon { width: 32px; height: 32px; margin-right: 18px; }
 .profile-btn div { color: var(--text-main); }
+
+/* --- MODAL PAYMENT --- */
+#modal-payment .modal-content {
+    padding: 24px;
+    max-width: 360px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.payment-img {
+    width: 160px;
+    margin-bottom: 16px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.payment-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: white;
+}
+
+.payment-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Кнопки оплаты в стиле видео-свитчеров */
+.pay-method-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.pay-method-btn img {
+    height: 24px;
+    width: auto;
+    filter: brightness(1.2);
+}
+
+/* Эффект при нажатии/активности (как у видео) */
+.pay-method-btn:active {
+    transform: scale(0.96);
+    background: linear-gradient(135deg, rgba(92, 135, 255, 0.1), rgba(156, 89, 255, 0.1));
+    border-color: #6c5ce7;
+}
+
+/* Подсветка для ЮMoney */
+.pay-method-btn.yoo:hover {
+    box-shadow: 0 4px 15px rgba(130, 53, 253, 0.2);
+    border-color: #8e44ad;
+}
+
+/* Подсветка для Crypto */
+.pay-method-btn.crypto:hover {
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+    border-color: #3498db;
+}

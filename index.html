@@ -212,6 +212,28 @@
         </div>
     </div>
 
-    <script src="script.js?v=32"></script>
+    <div class="modal-overlay" id="modal-payment">
+        <div class="modal-content">
+            <img src="icons/Оплата Без фона.png" class="payment-img" alt="Payment">
+            <div class="payment-title">Выберите способ оплаты</div>
+            
+            <div class="payment-buttons">
+                <button class="pay-method-btn yoo" onclick="selectPaymentMethod('yoomoney')">
+                    <img src="icons/ЮMoney.svg" alt="ЮMoney">
+                    ЮMoney
+                </button>
+                <button class="pay-method-btn crypto" onclick="selectPaymentMethod('crypto')">
+                    <img src="icons/CryptoPay.png" alt="Crypto">
+                    CryptoPay
+                </button>
+            </div>
+            
+            <button class="btn-subtle" style="margin-top: 20px; margin-bottom: 0; width: 100%; border: none;" onclick="closePaymentModal()">
+                Отмена
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js?v=33"></script>
 </body>
 </html>
