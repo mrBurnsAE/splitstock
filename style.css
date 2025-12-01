@@ -218,11 +218,60 @@ h1, h2, h3, p { margin: 0; }
 .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 .video-wrapper img { width: 100%; display: block; object-fit: cover; max-height: 60vh; }
 
-.platform-switcher { display: flex; justify-content: center; gap: 20px; padding: 12px; background: var(--card-bg); border-bottom: 1px solid #2c3e50; }
-.platform-btn { background: transparent; border: 2px solid transparent; border-radius: 12px; width: 54px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
-.platform-btn img { max-height: 26px; max-width: 26px; filter: grayscale(100%); }
-.platform-btn.active { border-color: #5c87ff; background: rgba(92, 135, 255, 0.1); }
-.platform-btn.active img { filter: grayscale(0%); }
+/* ... (предыдущий код для video-section и video-wrapper оставляем без изменений) ... */
+
+.platform-switcher { 
+    display: flex; 
+    justify-content: center; 
+    gap: 16px; /* Чуть плотнее */
+    padding: 16px; 
+    background: var(--card-bg); /* Тот же фон, что и у карточки */
+    /* Убрали жесткую линию снизу, заменили на отступ */
+    border-bottom: none; 
+    margin-bottom: -10px; /* Визуально притягиваем к инфо-блоку */
+    position: relative;
+    z-index: 10;
+}
+
+.platform-btn { 
+    background: rgba(255, 255, 255, 0.03); /* Еле заметный фон для неактивных */
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Тонкая рамка */
+    border-radius: 14px; /* Более скругленные углы */
+    width: 56px; 
+    height: 48px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Плавная анимация */
+}
+
+.platform-btn img { 
+    max-height: 24px; 
+    max-width: 24px; 
+    filter: grayscale(100%); 
+    opacity: 0.5; 
+    transition: all 0.3s;
+}
+
+/* Активное состояние - Красота */
+.platform-btn.active { 
+    background: linear-gradient(135deg, rgba(92, 135, 255, 0.15), rgba(156, 89, 255, 0.15)); /* Легкий фиолетовый градиент */
+    border-color: rgba(108, 92, 231, 0.5); /* Цвет primary с прозрачностью */
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25); /* Красивое свечение */
+    transform: translateY(-2px); /* Легкий подъем вверх */
+}
+
+.platform-btn.active img { 
+    filter: grayscale(0%); 
+    opacity: 1; 
+    transform: scale(1.1); /* Чуть увеличиваем иконку */
+}
+
+/* Эффект нажатия */
+.platform-btn:active {
+    transform: scale(0.95);
+}
 
 /* --- INFO BLOCK --- */
 .product-info { padding: 32px 20px 20px 20px; background: var(--bg-color); flex: 1; }
