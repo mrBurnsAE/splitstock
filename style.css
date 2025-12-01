@@ -222,10 +222,12 @@ h1, h2, h3, p { margin: 0; }
 
 /* ... (video-section и video-wrapper оставляем как были) ... */
 
+/* ... (код для video-section и video-wrapper оставляем без изменений) ... */
+
 .platform-switcher { 
     display: flex; 
     justify-content: center; 
-    gap: 12px; /* Чуть меньше отступ, так как кнопки станут шире */
+    gap: 12px; 
     padding: 16px; 
     background: var(--card-bg); 
     border-bottom: none; 
@@ -238,16 +240,17 @@ h1, h2, h3, p { margin: 0; }
     background: rgba(255, 255, 255, 0.03); 
     border: 1px solid rgba(255, 255, 255, 0.05); 
     border-radius: 14px; 
-    /* Убираем фиксированную ширину, ставим минимальную под иконку */
+    /* Минимальная ширина только под иконку */
     min-width: 52px; 
     height: 48px; 
-    padding: 0 14px; /* Отступы внутри кнопки */
+    padding: 0; /* Отступы регулируем внутри */
     display: flex; 
     align-items: center; 
     justify-content: center; 
     cursor: pointer; 
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Плавная анимация */
-    overflow: hidden; /* Чтобы текст не вылезал при сворачивании */
+    /* Плавная анимация всех свойств */
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
+    overflow: hidden; /* Чтобы текст не торчал при скрытии */
 }
 
 .platform-btn img { 
@@ -257,20 +260,21 @@ h1, h2, h3, p { margin: 0; }
     filter: grayscale(100%); 
     opacity: 0.5; 
     transition: all 0.3s;
-    flex-shrink: 0; /* Чтобы иконка не сжималась */
+    /* Чтобы иконка не сжималась, когда появляется текст */
+    flex-shrink: 0; 
 }
 
-/* Стили для текста внутри кнопки */
+/* Стили для текста (по умолчанию СКРЫТ) */
 .platform-btn span {
-    max-width: 0; /* Скрыт по ширине */
-    opacity: 0;   /* Прозрачен */
-    margin-left: 0;
-    white-space: nowrap; /* Текст в одну строку */
+    max-width: 0;       /* Ширина 0 */
+    opacity: 0;         /* Прозрачный */
+    margin-left: 0;     /* Нет отступа */
+    white-space: nowrap; 
     font-size: 14px;
     font-weight: 600;
-    color: white;
+    color: white;       /* БЕЛЫЙ ЦВЕТ */
     transition: all 0.4s ease; /* Анимация появления */
-    transform: translateX(-10px); /* Небольшой сдвиг для эффекта выезда */
+    transform: translateX(10px); /* Слегка сдвинут вправо */
 }
 
 /* --- АКТИВНОЕ СОСТОЯНИЕ --- */
@@ -278,8 +282,8 @@ h1, h2, h3, p { margin: 0; }
     background: linear-gradient(135deg, rgba(92, 135, 255, 0.15), rgba(156, 89, 255, 0.15)); 
     border-color: rgba(108, 92, 231, 0.5); 
     box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25); 
-    /* Ширина подстраивается под контент */
-    padding-right: 20px; /* Чуть больше места справа для текста */
+    /* Добавляем отступы по бокам, когда кнопка раскрыта */
+    padding: 0 20px; 
 }
 
 .platform-btn.active img { 
@@ -290,10 +294,10 @@ h1, h2, h3, p { margin: 0; }
 
 /* Раскрываем текст при активности */
 .platform-btn.active span {
-    max-width: 100px; /* Достаточно места для текста */
+    max-width: 150px; /* Достаточно места для текста */
     opacity: 1;
     margin-left: 10px; /* Отступ от иконки */
-    transform: translateX(0);
+    transform: translateX(0); /* Возвращаем на место */
 }
 
 /* Эффект нажатия */
