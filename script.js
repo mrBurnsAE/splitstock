@@ -6,13 +6,18 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+// 1. Пытаемся получить ID от Телеграма
 let USER_ID = tg.initDataUnsafe?.user?.id;
+
+// 2. РЕЖИМ РАЗРАБОТЧИКА
 const urlParams = new URLSearchParams(window.location.search);
 const debugId = urlParams.get('uid');
 if (debugId) {
     USER_ID = parseInt(debugId);
     console.log("Debug User ID set:", USER_ID);
 }
+
+// 3. Режим Гостя
 if (!USER_ID) {
     USER_ID = 0;
     console.warn("User ID not found. Guest mode activated.");
@@ -22,17 +27,57 @@ if (!USER_ID) {
 window.currentVideoLinks = {};
 window.currentItemId = null;
 window.currentItemStatus = null;
-window.pendingPaymentType = null; // 'item' или 'penalty'
+window.pendingPaymentType = null;
+
+// --- НОВОЕ: Хранение поискового запроса ---
+window.currentSearchQuery = ""; 
 
 document.addEventListener("DOMContentLoaded", () => {
     try {
         loadUserProfile();
         loadCategories();
         loadItems('active');
+        
+        // --- НОВОЕ: Обработчик поиска ---
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            // По нажатию Enter
+            searchInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    performSearch(this.value);
+                }
+            });
+            
+            // По потере фокуса (опционально, если нужно)
+            // searchInput.addEventListener('blur', function () { performSearch(this.value); });
+        }
+        
+        // Кнопка фильтра (пока работает как кнопка поиска)
+        const filterBtn = document.querySelector('.filter-btn');
+        if(filterBtn && searchInput) {
+            filterBtn.onclick = () => performSearch(searchInput.value);
+        }
+
     } catch (e) {
         console.error("Init error:", e);
     }
 });
+
+function performSearch(query) {
+    window.currentSearchQuery = query.trim();
+    // При поиске сбрасываем на 1 страницу и переключаемся на активные (или остаемся в текущем табе)
+    // Для простоты пока ищем в текущем активном табе, либо переходим в каталог
+    switchView('catalog'); 
+    
+    // Определяем текущий таб
+    let activeTabType = 'active';
+    const activeTab = document.querySelector('.tab.active');
+    if(activeTab && activeTab.innerText.includes('Завершённые')) {
+        activeTabType = 'completed';
+    }
+    
+    loadItems(activeTabType);
+}
 
 function getHeaders() {
     const uidStr = USER_ID ? USER_ID.toString() : "0";
@@ -42,7 +87,8 @@ function getHeaders() {
     };
 }
 
-// --- UI NAVIGATION ---
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     const view = document.getElementById(`view-${viewName}`);
@@ -67,8 +113,9 @@ function switchView(viewName) {
         if(iconHome) iconHome.src = 'icons/home.svg';
         if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
         if(iconProfile) iconProfile.src = 'icons/user.svg';
-        const activeTab = document.querySelector('.tab.active');
-        if(activeTab) selectTab(activeTab);
+        // При переключении табов вручную - поиск сбрасываем? Или оставляем?
+        // Обычно при клике на таб поиск лучше сбрасывать или применять к табу.
+        // Логика selectTab это обработает.
     } else if(viewName === 'profile') {
         document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
         if(iconHome) iconHome.src = 'icons/home.svg';
@@ -81,6 +128,12 @@ function switchView(viewName) {
 function selectTab(tabElement) {
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
     tabElement.classList.add('active');
+    
+    // Сбрасываем поиск при переключении табов (как обычно бывает в UX)
+    // Или можно оставить. Давай сбросим, чтобы очистить выдачу.
+    // window.currentSearchQuery = ""; 
+    // document.querySelector('.search-input').value = "";
+    
     const tabName = tabElement.innerText;
     if (tabName.includes("Активные")) loadItems('active');
     else if (tabName.includes("Завершённые")) loadItems('completed');
@@ -100,55 +153,7 @@ function formatDate(isoString) {
     }
 }
 
-// --- PAYMENT MODAL LOGIC ---
-
-function openPaymentModal(type) {
-    window.pendingPaymentType = type; // 'item' или 'penalty'
-    document.getElementById('modal-payment').classList.add('open');
-}
-
-function closePaymentModal() {
-    document.getElementById('modal-payment').classList.remove('open');
-    window.pendingPaymentType = null;
-}
-
-async function selectPaymentMethod(method) {
-    if (!window.pendingPaymentType) return;
-    
-    // Показываем лоадер или меняем текст кнопок, чтобы юзер понял, что идет процесс
-    const modalContent = document.querySelector('#modal-payment .modal-content');
-    modalContent.style.opacity = '0.5';
-    
-    try {
-        const body = {
-            user_id: USER_ID,
-            method: method,
-            type: window.pendingPaymentType,
-            item_id: (window.pendingPaymentType === 'item') ? window.currentItemId : 0
-        };
-
-        const response = await fetch(`${API_BASE_URL}/api/payment/init`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(body)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            tg.close(); // Закрываем WebApp, так как бот прислал сообщение
-        } else {
-            alert("Ошибка создания счета: " + (result.error || "Unknown"));
-            modalContent.style.opacity = '1';
-        }
-    } catch (error) {
-        console.error(error);
-        alert("Ошибка соединения");
-        modalContent.style.opacity = '1';
-    }
-}
-
-// --- API FUNCTIONS ---
+// --- API ---
 
 async function loadUserProfile() {
     if (USER_ID === 0) {
@@ -198,9 +203,7 @@ async function loadUserProfile() {
             stats[2].innerText = user.completed_count;
         }
         
-        // --- Обработка клика на СТАТУС (Штраф) ---
         const statusBtn = document.querySelector('.profile-menu .profile-btn:nth-child(1)');
-        // Клонируем, чтобы убрать старые обработчики
         const newStatusBtn = statusBtn.cloneNode(true);
         statusBtn.parentNode.replaceChild(newStatusBtn, statusBtn);
         
@@ -208,7 +211,7 @@ async function loadUserProfile() {
             if (user.status === 'Штрафник') {
                 openPaymentModal('penalty');
             } else {
-                openModal(); // Обычное инфо окно
+                openModal(); 
             }
         };
 
@@ -239,6 +242,12 @@ async function loadItems(type, categoryId = null) {
     try {
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
         if (categoryId) url += `&cat=${categoryId}`;
+        
+        // --- НОВОЕ: Добавляем поисковый запрос ---
+        if (window.currentSearchQuery) {
+            url += `&q=${encodeURIComponent(window.currentSearchQuery)}`;
+        }
+        
         url += `&t=${Date.now()}`;
 
         const response = await fetch(url, { headers: getHeaders() });
@@ -257,8 +266,19 @@ async function loadItems(type, categoryId = null) {
         }
         container.innerHTML = '';
         
+        // --- НОВОЕ: Отображение "Ничего не найдено" ---
         if (items.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:20px; color:#a2a5b9;">Здесь пока ничего нет...</div>';
+            if (window.currentSearchQuery) {
+                [cite_start]// Стили для пустого поиска (робот с лупой) [cite: 300]
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px 20px;">
+                        <img src="icons/Поиск без фона.png" style="width:120px; margin-bottom:20px; opacity:0.8;">
+                        <div style="color:#a2a5b9; font-size:16px; font-weight:600;">Ничего не найдено...</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#a2a5b9;">Здесь пока ничего нет...</div>';
+            }
             return;
         }
 
@@ -271,15 +291,16 @@ async function loadItems(type, categoryId = null) {
             let barColor = "";
             let badgeColor = "";
             let percent = 0;
-            
+            let barClass = "progress-fill";
+
             if (item.needed_participants > 0) {
                 if (item.status === 'fundraising') {
                     const paidCount = item.paid_participants || 0;
                     percent = (paidCount / item.needed_participants) * 100;
-                    barColor = "background: #0984e3;";
+                    barClass += " blue";
                 } else {
                     percent = (item.current_participants / item.needed_participants) * 100;
-                    barColor = "background: linear-gradient(90deg, #ff4757 0%, #ffa502 50%, #2ecc71 100%);";
+                    barClass += " gradient";
                 }
             }
 
@@ -303,7 +324,8 @@ async function loadItems(type, categoryId = null) {
                 }
             } else if (item.status === 'fundraising_scheduled') {
                 const dateStr = formatDate(item.start_at);
-                barColor = "background: #0984e3;"; 
+                barClass = "progress-fill blue"; 
+                percent = 0;
                 if (!item.is_joined) {
                     statusText = `⚠️ Объявлен сбор средств с ${dateStr}`;
                     badgeColor = "#ff7675";
@@ -313,7 +335,7 @@ async function loadItems(type, categoryId = null) {
                 }
             } else if (item.status === 'completed') {
                 statusText = "Завершена";
-                barColor = "background: #a2a5b9;";
+                barClass = "progress-fill blue"; 
                 badgeColor = "#a2a5b9";
                 percent = 100;
                 if (item.payment_status === 'paid') {
@@ -336,7 +358,7 @@ async function loadItems(type, categoryId = null) {
                             <span>Количество участников: ${item.current_participants}/${item.needed_participants}</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${percent}%; ${barColor}"></div>
+                            <div class="${barClass}" style="width: ${percent}%;"></div>
                         </div>
                     </div>
                     <div class="status-badge" style="color: ${badgeColor};">
@@ -573,7 +595,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
             }
         }
     }
-    // 3. ИДЁТ СБОР (ВОТ ТУТ ИЗМЕНЕНИЯ)
+    // 3. ИДЁТ СБОР
     else if (status === 'fundraising') {
         const endDate = formatDate(endAt);
         if(statusText) {
@@ -593,7 +615,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
             } else {
                 if(actionBtn) {
                     actionBtn.innerText = "Оплатить взнос";
-                    // --- ОТКРЫВАЕМ МОДАЛКУ ВМЕСТО ЗАКРЫТИЯ ---
                     actionBtn.onclick = () => openPaymentModal('item');
                 }
             }
@@ -634,9 +655,8 @@ async function handleProductAction() {
             openProduct(window.currentItemId);
         } else {
             if (result.error === 'penalty') {
-                alert("Вы Штрафник! Оплатите штраф в профиле.");
-                // Можно сразу открыть модалку штрафа
-                // openPaymentModal('penalty');
+                alert("Вы Штрафник! Оплатите штраф в боте.");
+                tg.close();
             } else {
                 alert("Ошибка: " + (result.message || "Не удалось записаться"));
             }
