@@ -12,8 +12,8 @@
     <div id="view-home" class="view active">
         <div class="header">
             <div class="user-info">
-                <img src="icons/Logo Telegram.svg" alt="Avatar" class="user-avatar">
-                <div class="user-name">Username</div>
+                <img src="icons/Logo Telegram.svg" alt="Avatar" class="user-avatar" id="header-avatar">
+                <div class="user-name" id="header-username">Загрузка...</div>
             </div>
         </div>
 
@@ -41,7 +41,7 @@
             <div class="section-header">
                 <h2 class="section-title">Топ 5 новых складчин</h2>
             </div>
-            <div class="item-list">
+            <div class="home-item-list" id="home-item-container">
                </div>
         </div>
     </div>
@@ -76,8 +76,10 @@
     <div id="view-profile" class="view">
         <div class="section" style="text-align: center; padding-top: 40px;">
             <img src="icons/Logo Telegram.svg" class="user-avatar" style="width: 80px; height: 80px; margin-bottom: 10px;">
-            <h2 style="font-size: 22px; font-weight: 700;">Username</h2>
-            <p style="color: var(--text-secondary); font-size: 14px;">Участник с ...</p>
+            
+            <h2 style="font-size: 22px; font-weight: 700;" id="profile-username">Username</h2>
+            
+            <p style="color: var(--text-secondary); font-size: 14px;" id="profile-join-date">Участник с ...</p>
         </div>
 
         <div class="section">
@@ -86,23 +88,23 @@
                     <img src="icons/status.svg" alt="Статус" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Статус</div>
-                        <div style="font-size: 16px; font-weight: 700;">...</div>
+                        <div style="font-size: 16px; font-weight: 700;" id="profile-status-text">Загрузка...</div>
                     </div>
                 </button>
 
-                <button class="profile-btn" onclick="switchView('catalog'); loadItems('active');">
+                <button class="profile-btn" onclick="switchView('catalog'); selectTabByName('Мои складчины');">
                     <img src="icons/folder.svg" alt="Активные" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Активные складчины</div>
-                        <div style="font-size: 16px; font-weight: 700;">0</div>
+                        <div style="font-size: 16px; font-weight: 700;" id="profile-active-count">0</div>
                     </div>
                 </button>
 
-                <button class="profile-btn" onclick="switchView('catalog'); loadItems('completed');">
+                <button class="profile-btn" onclick="switchView('catalog'); selectTabByName('Мои складчины');">
                     <img src="icons/archive.svg" alt="Завершенные" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Завершённые складчины</div>
-                        <div style="font-size: 16px; font-weight: 700;">0</div>
+                        <div style="font-size: 16px; font-weight: 700;" id="profile-completed-count">0</div>
                     </div>
                 </button>
             </div>
@@ -205,9 +207,12 @@
     <div class="modal-overlay" id="modal-status">
         <div class="modal-content">
             <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 5px;">Ваш статус</div>
-            <img src="icons/Новичок Без фона.png" class="modal-img">
-            <div class="modal-title">Новичок</div>
-            <div class="modal-text">Для получения статуса "Опытный" осталось завершить ещё 10 складчин</div>
+            
+            <img src="icons/Новичок Без фона.png" class="modal-img" id="modal-status-img">
+            
+            <div class="modal-title" id="modal-status-title">Новичок</div>
+            <div class="modal-text" id="modal-status-desc">Загрузка информации...</div>
+            
             <button class="btn-primary" onclick="closeModal()">OK</button>
         </div>
     </div>
@@ -268,6 +273,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=36"></script>
+    <script src="script.js?v=40"></script>
 </body>
 </html>
