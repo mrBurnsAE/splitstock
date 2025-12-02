@@ -1071,26 +1071,59 @@ async function loadHomeItems() {
 async function loadItems(type) {
     const catalogView = document.getElementById('view-catalog');
     let container = catalogView.querySelector('.item-container');
+    
+    // Показываем индикатор загрузки
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
 
     try {
+        // Формируем базовый URL
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
-        if (window.filterState.categories.length > 0) url += `&cat=${window.filterState.categories.join(',')}`;
-        if (window.filterState.tags.length > 0) url += `&tags=${window.filterState.tags.join(',')}`;
+
+        // --- ВАЖНО: Если это вкладка "Мои" (type='all'), добавляем фильтр по участию ---
+        if (type === 'all') {
+            url += '&joined=true';
+        }
+        // ------------------------------------------------------------------------------
+
+        // Добавляем категории из фильтра
+        if (window.filterState.categories.length > 0) {
+            url += `&cat=${window.filterState.categories.join(',')}`;
+        }
+        
+        // Добавляем теги из фильтра
+        if (window.filterState.tags.length > 0) {
+            url += `&tags=${window.filterState.tags.join(',')}`;
+        }
+        
+        // Добавляем сортировку
         url += `&sort=${window.filterState.sort}`;
-        if (window.currentSearchQuery) url += `&q=${encodeURIComponent(window.currentSearchQuery)}`;
+        
+        // Добавляем поисковый запрос, если есть
+        if (window.currentSearchQuery) {
+            url += `&q=${encodeURIComponent(window.currentSearchQuery)}`;
+        }
+        
+        // Добавляем timestamp, чтобы избежать кеширования браузером
         url += `&t=${Date.now()}`;
 
+        // Делаем запрос
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
+        
+        // Очищаем контейнер перед рендером
         container.innerHTML = '';
+        
+        // Если список пуст
         if (items.length === 0) {
             let msg = "Здесь пока ничего нет...";
             let img = "icons/Ничего нет без фона.png";
+            
+            // Если включены фильтры или поиск, меняем сообщение
             if (window.currentSearchQuery || window.filterState.categories.length > 0) {
                 msg = "Ничего не найдено...";
                 img = "icons/Поиск без фона.png";
             }
+            
             container.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
                     <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
@@ -1098,9 +1131,15 @@ async function loadItems(type) {
                 </div>`;
             return;
         }
+
+        // Рендерим карточки
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
         });
-    } catch (error) { console.error("Load Items Error:", error); }
+
+    } catch (error) { 
+        console.error("Load Items Error:", error);
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff7675;">Ошибка загрузки</div>';
+    }
 }
