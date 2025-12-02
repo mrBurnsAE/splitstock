@@ -104,7 +104,7 @@
                     </div>
                 </button>
 
-                <button class="profile-btn" onclick="switchView('catalog'); selectTabByName('Мои складчины');">
+                <button class="profile-btn" onclick="openMyItems('active')">
                     <img src="icons/folder.svg" alt="Активные" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Активные складчины</div>
@@ -112,7 +112,7 @@
                     </div>
                 </button>
 
-                <button class="profile-btn" onclick="switchView('catalog'); selectTabByName('Мои складчины');">
+                <button class="profile-btn" onclick="openMyItems('completed')">
                     <img src="icons/archive.svg" alt="Завершенные" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Завершённые складчины</div>
@@ -301,6 +301,20 @@
         </div>
     </div>
 
-    <script src="script.js?v=43"></script>
+    <div id="view-my-items" class="view">
+        <div class="filter-header">
+            <button class="back-btn" onclick="switchView('profile')">
+                <img src="icons/undo.svg" alt="Назад">
+            </button>
+            <div class="filter-title" id="my-items-title">Мои складчины</div>
+        </div>
+
+        <div class="section">
+            <div class="item-container" id="my-items-container">
+                </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=44"></script>
 </body>
 </html>

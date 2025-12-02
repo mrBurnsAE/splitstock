@@ -19,25 +19,25 @@ window.currentItemId = null;
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
 
-// Для экрана "Внутри категории"
-window.currentCategoryDetailsId = null; 
+// Контекст навигации (откуда пришли)
+window.currentCategoryDetailsId = null; // Если мы внутри категории
+window.isMyItemsContext = false;        // Если мы в "Моих складчинах"
+window.currentMyItemsType = 'active';   // Какой тип моих складчин смотрим
 
-// Состояние главного фильтра (общий каталог)
+// Состояние главного фильтра
 window.filterState = {
     sort: 'new',
-    categories: [], // массив ID
-    tags: []        // массив строк
+    categories: [],
+    tags: []
 };
 
 document.addEventListener("DOMContentLoaded", () => {
     try {
         console.log("DOM Loaded. Starting init...");
-        
         loadUserProfile();
         loadCategories(); 
         loadTags();       
         loadHomeItems(); 
-        // Фоновая загрузка общего каталога не обязательна, но можно оставить
         loadItems('active'); 
 
         const searchInput = document.querySelector('.search-input');
@@ -52,9 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         
-        if (filterBtn) {
-            filterBtn.onclick = openFilter;
-        }
+        if (filterBtn) filterBtn.onclick = openFilter;
 
     } catch (e) { console.error("Init error:", e); }
 });
@@ -64,49 +62,31 @@ function getHeaders() {
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
 }
 
-// --- ЛОГИКА ЭКРАНА "ВНУТРИ КАТЕГОРИИ" (НОВОЕ) ---
+// --- ЛОГИКА "МОИ СКЛАДЧИНЫ" (ПРОФИЛЬ) ---
 
-// 1. Открытие категории
-function openCategoryDetails(id, name) {
-    window.currentCategoryDetailsId = id;
-    
-    // Устанавливаем заголовок
-    const titleEl = document.getElementById('cat-details-title');
-    if (titleEl) titleEl.innerText = name;
-    
-    // Сбрасываем табы на "Активные"
-    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-cat-active').classList.add('active');
-    
-    // Переключаем экран
-    switchView('category-details');
-    
-    // Грузим товары (Активные)
-    loadCategoryItems('active');
+function openMyItems(type) {
+    window.isMyItemsContext = true;
+    window.currentCategoryDetailsId = null;
+    window.currentMyItemsType = type;
+
+    const titleEl = document.getElementById('my-items-title');
+    if (titleEl) {
+        titleEl.innerText = (type === 'active') ? 'Мои активные складчины' : 'Мои завершённые складчины';
+    }
+
+    switchView('my-items');
+    loadMyItems(type);
 }
 
-// 2. Переключение табов внутри категории
-function selectCategoryInnerTab(type) {
-    // UI переключение
-    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
-    const activeTabId = type === 'active' ? 'tab-cat-active' : 'tab-cat-completed';
-    document.getElementById(activeTabId).classList.add('active');
-    
-    // Загрузка данных
-    loadCategoryItems(type);
-}
-
-// 3. Загрузчик товаров для категории
-async function loadCategoryItems(type) {
-    const container = document.getElementById('category-details-container');
+async function loadMyItems(type) {
+    const container = document.getElementById('my-items-container');
     if (!container) return;
     
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
     
     try {
-        const catId = window.currentCategoryDetailsId;
-        // Запрос только по этой категории, без учета глобальных тегов/поиска
-        let url = `${API_BASE_URL}/api/items?type=${type}&cat=${catId}&page=1&sort=new&t=${Date.now()}`;
+        // Добавляем параметр joined=true
+        let url = `${API_BASE_URL}/api/items?type=${type}&joined=true&page=1&sort=new&t=${Date.now()}`;
         
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
@@ -114,9 +94,8 @@ async function loadCategoryItems(type) {
         container.innerHTML = '';
         
         if (items.length === 0) {
-            let msg = "Здесь пока ничего нет...";
-            let img = "icons/Ничего нет без фона.png"; // Робот
-            
+            let msg = "Список пуст";
+            let img = "icons/Ничего нет без фона.png";
             container.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
                     <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
@@ -131,13 +110,72 @@ async function loadCategoryItems(type) {
         });
         
     } catch (error) {
+        console.error("My items load error:", error);
+        container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
+    }
+}
+
+// --- ЛОГИКА "ВНУТРИ КАТЕГОРИИ" ---
+
+function openCategoryDetails(id, name) {
+    window.currentCategoryDetailsId = id;
+    window.isMyItemsContext = false; // Сбрасываем контекст "Моих"
+    
+    const titleEl = document.getElementById('cat-details-title');
+    if (titleEl) titleEl.innerText = name;
+    
+    // Сброс табов
+    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-cat-active').classList.add('active');
+    
+    switchView('category-details');
+    loadCategoryItems('active');
+}
+
+function selectCategoryInnerTab(type) {
+    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
+    const activeTabId = type === 'active' ? 'tab-cat-active' : 'tab-cat-completed';
+    document.getElementById(activeTabId).classList.add('active');
+    loadCategoryItems(type);
+}
+
+async function loadCategoryItems(type) {
+    const container = document.getElementById('category-details-container');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
+    
+    try {
+        const catId = window.currentCategoryDetailsId;
+        let url = `${API_BASE_URL}/api/items?type=${type}&cat=${catId}&page=1&sort=new&t=${Date.now()}`;
+        
+        const response = await fetch(url, { headers: getHeaders() });
+        const items = await response.json();
+        
+        container.innerHTML = '';
+        
+        if (items.length === 0) {
+            let msg = "Здесь пока ничего нет...";
+            let img = "icons/Ничего нет без фона.png";
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
+                    <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
+                    <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">${msg}</div>
+                </div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const card = createItemCard(item);
+            container.appendChild(card);
+        });
+    } catch (error) {
         console.error("Cat items load error:", error);
         container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
     }
 }
 
-
-// --- ЗАГРУЗКА СПИСКА ВСЕХ КАТЕГОРИЙ (Страница "Все категории") ---
+// --- СПИСОК ВСЕХ КАТЕГОРИЙ ---
 async function loadFullCategoriesList() {
     const container = document.getElementById('all-categories-container');
     if (!container) return;
@@ -172,10 +210,7 @@ async function loadFullCategoriesList() {
                     </div>
                 </div>
             `;
-
-            // ИЗМЕНЕНИЕ: Теперь открываем детальную страницу категории
             row.onclick = () => openCategoryDetails(cat.id, cat.name);
-
             container.appendChild(row);
         });
 
@@ -185,13 +220,12 @@ async function loadFullCategoriesList() {
     }
 }
 
-// --- ГЛАВНАЯ: КАТЕГОРИИ ---
+// --- ГЛАВНАЯ И ОБЩИЙ КАТАЛОГ ---
 async function loadCategories() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
         const categories = await response.json();
         
-        // Главная: Топ 4
         const homeGrid = document.querySelector('.categories-grid');
         if (homeGrid) {
             homeGrid.innerHTML = '';
@@ -199,13 +233,11 @@ async function loadCategories() {
                 const div = document.createElement('div');
                 div.className = 'category-card';
                 div.innerText = cat.name;
-                // ИЗМЕНЕНИЕ: Открываем детальную страницу
                 div.onclick = () => openCategoryDetails(cat.id, cat.name);
                 homeGrid.appendChild(div);
             });
         }
         
-        // Фильтр: Все (для общего каталога)
         const filterContainer = document.getElementById('filter-categories-container');
         if (filterContainer) {
             filterContainer.innerHTML = '';
@@ -221,122 +253,6 @@ async function loadCategories() {
     } catch (error) { console.error("Err cat:", error); }
 }
 
-// --- НАВИГАЦИЯ ---
-function switchView(viewName) {
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById(`view-${viewName}`).classList.add('active');
-    
-    const bottomNav = document.querySelector('.bottom-nav');
-    // Скрываем меню на вложенных страницах: товар, фильтр, список категорий, внутри категории
-    if(['product', 'filter', 'categories', 'category-details'].includes(viewName)) {
-        if(bottomNav) bottomNav.style.display = 'none';
-    } else {
-        if(bottomNav) bottomNav.style.display = 'flex';
-    }
-
-    if (viewName === 'home' || viewName === 'catalog' || viewName === 'profile') {
-        updateBottomNav(viewName);
-    }
-
-    if (viewName === 'categories') {
-        loadFullCategoriesList();
-    }
-}
-
-function updateBottomNav(activeView) {
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const iconHome = document.getElementById('icon-home');
-    const iconCatalog = document.getElementById('icon-catalog');
-    const iconProfile = document.getElementById('icon-profile');
-    
-    if(iconHome) iconHome.src = 'icons/home.svg';
-    if(iconCatalog) iconCatalog.src = 'icons/apps.svg';
-    if(iconProfile) iconProfile.src = 'icons/user.svg';
-
-    if(activeView === 'home') {
-        document.querySelector('.nav-item:nth-child(2)')?.classList.add('active');
-        if(iconHome) iconHome.src = 'icons/home active.svg';
-    } else if(activeView === 'catalog') {
-        document.querySelector('.nav-item:nth-child(1)')?.classList.add('active');
-        if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
-    } else if(activeView === 'profile') {
-        document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
-        if(iconProfile) iconProfile.src = 'icons/user active.svg';
-    }
-}
-
-function selectTab(tabElement) {
-    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-    tabElement.classList.add('active');
-    
-    const tabName = tabElement.innerText;
-    let type = 'active';
-    
-    if (tabName.includes("Завершённые")) {
-        type = 'completed';
-    } else if (tabName.includes("Мои")) {
-        type = 'active'; 
-    }
-    loadItems(type);
-}
-
-function selectTabByName(name) {
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(t => {
-        if(t.innerText.includes(name)) {
-            selectTab(t);
-        }
-    });
-}
-
-// --- ФИЛЬТРЫ (ОБЩИЙ КАТАЛОГ) ---
-function openFilter() { switchView('filter'); }
-function closeFilter() { switchView('catalog'); }
-
-window.selectSort = function(sortType, btnElement) {
-    window.filterState.sort = sortType;
-    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-    btnElement.classList.add('active');
-}
-
-function toggleCategory(catId, btnElement) {
-    const index = window.filterState.categories.indexOf(catId);
-    if (index === -1) {
-        window.filterState.categories.push(catId);
-        btnElement.classList.add('active');
-    } else {
-        window.filterState.categories.splice(index, 1);
-        btnElement.classList.remove('active');
-    }
-}
-
-function toggleTag(tag, btnElement) {
-    const index = window.filterState.tags.indexOf(tag);
-    if (index === -1) {
-        window.filterState.tags.push(tag);
-        btnElement.classList.add('active');
-    } else {
-        window.filterState.tags.splice(index, 1);
-        btnElement.classList.remove('active');
-    }
-}
-
-window.resetFilter = function() {
-    window.filterState = { sort: 'new', categories: [], tags: [] };
-    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.sort-btn:nth-child(1)').classList.add('active'); 
-    document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
-}
-
-window.applyFilter = function() {
-    closeFilter();
-    let targetType = 'active';
-    const activeTab = document.querySelector('.tab.active');
-    if (activeTab && activeTab.innerText.includes('Завершённые')) targetType = 'completed';
-    loadItems(targetType);
-}
-
-// --- ОБЩИЕ ЗАГРУЗЧИКИ ---
 async function loadTags() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/tags`, { headers: getHeaders() });
@@ -389,9 +305,7 @@ async function loadItems(type) {
 
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
-        
         container.innerHTML = '';
-        
         if (items.length === 0) {
             let msg = "Здесь пока ничего нет...";
             let img = "icons/Ничего нет без фона.png";
@@ -406,7 +320,6 @@ async function loadItems(type) {
                 </div>`;
             return;
         }
-
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
@@ -491,60 +404,6 @@ function createItemCard(item) {
         </div>
     `;
     return card;
-}
-
-// --- ЗАГРУЗКА ПРОФИЛЯ ---
-async function loadUserProfile() {
-    if (!USER_ID) return;
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
-        const user = await response.json();
-        
-        const headerName = document.getElementById('header-username');
-        if(headerName) headerName.innerText = user.first_name || user.username || "Пользователь";
-
-        const profileName = document.getElementById('profile-username');
-        if(profileName) profileName.innerText = user.first_name || user.username || "Пользователь";
-
-        const profileStatus = document.getElementById('profile-status-text');
-        if(profileStatus) profileStatus.innerText = user.status;
-
-        const profileActive = document.getElementById('profile-active-count');
-        if(profileActive) profileActive.innerText = user.active_count;
-
-        const profileCompleted = document.getElementById('profile-completed-count');
-        if(profileCompleted) profileCompleted.innerText = user.completed_count;
-
-        const dateEl = document.getElementById('profile-join-date');
-        if(dateEl && user.registration_date) {
-            const date = new Date(user.registration_date);
-            const dateStr = date.toLocaleDateString('ru-RU');
-            dateEl.innerText = `Участник с ${dateStr}`;
-        }
-
-        updateStatusModal(user.status, user.completed_count);
-
-    } catch (e) { console.error("Profile load error:", e); }
-}
-
-function updateStatusModal(status, completedCount) {
-    const title = document.getElementById('modal-status-title');
-    const desc = document.getElementById('modal-status-desc');
-    const img = document.getElementById('modal-status-img');
-
-    if(title) title.innerText = status;
-    
-    if (status === 'Новичок') {
-        const needed = Math.max(0, 10 - completedCount);
-        if(desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
-        if(img) img.src = "icons/Новичок Без фона.png";
-    } else if (status === 'Опытный') {
-        if(desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
-        if(img) img.src = "icons/Супермэн без фона.png";
-    } else if (status === 'Штрафник') {
-        if(desc) desc.innerText = "Вы не можете записываться в новые складчины, пока не оплатите штраф";
-        if(img) img.src = "icons/Штрафник без фона.png";
-    }
 }
 
 // --- UTILS & SEARCH ---
@@ -664,15 +523,21 @@ async function openProduct(id) {
 function closeProduct() {
     document.getElementById('main-video-frame').src = "";
     
-    // Если мы внутри категории - возвращаемся туда
-    if(window.currentCategoryDetailsId) {
+    // ЛОГИКА ВОЗВРАТА
+    if(window.isMyItemsContext) {
+        switchView('my-items');
+        loadMyItems(window.currentMyItemsType);
+    } else if(window.currentCategoryDetailsId) {
         switchView('category-details');
     } else {
-        // Иначе в общий каталог
         switchView('catalog');
         loadItems('active');
     }
 }
+
+// ... Остальные функции (switchVideo, updateProductStatusUI и т.д.) без изменений ...
+// Я их включил в полный код выше, но здесь сокращаю для читаемости, так как они такие же.
+// Но в полный файл копируй то, что ВЫШЕ в блоке кода.
 
 function switchVideo(platform) {
     const wrapper = document.getElementById('video-wrapper-el');
@@ -949,4 +814,282 @@ async function selectPaymentMethod(method) {
         alert("Ошибка соединения");
         modalContent.style.opacity = '1';
     }
+}
+
+// --- ЗАГРУЗКА ПРОФИЛЯ ---
+async function loadUserProfile() {
+    if (!USER_ID) return;
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
+        const user = await response.json();
+        
+        const headerName = document.getElementById('header-username');
+        if(headerName) headerName.innerText = user.first_name || user.username || "Пользователь";
+
+        const profileName = document.getElementById('profile-username');
+        if(profileName) profileName.innerText = user.first_name || user.username || "Пользователь";
+
+        const profileStatus = document.getElementById('profile-status-text');
+        if(profileStatus) profileStatus.innerText = user.status;
+
+        const profileActive = document.getElementById('profile-active-count');
+        if(profileActive) profileActive.innerText = user.active_count;
+
+        const profileCompleted = document.getElementById('profile-completed-count');
+        if(profileCompleted) profileCompleted.innerText = user.completed_count;
+
+        const dateEl = document.getElementById('profile-join-date');
+        if(dateEl && user.registration_date) {
+            const date = new Date(user.registration_date);
+            const dateStr = date.toLocaleDateString('ru-RU');
+            dateEl.innerText = `Участник с ${dateStr}`;
+        }
+
+        updateStatusModal(user.status, user.completed_count);
+
+    } catch (e) { console.error("Profile load error:", e); }
+}
+
+function updateStatusModal(status, completedCount) {
+    const title = document.getElementById('modal-status-title');
+    const desc = document.getElementById('modal-status-desc');
+    const img = document.getElementById('modal-status-img');
+
+    if(title) title.innerText = status;
+    
+    if (status === 'Новичок') {
+        const needed = Math.max(0, 10 - completedCount);
+        if(desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
+        if(img) img.src = "icons/Новичок Без фона.png";
+    } else if (status === 'Опытный') {
+        if(desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
+        if(img) img.src = "icons/Супермэн без фона.png";
+    } else if (status === 'Штрафник') {
+        if(desc) desc.innerText = "Вы не можете записываться в новые складчины, пока не оплатите штраф";
+        if(img) img.src = "icons/Штрафник без фона.png";
+    }
+}
+
+// --- НАВИГАЦИЯ ---
+function switchView(viewName) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById(`view-${viewName}`).classList.add('active');
+    
+    const bottomNav = document.querySelector('.bottom-nav');
+    // Скрываем меню на вложенных страницах: товар, фильтр, список категорий, внутри категории, мои товары
+    if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
+        if(bottomNav) bottomNav.style.display = 'none';
+    } else {
+        if(bottomNav) bottomNav.style.display = 'flex';
+    }
+
+    if (viewName === 'home' || viewName === 'catalog' || viewName === 'profile') {
+        updateBottomNav(viewName);
+    }
+
+    if (viewName === 'categories') {
+        loadFullCategoriesList();
+    }
+}
+
+function updateBottomNav(activeView) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const iconHome = document.getElementById('icon-home');
+    const iconCatalog = document.getElementById('icon-catalog');
+    const iconProfile = document.getElementById('icon-profile');
+    
+    if(iconHome) iconHome.src = 'icons/home.svg';
+    if(iconCatalog) iconCatalog.src = 'icons/apps.svg';
+    if(iconProfile) iconProfile.src = 'icons/user.svg';
+
+    if(activeView === 'home') {
+        document.querySelector('.nav-item:nth-child(2)')?.classList.add('active');
+        if(iconHome) iconHome.src = 'icons/home active.svg';
+    } else if(activeView === 'catalog') {
+        document.querySelector('.nav-item:nth-child(1)')?.classList.add('active');
+        if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
+    } else if(activeView === 'profile') {
+        document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
+        if(iconProfile) iconProfile.src = 'icons/user active.svg';
+    }
+}
+
+function selectTab(tabElement) {
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    tabElement.classList.add('active');
+    
+    const tabName = tabElement.innerText;
+    let type = 'active';
+    
+    if (tabName.includes("Завершённые")) {
+        type = 'completed';
+    } else if (tabName.includes("Мои")) {
+        // Пока грузим активные, так как API "my" еще не выделено
+        type = 'active'; 
+    }
+    
+    loadItems(type);
+}
+
+function selectTabByName(name) {
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(t => {
+        if(t.innerText.includes(name)) {
+            selectTab(t);
+        }
+    });
+}
+
+// --- ФИЛЬТРЫ ---
+function openFilter() { switchView('filter'); }
+function closeFilter() { switchView('catalog'); }
+
+window.selectSort = function(sortType, btnElement) {
+    window.filterState.sort = sortType;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btnElement.classList.add('active');
+}
+
+function toggleCategory(catId, btnElement) {
+    const index = window.filterState.categories.indexOf(catId);
+    if (index === -1) {
+        window.filterState.categories.push(catId);
+        btnElement.classList.add('active');
+    } else {
+        window.filterState.categories.splice(index, 1);
+        btnElement.classList.remove('active');
+    }
+}
+
+function toggleTag(tag, btnElement) {
+    const index = window.filterState.tags.indexOf(tag);
+    if (index === -1) {
+        window.filterState.tags.push(tag);
+        btnElement.classList.add('active');
+    } else {
+        window.filterState.tags.splice(index, 1);
+        btnElement.classList.remove('active');
+    }
+}
+
+window.resetFilter = function() {
+    window.filterState = { sort: 'new', categories: [], tags: [] };
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.sort-btn:nth-child(1)').classList.add('active'); 
+    document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+}
+
+window.applyFilter = function() {
+    closeFilter();
+    let targetType = 'active';
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab && activeTab.innerText.includes('Завершённые')) targetType = 'completed';
+    loadItems(targetType);
+}
+
+// --- ОБЩИЕ ЗАГРУЗЧИКИ ---
+async function loadCategories() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
+        const categories = await response.json();
+        
+        const homeGrid = document.querySelector('.categories-grid');
+        if (homeGrid) {
+            homeGrid.innerHTML = '';
+            categories.slice(0, 4).forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'category-card';
+                div.innerText = cat.name;
+                div.onclick = () => openCategoryDetails(cat.id, cat.name);
+                homeGrid.appendChild(div);
+            });
+        }
+        
+        const filterContainer = document.getElementById('filter-categories-container');
+        if (filterContainer) {
+            filterContainer.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement('div');
+                btn.className = 'chip-btn';
+                btn.innerText = cat.name;
+                if(window.filterState.categories.includes(cat.id)) btn.classList.add('active');
+                btn.onclick = () => toggleCategory(cat.id, btn);
+                filterContainer.appendChild(btn);
+            });
+        }
+    } catch (error) { console.error("Err cat:", error); }
+}
+
+async function loadTags() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/tags`, { headers: getHeaders() });
+        const tags = await response.json();
+        const filterContainer = document.getElementById('filter-tags-container');
+        if (filterContainer) {
+            filterContainer.innerHTML = '';
+            tags.forEach(tag => {
+                const btn = document.createElement('div');
+                btn.className = 'chip-btn';
+                btn.innerText = tag;
+                if(window.filterState.tags.includes(tag)) btn.classList.add('active');
+                btn.onclick = () => toggleTag(tag, btn);
+                filterContainer.appendChild(btn);
+            });
+        }
+    } catch (e) { console.error("Err tags:", e); }
+}
+
+async function loadHomeItems() {
+    const container = document.getElementById('home-item-container');
+    if(!container) return;
+    container.innerHTML = '';
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&sort=new`, { headers: getHeaders() });
+        const items = await response.json();
+        if (items.length === 0) {
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#555;">Пока пусто</div>';
+            return;
+        }
+        items.slice(0, 5).forEach(item => {
+            const card = createItemCard(item);
+            container.appendChild(card);
+        });
+    } catch (e) { console.error("Home load error:", e); }
+}
+
+async function loadItems(type) {
+    const catalogView = document.getElementById('view-catalog');
+    let container = catalogView.querySelector('.item-container');
+    container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
+
+    try {
+        let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
+        if (window.filterState.categories.length > 0) url += `&cat=${window.filterState.categories.join(',')}`;
+        if (window.filterState.tags.length > 0) url += `&tags=${window.filterState.tags.join(',')}`;
+        url += `&sort=${window.filterState.sort}`;
+        if (window.currentSearchQuery) url += `&q=${encodeURIComponent(window.currentSearchQuery)}`;
+        url += `&t=${Date.now()}`;
+
+        const response = await fetch(url, { headers: getHeaders() });
+        const items = await response.json();
+        container.innerHTML = '';
+        if (items.length === 0) {
+            let msg = "Здесь пока ничего нет...";
+            let img = "icons/Ничего нет без фона.png";
+            if (window.currentSearchQuery || window.filterState.categories.length > 0) {
+                msg = "Ничего не найдено...";
+                img = "icons/Поиск без фона.png";
+            }
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
+                    <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
+                    <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">${msg}</div>
+                </div>`;
+            return;
+        }
+        items.forEach(item => {
+            const card = createItemCard(item);
+            container.appendChild(card);
+        });
+    } catch (error) { console.error("Load Items Error:", error); }
 }
