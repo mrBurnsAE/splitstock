@@ -27,34 +27,31 @@ if (!USER_ID) {
 window.currentVideoLinks = {};
 window.currentItemId = null;
 window.currentItemStatus = null;
-window.pendingPaymentType = null;
-
-// --- НОВОЕ: Хранение поискового запроса ---
-window.currentSearchQuery = ""; 
+window.currentSearchQuery = ""; // Храним текст поиска
 
 document.addEventListener("DOMContentLoaded", () => {
     try {
         loadUserProfile();
         loadCategories();
         loadItems('active');
-        
-        // --- НОВОЕ: Обработчик поиска ---
+
+        // --- ПОИСК ---
         const searchInput = document.querySelector('.search-input');
+        const filterBtn = document.querySelector('.filter-btn'); // Используем кнопку фильтра как "Найти"
+
         if (searchInput) {
-            // По нажатию Enter
+            // Поиск по Enter
             searchInput.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     performSearch(this.value);
+                    // Убираем клавиатуру на мобильных
+                    this.blur();
                 }
             });
-            
-            // По потере фокуса (опционально, если нужно)
-            // searchInput.addEventListener('blur', function () { performSearch(this.value); });
         }
-        
-        // Кнопка фильтра (пока работает как кнопка поиска)
-        const filterBtn = document.querySelector('.filter-btn');
-        if(filterBtn && searchInput) {
+
+        if (filterBtn && searchInput) {
+            // Поиск по кнопке
             filterBtn.onclick = () => performSearch(searchInput.value);
         }
 
@@ -65,18 +62,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function performSearch(query) {
     window.currentSearchQuery = query.trim();
-    // При поиске сбрасываем на 1 страницу и переключаемся на активные (или остаемся в текущем табе)
-    // Для простоты пока ищем в текущем активном табе, либо переходим в каталог
-    switchView('catalog'); 
     
-    // Определяем текущий таб
-    let activeTabType = 'active';
-    const activeTab = document.querySelector('.tab.active');
-    if(activeTab && activeTab.innerText.includes('Завершённые')) {
-        activeTabType = 'completed';
+    // Если мы не в каталоге - переходим туда
+    const viewCatalog = document.getElementById('view-catalog');
+    if (!viewCatalog.classList.contains('active')) {
+        switchView('catalog');
     }
     
-    loadItems(activeTabType);
+    // Определяем, какой таб сейчас активен, чтобы искать внутри него (Активные или Завершенные)
+    // По умолчанию ищем в активных
+    let targetType = 'active';
+    
+    // Если визуально активен таб "Завершённые", ищем там
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab && activeTab.innerText.includes('Завершённые')) {
+        targetType = 'completed';
+    }
+    
+    loadItems(targetType);
 }
 
 function getHeaders() {
@@ -113,9 +116,8 @@ function switchView(viewName) {
         if(iconHome) iconHome.src = 'icons/home.svg';
         if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
         if(iconProfile) iconProfile.src = 'icons/user.svg';
-        // При переключении табов вручную - поиск сбрасываем? Или оставляем?
-        // Обычно при клике на таб поиск лучше сбрасывать или применять к табу.
-        // Логика selectTab это обработает.
+        const activeTab = document.querySelector('.tab.active');
+        if(activeTab) selectTab(activeTab);
     } else if(viewName === 'profile') {
         document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
         if(iconHome) iconHome.src = 'icons/home.svg';
@@ -129,11 +131,12 @@ function selectTab(tabElement) {
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
     tabElement.classList.add('active');
     
-    // Сбрасываем поиск при переключении табов (как обычно бывает в UX)
-    // Или можно оставить. Давай сбросим, чтобы очистить выдачу.
-    // window.currentSearchQuery = ""; 
-    // document.querySelector('.search-input').value = "";
-    
+    // При переключении табов сбрасываем поиск или оставляем?
+    // Обычно лучше сбросить, чтобы юзер увидел полный список категории
+    window.currentSearchQuery = "";
+    const searchInput = document.querySelector('.search-input');
+    if(searchInput) searchInput.value = "";
+
     const tabName = tabElement.innerText;
     if (tabName.includes("Активные")) loadItems('active');
     else if (tabName.includes("Завершённые")) loadItems('completed');
@@ -243,7 +246,7 @@ async function loadItems(type, categoryId = null) {
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
         if (categoryId) url += `&cat=${categoryId}`;
         
-        // --- НОВОЕ: Добавляем поисковый запрос ---
+        // --- ПОИСК ---
         if (window.currentSearchQuery) {
             url += `&q=${encodeURIComponent(window.currentSearchQuery)}`;
         }
@@ -266,18 +269,25 @@ async function loadItems(type, categoryId = null) {
         }
         container.innerHTML = '';
         
-        // --- НОВОЕ: Отображение "Ничего не найдено" ---
+        // --- ЕСЛИ ПУСТО ---
         if (items.length === 0) {
+            // Проверяем, был ли это поиск или просто пустая категория
             if (window.currentSearchQuery) {
-                [cite_start]// Стили для пустого поиска (робот с лупой) [cite: 300]
+                // Вывод картинки и текста для поиска
                 container.innerHTML = `
-                    <div style="text-align:center; padding:40px 20px;">
-                        <img src="icons/Поиск без фона.png" style="width:120px; margin-bottom:20px; opacity:0.8;">
-                        <div style="color:#a2a5b9; font-size:16px; font-weight:600;">Ничего не найдено...</div>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
+                        <img src="icons/Поиск без фона.png" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
+                        <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">Ничего не найдено...</div>
                     </div>
                 `;
             } else {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#a2a5b9;">Здесь пока ничего нет...</div>';
+                // Обычная заглушка для пустой категории
+                container.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
+                        <img src="icons/Ничего нет без фона.png" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
+                        <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">Здесь пока ничего нет...</div>
+                    </div>
+                `;
             }
             return;
         }
