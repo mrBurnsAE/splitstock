@@ -407,3 +407,64 @@ h1, h2, h3, p { margin: 0; }
     font-weight: 600;
     cursor: pointer;
 }
+
+/* --- VIEW: ALL CATEGORIES --- */
+.full-categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 20px;
+}
+
+.category-row {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.category-row:active {
+    transform: scale(0.98);
+    background-color: #3d4258;
+}
+
+.cat-icon {
+    width: 56px;
+    height: 56px;
+    background: white; /* Логотипы обычно лучше смотрятся на белом подложке */
+    border-radius: 12px;
+    object-fit: contain;
+    padding: 6px; 
+    flex-shrink: 0;
+}
+
+.cat-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.cat-name {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.cat-stats {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.cat-stats span {
+    white-space: nowrap;
+}

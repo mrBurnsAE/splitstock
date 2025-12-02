@@ -30,17 +30,16 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
         console.log("DOM Loaded. Starting init...");
         
-        // 1. Загружаем профиль (имя, статус и т.д.)
+        // 1. Загружаем профиль
         loadUserProfile();
         
         // 2. Загружаем категории и теги
         loadCategories(); 
         loadTags();       
         
-        // 3. Загружаем складчины (Топ 5 для главной и активные для каталога)
-        // Для главной страницы используем отдельный вызов или фильтр
-        loadHomeItems(); // Новая функция для главной
-        loadItems('active'); // Для каталога
+        // 3. Загружаем контент
+        loadHomeItems(); // Для главной
+        loadItems('active'); // Для каталога (фоново)
 
         const searchInput = document.querySelector('.search-input');
         const filterBtn = document.querySelector('.filter-btn');
@@ -66,18 +65,71 @@ function getHeaders() {
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
 }
 
-// --- НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ПРОФИЛЯ ---
+// --- НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ПОЛНОГО СПИСКА КАТЕГОРИЙ ---
+async function loadFullCategoriesList() {
+    const container = document.getElementById('all-categories-container');
+    if (!container) return;
+    
+    // Показываем лоадер, если там еще пусто
+    if (!container.hasChildNodes()) {
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#8e92a8;">Загрузка...</div>';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
+        const categories = await response.json();
+
+        container.innerHTML = '';
+
+        if (categories.length === 0) {
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#8e92a8;">Категорий нет</div>';
+            return;
+        }
+
+        categories.forEach(cat => {
+            const row = document.createElement('div');
+            row.className = 'category-row';
+            
+            // Используем иконку с сервера или заглушку
+            const iconSrc = cat.icon_url || "icons/folder.svg";
+
+            row.innerHTML = `
+                <img src="${iconSrc}" class="cat-icon" onerror="this.src='icons/folder.svg'">
+                <div class="cat-info">
+                    <div class="cat-name">${cat.name}</div>
+                    <div class="cat-stats">
+                        <span style="color: #00cec9;">Активные: ${cat.active_count || 0}</span>
+                        <span style="color: #a2a5b9; margin-left: 8px;">Завершённые: ${cat.completed_count || 0}</span>
+                    </div>
+                </div>
+            `;
+
+            // При клике - фильтруем каталог по этой категории
+            row.onclick = () => {
+                window.filterState.categories = [cat.id];
+                switchView('catalog');
+                loadItems('active');
+            };
+
+            container.appendChild(row);
+        });
+
+    } catch (e) {
+        console.error("Full categories load error:", e);
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff7675;">Ошибка загрузки</div>';
+    }
+}
+
+// --- ПРОФИЛЬ ---
 async function loadUserProfile() {
     if (!USER_ID) return;
     try {
         const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
         const user = await response.json();
         
-        // Обновляем Хедер
         const headerName = document.getElementById('header-username');
         if(headerName) headerName.innerText = user.first_name || user.username || "Пользователь";
 
-        // Обновляем Страницу Профиля
         const profileName = document.getElementById('profile-username');
         if(profileName) profileName.innerText = user.first_name || user.username || "Пользователь";
 
@@ -90,7 +142,6 @@ async function loadUserProfile() {
         const profileCompleted = document.getElementById('profile-completed-count');
         if(profileCompleted) profileCompleted.innerText = user.completed_count;
 
-        // Дата регистрации
         const dateEl = document.getElementById('profile-join-date');
         if(dateEl && user.registration_date) {
             const date = new Date(user.registration_date);
@@ -98,12 +149,9 @@ async function loadUserProfile() {
             dateEl.innerText = `Участник с ${dateStr}`;
         }
 
-        // Обновляем данные для модального окна статуса
         updateStatusModal(user.status, user.completed_count);
 
-    } catch (e) {
-        console.error("Profile load error:", e);
-    }
+    } catch (e) { console.error("Profile load error:", e); }
 }
 
 function updateStatusModal(status, completedCount) {
@@ -126,13 +174,14 @@ function updateStatusModal(status, completedCount) {
     }
 }
 
-// --- NAVIGATION ---
+// --- НАВИГАЦИЯ (ОБНОВЛЕНА) ---
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(`view-${viewName}`).classList.add('active');
     
     const bottomNav = document.querySelector('.bottom-nav');
-    if(viewName === 'product' || viewName === 'filter') {
+    // Скрываем нижнее меню на вложенных страницах
+    if(viewName === 'product' || viewName === 'filter' || viewName === 'categories') {
         if(bottomNav) bottomNav.style.display = 'none';
     } else {
         if(bottomNav) bottomNav.style.display = 'flex';
@@ -140,6 +189,11 @@ function switchView(viewName) {
 
     if (viewName === 'home' || viewName === 'catalog' || viewName === 'profile') {
         updateBottomNav(viewName);
+    }
+
+    // Если открыли страницу категорий - грузим список
+    if (viewName === 'categories') {
+        loadFullCategoriesList();
     }
 }
 
@@ -172,23 +226,16 @@ function selectTab(tabElement) {
     const tabName = tabElement.innerText;
     let type = 'active';
     
-    // Сбрасываем фильтры при переключении табов (опционально, но логично)
-    // window.filterState.categories = []; // Если нужно сбрасывать категории
-    
     if (tabName.includes("Завершённые")) {
         type = 'completed';
     } else if (tabName.includes("Мои")) {
-        // Для "Мои складчины" нужно фильтровать на клиенте или добавить API параметр
-        // Пока грузим активные, но в идеале нужен отдельный эндпоинт или параметр ?my=true
-        // В текущем API main.py нет параметра 'my', так что пока грузим active.
-        // TODO: Добавить поддержку 'my' в API, если нужно.
+        // Пока грузим активные, так как API "my" еще не выделено
         type = 'active'; 
     }
     
     loadItems(type);
 }
 
-// Хелпер для перехода из профиля
 function selectTabByName(name) {
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(t => {
@@ -198,8 +245,7 @@ function selectTabByName(name) {
     });
 }
 
-// --- FILTER LOGIC ---
-
+// --- ФИЛЬТРЫ ---
 function openFilter() { switchView('filter'); }
 function closeFilter() { switchView('catalog'); }
 
@@ -246,18 +292,17 @@ window.applyFilter = function() {
     loadItems(targetType);
 }
 
-// --- LOADERS ---
-
+// --- ЗАГРУЗЧИКИ ДАННЫХ ---
 async function loadCategories() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
         const categories = await response.json();
         
-        // Главная
+        // Главная: только Топ 4
         const homeGrid = document.querySelector('.categories-grid');
         if (homeGrid) {
             homeGrid.innerHTML = '';
-            categories.slice(0, 4).forEach(cat => { // Показываем 4 на главной
+            categories.slice(0, 4).forEach(cat => {
                 const div = document.createElement('div');
                 div.className = 'category-card';
                 div.innerText = cat.name;
@@ -270,7 +315,7 @@ async function loadCategories() {
             });
         }
         
-        // Фильтр
+        // Фильтр: Все
         const filterContainer = document.getElementById('filter-categories-container');
         if (filterContainer) {
             filterContainer.innerHTML = '';
@@ -306,15 +351,12 @@ async function loadTags() {
     } catch (e) { console.error("Err tags:", e); }
 }
 
-// Загрузка для Главной страницы (Топ 5 новых)
 async function loadHomeItems() {
     const container = document.getElementById('home-item-container');
     if(!container) return;
-    container.innerHTML = ''; // Очистка
+    container.innerHTML = '';
 
     try {
-        // Загружаем active, сортировка active (или new), лимит 5
-        // В API есть пагинация, запрашиваем 1 страницу
         const response = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&sort=new`, { headers: getHeaders() });
         const items = await response.json();
         
@@ -323,7 +365,6 @@ async function loadHomeItems() {
             return;
         }
 
-        // Рендерим только первые 5
         items.slice(0, 5).forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
@@ -372,7 +413,6 @@ async function loadItems(type) {
     } catch (error) { console.error("Load Items Error:", error); }
 }
 
-// Вспомогательная функция для создания карточки (чтобы не дублировать код)
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = 'big-card';
@@ -459,9 +499,6 @@ function performSearch(query) {
     if(activeTab && activeTab.innerText.includes('Завершённые')) activeTabType = 'completed';
     loadItems(activeTabType);
 }
-
-// --- PRODUCT DETAILS & UTILS ---
-// (Эти функции остаются такими же, но я приведу их для полноты файла)
 
 function formatDate(isoString) {
     if(!isoString) return "";

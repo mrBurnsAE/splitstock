@@ -20,7 +20,7 @@
         <div class="section">
             <div class="section-header">
                 <h2 class="section-title">Категории</h2>
-                <a href="#" class="link-all" onclick="switchView('catalog')">Смотреть все</a>
+                <a href="#" class="link-all" onclick="switchView('categories')">Смотреть все</a>
             </div>
             <div class="categories-grid">
                 </div>
@@ -43,6 +43,20 @@
             </div>
             <div class="home-item-list" id="home-item-container">
                </div>
+        </div>
+    </div>
+
+    <div id="view-categories" class="view">
+        <div class="filter-header" style="padding: 20px 20px 10px 20px;">
+            <button class="back-btn" onclick="switchView('home')">
+                <img src="icons/undo.svg" alt="Назад">
+            </button>
+            <div class="filter-title">Все категории</div>
+        </div>
+
+        <div class="section">
+            <div class="full-categories-list" id="all-categories-container">
+                </div>
         </div>
     </div>
 
@@ -76,9 +90,7 @@
     <div id="view-profile" class="view">
         <div class="section" style="text-align: center; padding-top: 40px;">
             <img src="icons/Logo Telegram.svg" class="user-avatar" style="width: 80px; height: 80px; margin-bottom: 10px;">
-            
             <h2 style="font-size: 22px; font-weight: 700;" id="profile-username">Username</h2>
-            
             <p style="color: var(--text-secondary); font-size: 14px;" id="profile-join-date">Участник с ...</p>
         </div>
 
@@ -207,12 +219,9 @@
     <div class="modal-overlay" id="modal-status">
         <div class="modal-content">
             <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 5px;">Ваш статус</div>
-            
             <img src="icons/Новичок Без фона.png" class="modal-img" id="modal-status-img">
-            
             <div class="modal-title" id="modal-status-title">Новичок</div>
             <div class="modal-text" id="modal-status-desc">Загрузка информации...</div>
-            
             <button class="btn-primary" onclick="closeModal()">OK</button>
         </div>
     </div>
@@ -258,13 +267,13 @@
         <div class="filter-section">
             <div class="filter-section-title">Категории</div>
             <div class="chips-grid" id="filter-categories-container">
-                </div>
+            </div>
         </div>
 
         <div class="filter-section">
             <div class="filter-section-title">Теги</div>
             <div class="chips-grid" id="filter-tags-container">
-                </div>
+            </div>
         </div>
 
         <div class="filter-actions">
@@ -273,6 +282,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=40"></script>
+    <script src="script.js?v=42"></script>
 </body>
 </html>
