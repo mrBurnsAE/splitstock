@@ -234,6 +234,40 @@
         </div>
     </div>
 
-    <script src="script.js?v=35"></script>
+    <div id="view-filter" class="view">
+        <div class="filter-header">
+            <button class="back-btn" onclick="closeFilter()">
+                <img src="icons/undo.svg" alt="Назад">
+            </button>
+            <div class="filter-title">Фильтр</div>
+        </div>
+
+        <div class="filter-section">
+            <div class="sort-buttons">
+                <button class="sort-btn active" onclick="selectSort('new', this)">Новые</button>
+                <button class="sort-btn" onclick="selectSort('old', this)">Старые</button>
+                <button class="sort-btn" onclick="selectSort('popular', this)">Популярные</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-section-title">Категории</div>
+            <div class="chips-grid" id="filter-categories-container">
+                </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-section-title">Теги</div>
+            <div class="chips-grid" id="filter-tags-container">
+                </div>
+        </div>
+
+        <div class="filter-actions">
+            <button class="btn-secondary" onclick="resetFilter()">Сбросить</button>
+            <button class="btn-primary" onclick="applyFilter()">Применить</button>
+        </div>
+    </div>
+
+    <script src="script.js?v=36"></script>
 </body>
 </html>
