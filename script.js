@@ -296,7 +296,15 @@ async function loadItems(type) {
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
 
     try {
+        // Формируем URL
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
+        
+        // --- НОВОЕ: Если тип 'all' (вкладка "Мои"), добавляем joined=true ---
+        if (type === 'all') {
+            url += '&joined=true';
+        }
+        // ---------------------------------------------------------------------
+
         if (window.filterState.categories.length > 0) url += `&cat=${window.filterState.categories.join(',')}`;
         if (window.filterState.tags.length > 0) url += `&tags=${window.filterState.tags.join(',')}`;
         url += `&sort=${window.filterState.sort}`;
@@ -305,7 +313,9 @@ async function loadItems(type) {
 
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
+        
         container.innerHTML = '';
+        
         if (items.length === 0) {
             let msg = "Здесь пока ничего нет...";
             let img = "icons/Ничего нет без фона.png";
@@ -320,6 +330,7 @@ async function loadItems(type) {
                 </div>`;
             return;
         }
+
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
@@ -924,8 +935,8 @@ function selectTab(tabElement) {
     if (tabName.includes("Завершённые")) {
         type = 'completed';
     } else if (tabName.includes("Мои")) {
-        // Пока грузим активные, так как API "my" еще не выделено
-        type = 'active'; 
+        // Для вкладки "Мои складчины" используем тип 'all' (все статусы)
+        type = 'all'; 
     }
     
     loadItems(type);
