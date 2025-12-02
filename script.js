@@ -19,7 +19,10 @@ window.currentItemId = null;
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
 
-// Состояние фильтра
+// Для экрана "Внутри категории"
+window.currentCategoryDetailsId = null; 
+
+// Состояние главного фильтра (общий каталог)
 window.filterState = {
     sort: 'new',
     categories: [], // массив ID
@@ -30,16 +33,12 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
         console.log("DOM Loaded. Starting init...");
         
-        // 1. Загружаем профиль
         loadUserProfile();
-        
-        // 2. Загружаем категории и теги
         loadCategories(); 
         loadTags();       
-        
-        // 3. Загружаем контент
-        loadHomeItems(); // Для главной
-        loadItems('active'); // Для каталога (фоново)
+        loadHomeItems(); 
+        // Фоновая загрузка общего каталога не обязательна, но можно оставить
+        loadItems('active'); 
 
         const searchInput = document.querySelector('.search-input');
         const filterBtn = document.querySelector('.filter-btn');
@@ -65,12 +64,84 @@ function getHeaders() {
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
 }
 
-// --- НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ПОЛНОГО СПИСКА КАТЕГОРИЙ ---
+// --- ЛОГИКА ЭКРАНА "ВНУТРИ КАТЕГОРИИ" (НОВОЕ) ---
+
+// 1. Открытие категории
+function openCategoryDetails(id, name) {
+    window.currentCategoryDetailsId = id;
+    
+    // Устанавливаем заголовок
+    const titleEl = document.getElementById('cat-details-title');
+    if (titleEl) titleEl.innerText = name;
+    
+    // Сбрасываем табы на "Активные"
+    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-cat-active').classList.add('active');
+    
+    // Переключаем экран
+    switchView('category-details');
+    
+    // Грузим товары (Активные)
+    loadCategoryItems('active');
+}
+
+// 2. Переключение табов внутри категории
+function selectCategoryInnerTab(type) {
+    // UI переключение
+    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
+    const activeTabId = type === 'active' ? 'tab-cat-active' : 'tab-cat-completed';
+    document.getElementById(activeTabId).classList.add('active');
+    
+    // Загрузка данных
+    loadCategoryItems(type);
+}
+
+// 3. Загрузчик товаров для категории
+async function loadCategoryItems(type) {
+    const container = document.getElementById('category-details-container');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
+    
+    try {
+        const catId = window.currentCategoryDetailsId;
+        // Запрос только по этой категории, без учета глобальных тегов/поиска
+        let url = `${API_BASE_URL}/api/items?type=${type}&cat=${catId}&page=1&sort=new&t=${Date.now()}`;
+        
+        const response = await fetch(url, { headers: getHeaders() });
+        const items = await response.json();
+        
+        container.innerHTML = '';
+        
+        if (items.length === 0) {
+            let msg = "Здесь пока ничего нет...";
+            let img = "icons/Ничего нет без фона.png"; // Робот
+            
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
+                    <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
+                    <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">${msg}</div>
+                </div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const card = createItemCard(item);
+            container.appendChild(card);
+        });
+        
+    } catch (error) {
+        console.error("Cat items load error:", error);
+        container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
+    }
+}
+
+
+// --- ЗАГРУЗКА СПИСКА ВСЕХ КАТЕГОРИЙ (Страница "Все категории") ---
 async function loadFullCategoriesList() {
     const container = document.getElementById('all-categories-container');
     if (!container) return;
     
-    // Показываем лоадер, если там еще пусто
     if (!container.hasChildNodes()) {
         container.innerHTML = '<div style="padding:20px; text-align:center; color:#8e92a8;">Загрузка...</div>';
     }
@@ -89,8 +160,6 @@ async function loadFullCategoriesList() {
         categories.forEach(cat => {
             const row = document.createElement('div');
             row.className = 'category-row';
-            
-            // Используем иконку с сервера или заглушку
             const iconSrc = cat.icon_url || "icons/folder.svg";
 
             row.innerHTML = `
@@ -104,12 +173,8 @@ async function loadFullCategoriesList() {
                 </div>
             `;
 
-            // При клике - фильтруем каталог по этой категории
-            row.onclick = () => {
-                window.filterState.categories = [cat.id];
-                switchView('catalog');
-                loadItems('active');
-            };
+            // ИЗМЕНЕНИЕ: Теперь открываем детальную страницу категории
+            row.onclick = () => openCategoryDetails(cat.id, cat.name);
 
             container.appendChild(row);
         });
@@ -120,68 +185,50 @@ async function loadFullCategoriesList() {
     }
 }
 
-// --- ПРОФИЛЬ ---
-async function loadUserProfile() {
-    if (!USER_ID) return;
+// --- ГЛАВНАЯ: КАТЕГОРИИ ---
+async function loadCategories() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
-        const user = await response.json();
+        const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
+        const categories = await response.json();
         
-        const headerName = document.getElementById('header-username');
-        if(headerName) headerName.innerText = user.first_name || user.username || "Пользователь";
-
-        const profileName = document.getElementById('profile-username');
-        if(profileName) profileName.innerText = user.first_name || user.username || "Пользователь";
-
-        const profileStatus = document.getElementById('profile-status-text');
-        if(profileStatus) profileStatus.innerText = user.status;
-
-        const profileActive = document.getElementById('profile-active-count');
-        if(profileActive) profileActive.innerText = user.active_count;
-
-        const profileCompleted = document.getElementById('profile-completed-count');
-        if(profileCompleted) profileCompleted.innerText = user.completed_count;
-
-        const dateEl = document.getElementById('profile-join-date');
-        if(dateEl && user.registration_date) {
-            const date = new Date(user.registration_date);
-            const dateStr = date.toLocaleDateString('ru-RU');
-            dateEl.innerText = `Участник с ${dateStr}`;
+        // Главная: Топ 4
+        const homeGrid = document.querySelector('.categories-grid');
+        if (homeGrid) {
+            homeGrid.innerHTML = '';
+            categories.slice(0, 4).forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'category-card';
+                div.innerText = cat.name;
+                // ИЗМЕНЕНИЕ: Открываем детальную страницу
+                div.onclick = () => openCategoryDetails(cat.id, cat.name);
+                homeGrid.appendChild(div);
+            });
         }
-
-        updateStatusModal(user.status, user.completed_count);
-
-    } catch (e) { console.error("Profile load error:", e); }
+        
+        // Фильтр: Все (для общего каталога)
+        const filterContainer = document.getElementById('filter-categories-container');
+        if (filterContainer) {
+            filterContainer.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement('div');
+                btn.className = 'chip-btn';
+                btn.innerText = cat.name;
+                if(window.filterState.categories.includes(cat.id)) btn.classList.add('active');
+                btn.onclick = () => toggleCategory(cat.id, btn);
+                filterContainer.appendChild(btn);
+            });
+        }
+    } catch (error) { console.error("Err cat:", error); }
 }
 
-function updateStatusModal(status, completedCount) {
-    const title = document.getElementById('modal-status-title');
-    const desc = document.getElementById('modal-status-desc');
-    const img = document.getElementById('modal-status-img');
-
-    if(title) title.innerText = status;
-    
-    if (status === 'Новичок') {
-        const needed = Math.max(0, 10 - completedCount);
-        if(desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
-        if(img) img.src = "icons/Новичок Без фона.png";
-    } else if (status === 'Опытный') {
-        if(desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
-        if(img) img.src = "icons/Супермэн без фона.png";
-    } else if (status === 'Штрафник') {
-        if(desc) desc.innerText = "Вы не можете записываться в новые складчины, пока не оплатите штраф";
-        if(img) img.src = "icons/Штрафник без фона.png";
-    }
-}
-
-// --- НАВИГАЦИЯ (ОБНОВЛЕНА) ---
+// --- НАВИГАЦИЯ ---
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(`view-${viewName}`).classList.add('active');
     
     const bottomNav = document.querySelector('.bottom-nav');
-    // Скрываем нижнее меню на вложенных страницах
-    if(viewName === 'product' || viewName === 'filter' || viewName === 'categories') {
+    // Скрываем меню на вложенных страницах: товар, фильтр, список категорий, внутри категории
+    if(['product', 'filter', 'categories', 'category-details'].includes(viewName)) {
         if(bottomNav) bottomNav.style.display = 'none';
     } else {
         if(bottomNav) bottomNav.style.display = 'flex';
@@ -191,7 +238,6 @@ function switchView(viewName) {
         updateBottomNav(viewName);
     }
 
-    // Если открыли страницу категорий - грузим список
     if (viewName === 'categories') {
         loadFullCategoriesList();
     }
@@ -229,10 +275,8 @@ function selectTab(tabElement) {
     if (tabName.includes("Завершённые")) {
         type = 'completed';
     } else if (tabName.includes("Мои")) {
-        // Пока грузим активные, так как API "my" еще не выделено
         type = 'active'; 
     }
-    
     loadItems(type);
 }
 
@@ -245,7 +289,7 @@ function selectTabByName(name) {
     });
 }
 
-// --- ФИЛЬТРЫ ---
+// --- ФИЛЬТРЫ (ОБЩИЙ КАТАЛОГ) ---
 function openFilter() { switchView('filter'); }
 function closeFilter() { switchView('catalog'); }
 
@@ -292,50 +336,11 @@ window.applyFilter = function() {
     loadItems(targetType);
 }
 
-// --- ЗАГРУЗЧИКИ ДАННЫХ ---
-async function loadCategories() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
-        const categories = await response.json();
-        
-        // Главная: только Топ 4
-        const homeGrid = document.querySelector('.categories-grid');
-        if (homeGrid) {
-            homeGrid.innerHTML = '';
-            categories.slice(0, 4).forEach(cat => {
-                const div = document.createElement('div');
-                div.className = 'category-card';
-                div.innerText = cat.name;
-                div.onclick = () => { 
-                    window.filterState.categories = [cat.id]; 
-                    switchView('catalog'); 
-                    loadItems('active'); 
-                };
-                homeGrid.appendChild(div);
-            });
-        }
-        
-        // Фильтр: Все
-        const filterContainer = document.getElementById('filter-categories-container');
-        if (filterContainer) {
-            filterContainer.innerHTML = '';
-            categories.forEach(cat => {
-                const btn = document.createElement('div');
-                btn.className = 'chip-btn';
-                btn.innerText = cat.name;
-                if(window.filterState.categories.includes(cat.id)) btn.classList.add('active');
-                btn.onclick = () => toggleCategory(cat.id, btn);
-                filterContainer.appendChild(btn);
-            });
-        }
-    } catch (error) { console.error("Err cat:", error); }
-}
-
+// --- ОБЩИЕ ЗАГРУЗЧИКИ ---
 async function loadTags() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/tags`, { headers: getHeaders() });
         const tags = await response.json();
-        
         const filterContainer = document.getElementById('filter-tags-container');
         if (filterContainer) {
             filterContainer.innerHTML = '';
@@ -355,21 +360,17 @@ async function loadHomeItems() {
     const container = document.getElementById('home-item-container');
     if(!container) return;
     container.innerHTML = '';
-
     try {
         const response = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&sort=new`, { headers: getHeaders() });
         const items = await response.json();
-        
         if (items.length === 0) {
             container.innerHTML = '<div style="padding:20px; text-align:center; color:#555;">Пока пусто</div>';
             return;
         }
-
         items.slice(0, 5).forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
         });
-
     } catch (e) { console.error("Home load error:", e); }
 }
 
@@ -413,6 +414,7 @@ async function loadItems(type) {
     } catch (error) { console.error("Load Items Error:", error); }
 }
 
+// --- КАРТОЧКА ТОВАРА И ФУНКЦИОНАЛ ---
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = 'big-card';
@@ -491,6 +493,61 @@ function createItemCard(item) {
     return card;
 }
 
+// --- ЗАГРУЗКА ПРОФИЛЯ ---
+async function loadUserProfile() {
+    if (!USER_ID) return;
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
+        const user = await response.json();
+        
+        const headerName = document.getElementById('header-username');
+        if(headerName) headerName.innerText = user.first_name || user.username || "Пользователь";
+
+        const profileName = document.getElementById('profile-username');
+        if(profileName) profileName.innerText = user.first_name || user.username || "Пользователь";
+
+        const profileStatus = document.getElementById('profile-status-text');
+        if(profileStatus) profileStatus.innerText = user.status;
+
+        const profileActive = document.getElementById('profile-active-count');
+        if(profileActive) profileActive.innerText = user.active_count;
+
+        const profileCompleted = document.getElementById('profile-completed-count');
+        if(profileCompleted) profileCompleted.innerText = user.completed_count;
+
+        const dateEl = document.getElementById('profile-join-date');
+        if(dateEl && user.registration_date) {
+            const date = new Date(user.registration_date);
+            const dateStr = date.toLocaleDateString('ru-RU');
+            dateEl.innerText = `Участник с ${dateStr}`;
+        }
+
+        updateStatusModal(user.status, user.completed_count);
+
+    } catch (e) { console.error("Profile load error:", e); }
+}
+
+function updateStatusModal(status, completedCount) {
+    const title = document.getElementById('modal-status-title');
+    const desc = document.getElementById('modal-status-desc');
+    const img = document.getElementById('modal-status-img');
+
+    if(title) title.innerText = status;
+    
+    if (status === 'Новичок') {
+        const needed = Math.max(0, 10 - completedCount);
+        if(desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
+        if(img) img.src = "icons/Новичок Без фона.png";
+    } else if (status === 'Опытный') {
+        if(desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
+        if(img) img.src = "icons/Супермэн без фона.png";
+    } else if (status === 'Штрафник') {
+        if(desc) desc.innerText = "Вы не можете записываться в новые складчины, пока не оплатите штраф";
+        if(img) img.src = "icons/Штрафник без фона.png";
+    }
+}
+
+// --- UTILS & SEARCH ---
 function performSearch(query) {
     window.currentSearchQuery = query.trim();
     switchView('catalog'); 
@@ -508,6 +565,7 @@ function formatDate(isoString) {
     } catch(e) { return ""; }
 }
 
+// --- ОТКРЫТИЕ ТОВАРА ---
 async function openProduct(id) {
     const bottomNav = document.querySelector('.bottom-nav');
     if(bottomNav) bottomNav.style.display = 'none';
@@ -605,8 +663,15 @@ async function openProduct(id) {
 
 function closeProduct() {
     document.getElementById('main-video-frame').src = "";
-    loadItems('active');
-    switchView('catalog');
+    
+    // Если мы внутри категории - возвращаемся туда
+    if(window.currentCategoryDetailsId) {
+        switchView('category-details');
+    } else {
+        // Иначе в общий каталог
+        switchView('catalog');
+        loadItems('active');
+    }
 }
 
 function switchVideo(platform) {

@@ -282,6 +282,25 @@
         </div>
     </div>
 
-    <script src="script.js?v=42"></script>
+    <div id="view-category-details" class="view">
+        <div class="filter-header">
+            <button class="back-btn" onclick="switchView('categories')">
+                <img src="icons/undo.svg" alt="Назад">
+            </button>
+            <div class="filter-title" id="cat-details-title">Название категории</div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" id="tab-cat-active" onclick="selectCategoryInnerTab('active')">Активные</div>
+            <div class="tab" id="tab-cat-completed" onclick="selectCategoryInnerTab('completed')">Завершённые</div>
+        </div>
+
+        <div class="section">
+            <div class="item-container" id="category-details-container">
+                </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=43"></script>
 </body>
 </html>
