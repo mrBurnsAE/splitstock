@@ -18,7 +18,7 @@ window.currentVideoLinks = {};
 window.currentItemId = null;
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
-window.currentUserStatus = null; // <-- Храним статус пользователя
+window.currentUserStatus = null; // Статус пользователя
 
 // Контекст навигации
 window.currentCategoryDetailsId = null;
@@ -26,16 +26,22 @@ window.isMyItemsContext = false;
 window.currentMyItemsType = 'active';
 
 // Состояние фильтра
-window.filterState = { sort: 'new', categories: [], tags: [] };
+window.filterState = {
+    sort: 'new',
+    categories: [],
+    tags: []
+};
 
+// --- ИНИЦИАЛИЗАЦИЯ ---
 document.addEventListener("DOMContentLoaded", () => {
     try {
         console.log("DOM Loaded. Starting init...");
-        loadUserProfile();
-        loadCategories(); 
-        loadTags();       
-        loadHomeItems(); 
-        loadItems('active'); 
+        
+        loadUserProfile(); // Грузим профиль и статус
+        loadCategories();  // Грузим категории
+        loadTags();        // Грузим теги
+        loadHomeItems();   // Грузим главную
+        loadItems('active'); // Грузим каталог (фоном)
 
         const searchInput = document.querySelector('.search-input');
         const filterBtn = document.querySelector('.filter-btn');
@@ -48,7 +54,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         }
-        if (filterBtn) filterBtn.onclick = openFilter;
+        
+        if (filterBtn) {
+            filterBtn.onclick = openFilter;
+        }
 
     } catch (e) { console.error("Init error:", e); }
 });
@@ -61,10 +70,10 @@ function getHeaders() {
 // --- НОВАЯ ФУНКЦИЯ ПРОВЕРКИ ШТРАФА ПРИ ОПЛАТЕ ---
 function checkPenaltyAndPay() {
     if (window.currentUserStatus === 'Штрафник') {
-        updateStatusModal('Штрафник', 0);
+        updateStatusModal('Штрафник', 0); // Показываем окно штрафа
         openModal();
     } else {
-        openPaymentModal('item');
+        openPaymentModal('item'); // Показываем окно оплаты товара
     }
 }
 
@@ -90,11 +99,14 @@ async function loadMyItems(type) {
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
     
     try {
+        // Добавляем joined=true
         let url = `${API_BASE_URL}/api/items?type=${type}&joined=true&page=1&sort=new&t=${Date.now()}`;
+        
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
         
         container.innerHTML = '';
+        
         if (items.length === 0) {
             let msg = "Список пуст";
             let img = "icons/Ничего нет без фона.png";
@@ -105,10 +117,12 @@ async function loadMyItems(type) {
                 </div>`;
             return;
         }
+
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
         });
+        
     } catch (error) {
         console.error("My items load error:", error);
         container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
@@ -149,6 +163,7 @@ async function loadCategoryItems(type) {
         const items = await response.json();
         
         container.innerHTML = '';
+        
         if (items.length === 0) {
             let msg = "Здесь пока ничего нет...";
             let img = "icons/Ничего нет без фона.png";
@@ -159,6 +174,7 @@ async function loadCategoryItems(type) {
                 </div>`;
             return;
         }
+
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
@@ -183,6 +199,7 @@ async function loadFullCategoriesList() {
         const categories = await response.json();
 
         container.innerHTML = '';
+
         if (categories.length === 0) {
             container.innerHTML = '<div style="padding:20px; text-align:center; color:#8e92a8;">Категорий нет</div>';
             return;
@@ -206,13 +223,14 @@ async function loadFullCategoriesList() {
             row.onclick = () => openCategoryDetails(cat.id, cat.name);
             container.appendChild(row);
         });
+
     } catch (e) {
         console.error("Full categories load error:", e);
         container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff7675;">Ошибка загрузки</div>';
     }
 }
 
-// --- ГЛАВНАЯ И ОБЩИЙ КАТАЛОГ ---
+// --- ГЛАВНАЯ: КАТЕГОРИИ ---
 async function loadCategories() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
@@ -302,6 +320,7 @@ async function loadItems(type) {
 
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
+        
         container.innerHTML = '';
         if (items.length === 0) {
             let msg = "Здесь пока ничего нет...";
@@ -317,6 +336,7 @@ async function loadItems(type) {
                 </div>`;
             return;
         }
+
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
@@ -324,6 +344,7 @@ async function loadItems(type) {
     } catch (error) { console.error("Load Items Error:", error); }
 }
 
+// --- КАРТОЧКА ТОВАРА ---
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = 'big-card';
@@ -402,6 +423,7 @@ function createItemCard(item) {
     return card;
 }
 
+// --- UTILS & SEARCH ---
 function performSearch(query) {
     window.currentSearchQuery = query.trim();
     switchView('catalog'); 
@@ -419,6 +441,7 @@ function formatDate(isoString) {
     } catch(e) { return ""; }
 }
 
+// --- ОТКРЫТИЕ ТОВАРА ---
 async function openProduct(id) {
     const bottomNav = document.querySelector('.bottom-nav');
     if(bottomNav) bottomNav.style.display = 'none';
@@ -516,6 +539,7 @@ async function openProduct(id) {
 
 function closeProduct() {
     document.getElementById('main-video-frame').src = "";
+    
     if(window.isMyItemsContext) {
         switchView('my-items');
         loadMyItems(window.currentMyItemsType);
@@ -531,8 +555,10 @@ function switchVideo(platform) {
     const wrapper = document.getElementById('video-wrapper-el');
     const iframe = document.getElementById('main-video-frame');
     const placeholder = document.getElementById('no-video-placeholder');
+    
     const btns = document.querySelectorAll('.platform-btn');
     btns.forEach(b => b.classList.remove('active'));
+    
     const btn = document.getElementById(`btn-${platform}`);
     if(btn) btn.classList.add('active');
 
@@ -574,7 +600,9 @@ function switchVideo(platform) {
         if (placeholder) placeholder.style.display = 'none';
         if (iframe) iframe.src = videoUrl;
         if (wrapper) wrapper.classList.add('video-mode');
-    } else { showPlaceholder(); }
+    } else {
+        showPlaceholder();
+    }
 }
 
 function showPlaceholder() {
@@ -606,6 +634,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
 
     if (status === 'published' || status === 'active' || status === 'scheduled') {
         if(statusText) statusText.innerText = "Активная складчина";
+        
         if (isJoined) {
             if(actionBtn) {
                 actionBtn.innerText = "Вы записаны";
@@ -656,7 +685,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
             } else {
                 if(actionBtn) {
                     actionBtn.innerText = "Оплатить взнос";
-                    // --- ОБНОВЛЕНО: ПРОВЕРКА ШТРАФА ---
                     actionBtn.onclick = () => checkPenaltyAndPay();
                 }
             }
@@ -672,11 +700,10 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
         if(statusText) statusText.innerText = "Складчина завершена";
         
         if (isJoined && paymentStatus !== 'paid') {
-            // --- НОВОЕ: ДОЛГ В ЗАВЕРШЕННОЙ ---
             if(actionBtn) {
                 actionBtn.innerText = "Оплатить (200₽)";
                 actionBtn.disabled = false;
-                actionBtn.style.backgroundColor = "#fdcb6e"; // Желтый цвет (внимание)
+                actionBtn.style.backgroundColor = "#fdcb6e";
                 actionBtn.style.color = "#2d3436";
                 actionBtn.onclick = () => checkPenaltyAndPay();
             }
