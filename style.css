@@ -145,14 +145,14 @@ h1, h2, h3, p { margin: 0; }
 .modal-overlay.open { display: flex; }
 .modal-content { background: var(--card-bg); padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 340px; }
 .modal-img {
-    width: 220px;  /* Сделали еще больше */
-    height: 220px;
+    width: 220px !important;  /* Принудительно 220 пикселей */
+    height: 220px !important; 
     object-fit: contain;
     margin-bottom: 20px;
     display: block;
     margin-left: auto;
     margin-right: auto;
-    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.3)); /* Тень еще мощнее */
 }
 .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
 .modal-text { color: var(--text-secondary); font-size: 16px; margin-bottom: 24px; line-height: 1.5; }
