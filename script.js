@@ -1,3 +1,7 @@
+window.onerror = function(message, source, lineno, colno, error) {
+    alert("ОШИБКА:\n" + message + "\nСтрока: " + lineno);
+};
+
 // --- НАСТРОЙКИ ---
 const API_BASE_URL = "https://api.splitstock.ru";
 
