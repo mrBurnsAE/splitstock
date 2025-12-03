@@ -19,12 +19,12 @@ window.currentItemId = null;
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
 
-// Контекст навигации (откуда пришли)
-window.currentCategoryDetailsId = null; // Если мы внутри категории
-window.isMyItemsContext = false;        // Если мы в "Моих складчинах"
-window.currentMyItemsType = 'active';   // Какой тип моих складчин смотрим
+// Контекст навигации
+window.currentCategoryDetailsId = null;
+window.isMyItemsContext = false;
+window.currentMyItemsType = 'active';
 
-// Состояние главного фильтра
+// Состояние фильтра
 window.filterState = {
     sort: 'new',
     categories: [],
@@ -62,8 +62,7 @@ function getHeaders() {
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
 }
 
-// --- ЛОГИКА "МОИ СКЛАДЧИНЫ" (ПРОФИЛЬ) ---
-
+// --- ЛОГИКА "МОИ СКЛАДЧИНЫ" ---
 function openMyItems(type) {
     window.isMyItemsContext = true;
     window.currentCategoryDetailsId = null;
@@ -85,7 +84,6 @@ async function loadMyItems(type) {
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
     
     try {
-        // Добавляем параметр joined=true
         let url = `${API_BASE_URL}/api/items?type=${type}&joined=true&page=1&sort=new&t=${Date.now()}`;
         
         const response = await fetch(url, { headers: getHeaders() });
@@ -116,15 +114,13 @@ async function loadMyItems(type) {
 }
 
 // --- ЛОГИКА "ВНУТРИ КАТЕГОРИИ" ---
-
 function openCategoryDetails(id, name) {
     window.currentCategoryDetailsId = id;
-    window.isMyItemsContext = false; // Сбрасываем контекст "Моих"
+    window.isMyItemsContext = false;
     
     const titleEl = document.getElementById('cat-details-title');
     if (titleEl) titleEl.innerText = name;
     
-    // Сброс табов
     document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-cat-active').classList.add('active');
     
@@ -142,18 +138,15 @@ function selectCategoryInnerTab(type) {
 async function loadCategoryItems(type) {
     const container = document.getElementById('category-details-container');
     if (!container) return;
-    
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
     
     try {
         const catId = window.currentCategoryDetailsId;
         let url = `${API_BASE_URL}/api/items?type=${type}&cat=${catId}&page=1&sort=new&t=${Date.now()}`;
-        
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
         
         container.innerHTML = '';
-        
         if (items.length === 0) {
             let msg = "Здесь пока ничего нет...";
             let img = "icons/Ничего нет без фона.png";
@@ -164,7 +157,6 @@ async function loadCategoryItems(type) {
                 </div>`;
             return;
         }
-
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
@@ -189,7 +181,6 @@ async function loadFullCategoriesList() {
         const categories = await response.json();
 
         container.innerHTML = '';
-
         if (categories.length === 0) {
             container.innerHTML = '<div style="padding:20px; text-align:center; color:#8e92a8;">Категорий нет</div>';
             return;
@@ -213,7 +204,6 @@ async function loadFullCategoriesList() {
             row.onclick = () => openCategoryDetails(cat.id, cat.name);
             container.appendChild(row);
         });
-
     } catch (e) {
         console.error("Full categories load error:", e);
         container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff7675;">Ошибка загрузки</div>';
@@ -296,14 +286,12 @@ async function loadItems(type) {
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
 
     try {
-        // Формируем URL
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
         
-        // --- НОВОЕ: Если тип 'all' (вкладка "Мои"), добавляем joined=true ---
+        // ВАЖНО: Если это вкладка "Мои" (type='all'), добавляем joined=true
         if (type === 'all') {
             url += '&joined=true';
         }
-        // ---------------------------------------------------------------------
 
         if (window.filterState.categories.length > 0) url += `&cat=${window.filterState.categories.join(',')}`;
         if (window.filterState.tags.length > 0) url += `&tags=${window.filterState.tags.join(',')}`;
@@ -313,9 +301,7 @@ async function loadItems(type) {
 
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
-        
         container.innerHTML = '';
-        
         if (items.length === 0) {
             let msg = "Здесь пока ничего нет...";
             let img = "icons/Ничего нет без фона.png";
@@ -330,7 +316,6 @@ async function loadItems(type) {
                 </div>`;
             return;
         }
-
         items.forEach(item => {
             const card = createItemCard(item);
             container.appendChild(card);
@@ -338,7 +323,7 @@ async function loadItems(type) {
     } catch (error) { console.error("Load Items Error:", error); }
 }
 
-// --- КАРТОЧКА ТОВАРА И ФУНКЦИОНАЛ ---
+// --- КАРТОЧКА ТОВАРА ---
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = 'big-card';
@@ -546,10 +531,6 @@ function closeProduct() {
     }
 }
 
-// ... Остальные функции (switchVideo, updateProductStatusUI и т.д.) без изменений ...
-// Я их включил в полный код выше, но здесь сокращаю для читаемости, так как они такие же.
-// Но в полный файл копируй то, что ВЫШЕ в блоке кода.
-
 function switchVideo(platform) {
     const wrapper = document.getElementById('video-wrapper-el');
     const iframe = document.getElementById('main-video-frame');
@@ -726,9 +707,10 @@ async function handleProductAction() {
         if (result.success) {
             openProduct(window.currentItemId);
         } else {
+            // --- ОБНОВЛЕНО: ЛОГИКА ШТРАФНИКА ---
             if (result.error === 'penalty') {
-                alert("Вы Штрафник! Оплатите штраф в боте.");
-                tg.close();
+                updateStatusModal('Штрафник', 0);
+                openModal();
             } else {
                 alert("Ошибка: " + (result.message || "Не удалось записаться"));
             }
@@ -745,28 +727,20 @@ async function handleProductAction() {
 
 async function leaveProduct() {
     if (!confirm("Точно хотите выйти из складчины?")) return;
-    
     const btn = document.getElementById('product-leave-btn');
     btn.disabled = true;
-
     try {
         const response = await fetch(`${API_BASE_URL}/api/leave`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ user_id: USER_ID, item_id: window.currentItemId })
         });
-        
         const result = await response.json();
-        
         if (result.success) {
             openProduct(window.currentItemId);
         } else {
             if (result.error === 'locked') {
-                tg.showPopup({
-                    title: 'Внимание',
-                    message: 'После объявления сбора средств, покинуть складчину невозможно.',
-                    buttons: [{type: 'ok'}]
-                });
+                tg.showPopup({ title: 'Внимание', message: 'После объявления сбора средств, покинуть складчину невозможно.', buttons: [{type: 'ok'}] });
             } else {
                 alert("Ошибка: " + (result.error || "Не удалось выйти"));
             }
@@ -794,10 +768,8 @@ function closePaymentModal() {
 
 async function selectPaymentMethod(method) {
     if (!window.pendingPaymentType) return;
-    
     const modalContent = document.querySelector('#modal-payment .modal-content');
     modalContent.style.opacity = '0.5';
-    
     try {
         const body = {
             user_id: USER_ID,
@@ -805,15 +777,12 @@ async function selectPaymentMethod(method) {
             type: window.pendingPaymentType,
             item_id: (window.pendingPaymentType === 'item') ? window.currentItemId : 0
         };
-
         const response = await fetch(`${API_BASE_URL}/api/payment/init`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(body)
         });
-        
         const result = await response.json();
-        
         if (result.success) {
             tg.close(); 
         } else {
@@ -827,7 +796,7 @@ async function selectPaymentMethod(method) {
     }
 }
 
-// --- ЗАГРУЗКА ПРОФИЛЯ ---
+// --- ЗАГРУЗКА ПРОФИЛЯ (ОБНОВЛЕНО) ---
 async function loadUserProfile() {
     if (!USER_ID) return;
     try {
@@ -861,13 +830,20 @@ async function loadUserProfile() {
     } catch (e) { console.error("Profile load error:", e); }
 }
 
+// --- ОБНОВЛЕНИЕ МОДАЛКИ СТАТУСА ---
 function updateStatusModal(status, completedCount) {
     const title = document.getElementById('modal-status-title');
     const desc = document.getElementById('modal-status-desc');
     const img = document.getElementById('modal-status-img');
+    const okBtn = document.getElementById('modal-status-ok-btn');
+    const penaltyBtns = document.getElementById('modal-status-penalty-btns');
 
     if(title) title.innerText = status;
-    
+
+    // Сброс видимости кнопок по умолчанию
+    if(okBtn) okBtn.style.display = 'block';
+    if(penaltyBtns) penaltyBtns.style.display = 'none';
+
     if (status === 'Новичок') {
         const needed = Math.max(0, 10 - completedCount);
         if(desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
@@ -876,8 +852,12 @@ function updateStatusModal(status, completedCount) {
         if(desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
         if(img) img.src = "icons/Супермэн без фона.png";
     } else if (status === 'Штрафник') {
-        if(desc) desc.innerText = "Вы не можете записываться в новые складчины, пока не оплатите штраф";
+        if(desc) desc.innerText = "Вы не можете записываться в новые складчины и оплачивать взносы, пока не оплатите штраф";
         if(img) img.src = "icons/Штрафник без фона.png";
+
+        // Переключаем кнопки
+        if(okBtn) okBtn.style.display = 'none';
+        if(penaltyBtns) penaltyBtns.style.display = 'flex';
     }
 }
 
@@ -887,7 +867,6 @@ function switchView(viewName) {
     document.getElementById(`view-${viewName}`).classList.add('active');
     
     const bottomNav = document.querySelector('.bottom-nav');
-    // Скрываем меню на вложенных страницах: товар, фильтр, список категорий, внутри категории, мои товары
     if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
         if(bottomNav) bottomNav.style.display = 'none';
     } else {
@@ -928,26 +907,17 @@ function updateBottomNav(activeView) {
 function selectTab(tabElement) {
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
     tabElement.classList.add('active');
-    
     const tabName = tabElement.innerText;
     let type = 'active';
-    
-    if (tabName.includes("Завершённые")) {
-        type = 'completed';
-    } else if (tabName.includes("Мои")) {
-        // Для вкладки "Мои складчины" используем тип 'all' (все статусы)
-        type = 'all'; 
-    }
-    
+    if (tabName.includes("Завершённые")) { type = 'completed'; }
+    else if (tabName.includes("Мои")) { type = 'all'; }
     loadItems(type);
 }
 
 function selectTabByName(name) {
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(t => {
-        if(t.innerText.includes(name)) {
-            selectTab(t);
-        }
+        if(t.innerText.includes(name)) { selectTab(t); }
     });
 }
 
@@ -963,24 +933,14 @@ window.selectSort = function(sortType, btnElement) {
 
 function toggleCategory(catId, btnElement) {
     const index = window.filterState.categories.indexOf(catId);
-    if (index === -1) {
-        window.filterState.categories.push(catId);
-        btnElement.classList.add('active');
-    } else {
-        window.filterState.categories.splice(index, 1);
-        btnElement.classList.remove('active');
-    }
+    if (index === -1) { window.filterState.categories.push(catId); btnElement.classList.add('active'); }
+    else { window.filterState.categories.splice(index, 1); btnElement.classList.remove('active'); }
 }
 
 function toggleTag(tag, btnElement) {
     const index = window.filterState.tags.indexOf(tag);
-    if (index === -1) {
-        window.filterState.tags.push(tag);
-        btnElement.classList.add('active');
-    } else {
-        window.filterState.tags.splice(index, 1);
-        btnElement.classList.remove('active');
-    }
+    if (index === -1) { window.filterState.tags.push(tag); btnElement.classList.add('active'); }
+    else { window.filterState.tags.splice(index, 1); btnElement.classList.remove('active'); }
 }
 
 window.resetFilter = function() {
@@ -996,150 +956,4 @@ window.applyFilter = function() {
     const activeTab = document.querySelector('.tab.active');
     if (activeTab && activeTab.innerText.includes('Завершённые')) targetType = 'completed';
     loadItems(targetType);
-}
-
-// --- ОБЩИЕ ЗАГРУЗЧИКИ ---
-async function loadCategories() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
-        const categories = await response.json();
-        
-        const homeGrid = document.querySelector('.categories-grid');
-        if (homeGrid) {
-            homeGrid.innerHTML = '';
-            categories.slice(0, 4).forEach(cat => {
-                const div = document.createElement('div');
-                div.className = 'category-card';
-                div.innerText = cat.name;
-                div.onclick = () => openCategoryDetails(cat.id, cat.name);
-                homeGrid.appendChild(div);
-            });
-        }
-        
-        const filterContainer = document.getElementById('filter-categories-container');
-        if (filterContainer) {
-            filterContainer.innerHTML = '';
-            categories.forEach(cat => {
-                const btn = document.createElement('div');
-                btn.className = 'chip-btn';
-                btn.innerText = cat.name;
-                if(window.filterState.categories.includes(cat.id)) btn.classList.add('active');
-                btn.onclick = () => toggleCategory(cat.id, btn);
-                filterContainer.appendChild(btn);
-            });
-        }
-    } catch (error) { console.error("Err cat:", error); }
-}
-
-async function loadTags() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/tags`, { headers: getHeaders() });
-        const tags = await response.json();
-        const filterContainer = document.getElementById('filter-tags-container');
-        if (filterContainer) {
-            filterContainer.innerHTML = '';
-            tags.forEach(tag => {
-                const btn = document.createElement('div');
-                btn.className = 'chip-btn';
-                btn.innerText = tag;
-                if(window.filterState.tags.includes(tag)) btn.classList.add('active');
-                btn.onclick = () => toggleTag(tag, btn);
-                filterContainer.appendChild(btn);
-            });
-        }
-    } catch (e) { console.error("Err tags:", e); }
-}
-
-async function loadHomeItems() {
-    const container = document.getElementById('home-item-container');
-    if(!container) return;
-    container.innerHTML = '';
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&sort=new`, { headers: getHeaders() });
-        const items = await response.json();
-        if (items.length === 0) {
-            container.innerHTML = '<div style="padding:20px; text-align:center; color:#555;">Пока пусто</div>';
-            return;
-        }
-        items.slice(0, 5).forEach(item => {
-            const card = createItemCard(item);
-            container.appendChild(card);
-        });
-    } catch (e) { console.error("Home load error:", e); }
-}
-
-async function loadItems(type) {
-    const catalogView = document.getElementById('view-catalog');
-    let container = catalogView.querySelector('.item-container');
-    
-    // Показываем индикатор загрузки
-    container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
-
-    try {
-        // Формируем базовый URL
-        let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
-
-        // --- ВАЖНО: Если это вкладка "Мои" (type='all'), добавляем фильтр по участию ---
-        if (type === 'all') {
-            url += '&joined=true';
-        }
-        // ------------------------------------------------------------------------------
-
-        // Добавляем категории из фильтра
-        if (window.filterState.categories.length > 0) {
-            url += `&cat=${window.filterState.categories.join(',')}`;
-        }
-        
-        // Добавляем теги из фильтра
-        if (window.filterState.tags.length > 0) {
-            url += `&tags=${window.filterState.tags.join(',')}`;
-        }
-        
-        // Добавляем сортировку
-        url += `&sort=${window.filterState.sort}`;
-        
-        // Добавляем поисковый запрос, если есть
-        if (window.currentSearchQuery) {
-            url += `&q=${encodeURIComponent(window.currentSearchQuery)}`;
-        }
-        
-        // Добавляем timestamp, чтобы избежать кеширования браузером
-        url += `&t=${Date.now()}`;
-
-        // Делаем запрос
-        const response = await fetch(url, { headers: getHeaders() });
-        const items = await response.json();
-        
-        // Очищаем контейнер перед рендером
-        container.innerHTML = '';
-        
-        // Если список пуст
-        if (items.length === 0) {
-            let msg = "Здесь пока ничего нет...";
-            let img = "icons/Ничего нет без фона.png";
-            
-            // Если включены фильтры или поиск, меняем сообщение
-            if (window.currentSearchQuery || window.filterState.categories.length > 0) {
-                msg = "Ничего не найдено...";
-                img = "icons/Поиск без фона.png";
-            }
-            
-            container.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
-                    <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
-                    <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">${msg}</div>
-                </div>`;
-            return;
-        }
-
-        // Рендерим карточки
-        items.forEach(item => {
-            const card = createItemCard(item);
-            container.appendChild(card);
-        });
-
-    } catch (error) { 
-        console.error("Load Items Error:", error);
-        container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff7675;">Ошибка загрузки</div>';
-    }
 }
