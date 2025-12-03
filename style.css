@@ -481,19 +481,21 @@ h1, h2, h3, p { margin: 0; }
 /* --- СТИЛИ ДЛЯ КНОПОК ШТРАФНИКА --- */
 #modal-status-penalty-btns {
     width: 100%;
-    display: flex; /* Убеждаемся, что flex включен */
-    gap: 12px !important; /* Расстояние между кнопками */
-    margin-top: 24px !important; /* Отступ сверху */
+    display: flex; /* Включаем Flexbox */
+    gap: 12px !important;
+    margin-top: 24px !important;
 }
 
-/* Кнопка "Оплатить штраф" (красная) - делаем её главной и широкой */
+/* Кнопка "Оплатить штраф" - широкая */
 #modal-status-penalty-btns .btn-primary {
-    flex: 2; /* Занимает 2 части пространства */
-    white-space: nowrap; /* Текст гарантированно в одну строку */
-    padding: 14px 10px; /* Чуть меньше боковые отступы, чтобы влезло на совсем узких экранах */
+    flex: 2 !important; /* Занимает 2 части места */
+    width: auto !important; /* Отключаем 100% ширину */
+    white-space: nowrap;
+    padding: 14px 10px;
 }
 
-/* Кнопка "Назад" (серая) - делаем её поуже */
+/* Кнопка "Назад" - узкая */
 #modal-status-penalty-btns .btn-secondary {
-    flex: 1; /* Занимает 1 часть пространства */
+    flex: 1 !important; /* Занимает 1 часть места */
+    width: auto !important; /* Отключаем 100% ширину */
 }
