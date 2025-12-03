@@ -144,7 +144,13 @@ h1, h2, h3, p { margin: 0; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(28, 31, 46, 0.9); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; display: none; }
 .modal-overlay.open { display: flex; }
 .modal-content { background: var(--card-bg); padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 340px; }
-.modal-img { width: 140px; margin-bottom: 24px; }
+.modal-img {
+    width: 140px;  /* Было меньше, увеличили */
+    height: 140px; /* Было меньше, увеличили */
+    object-fit: contain;
+    margin-bottom: 20px; /* Чуть больше отступ снизу */
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); /* Добавили красивую тень */
+}
 .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
 .modal-text { color: var(--text-secondary); font-size: 16px; margin-bottom: 24px; line-height: 1.5; }
 
@@ -467,4 +473,24 @@ h1, h2, h3, p { margin: 0; }
 
 .cat-stats span {
     white-space: nowrap;
+}
+
+/* --- СТИЛИ ДЛЯ КНОПОК ШТРАФНИКА --- */
+#modal-status-penalty-btns {
+    width: 100%;
+    display: flex; /* Убеждаемся, что flex включен */
+    gap: 12px !important; /* Расстояние между кнопками */
+    margin-top: 24px !important; /* Отступ сверху */
+}
+
+/* Кнопка "Оплатить штраф" (красная) - делаем её главной и широкой */
+#modal-status-penalty-btns .btn-primary {
+    flex: 2; /* Занимает 2 части пространства */
+    white-space: nowrap; /* Текст гарантированно в одну строку */
+    padding: 14px 10px; /* Чуть меньше боковые отступы, чтобы влезло на совсем узких экранах */
+}
+
+/* Кнопка "Назад" (серая) - делаем её поуже */
+#modal-status-penalty-btns .btn-secondary {
+    flex: 1; /* Занимает 1 часть пространства */
 }
