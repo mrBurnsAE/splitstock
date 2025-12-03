@@ -1,14 +1,10 @@
-// ==========================================
-// ЧАСТЬ 1: НАСТРОЙКИ, НАВИГАЦИЯ, МОДАЛКИ
-// ==========================================
-
+// --- НАСТРОЙКИ ---
 const API_BASE_URL = "https://api.splitstock.ru";
 
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// Получаем ID пользователя
 let USER_ID = tg.initDataUnsafe?.user?.id;
 const urlParams = new URLSearchParams(window.location.search);
 const debugId = urlParams.get('uid');
@@ -22,7 +18,7 @@ window.currentVideoLinks = {};
 window.currentItemId = null;
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
-window.currentUserStatus = null; 
+window.currentUserStatus = null;
 
 // Навигация
 window.currentCategoryDetailsId = null;
@@ -32,15 +28,10 @@ window.currentMyItemsType = 'active';
 // Фильтр
 window.filterState = { sort: 'new', categories: [], tags: [] };
 
-// --- ЛОВУШКА ОШИБОК (Оставь для отладки) ---
-window.onerror = function(message, source, lineno, colno, error) {
-    // alert("Error: " + message + " at line " + lineno); // Можно раскомментировать если снова будут проблемы
-};
-
 // --- ИНИЦИАЛИЗАЦИЯ ---
 document.addEventListener("DOMContentLoaded", () => {
     try {
-        console.log("DOM Loaded. Starting...");
+        console.log("DOM Loaded. Starting init...");
         loadUserProfile();
         loadCategories(); 
         loadTags();       
@@ -68,75 +59,20 @@ function getHeaders() {
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
 }
 
-// --- НАВИГАЦИЯ (SWITCH VIEW) ---
-function switchView(viewName) {
-    // Скрываем все экраны
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    // Показываем нужный
-    const target = document.getElementById(`view-${viewName}`);
-    if (target) target.classList.add('active');
+// --- НОВАЯ СИСТЕМА УВЕДОМЛЕНИЙ (ВМЕСТО ALERT) ---
+function showCustomAlert(msg, title = "SplitStockBot") {
+    const el = document.getElementById('modal-alert');
+    const titleEl = document.getElementById('modal-alert-title');
+    const msgEl = document.getElementById('modal-alert-msg');
     
-    // Управление нижним меню
-    const bottomNav = document.querySelector('.bottom-nav');
-    if (bottomNav) {
-        if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
-            bottomNav.style.display = 'none';
-        } else {
-            bottomNav.style.display = 'flex';
-        }
-    }
-
-    if (['home', 'catalog', 'profile'].includes(viewName)) {
-        updateBottomNav(viewName);
-    }
-
-    if (viewName === 'categories') {
-        loadFullCategoriesList();
-    }
-}
-
-function updateBottomNav(activeView) {
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const iconHome = document.getElementById('icon-home');
-    const iconCatalog = document.getElementById('icon-catalog');
-    const iconProfile = document.getElementById('icon-profile');
-    
-    if(iconHome) iconHome.src = 'icons/home.svg';
-    if(iconCatalog) iconCatalog.src = 'icons/apps.svg';
-    if(iconProfile) iconProfile.src = 'icons/user.svg';
-
-    if(activeView === 'home') {
-        document.querySelector('.nav-item:nth-child(2)')?.classList.add('active');
-        if(iconHome) iconHome.src = 'icons/home active.svg';
-    } else if(activeView === 'catalog') {
-        document.querySelector('.nav-item:nth-child(1)')?.classList.add('active');
-        if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
-    } else if(activeView === 'profile') {
-        document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
-        if(iconProfile) iconProfile.src = 'icons/user active.svg';
-    }
-}
-
-// --- МОДАЛЬНЫЕ ОКНА ---
-function openModal() { 
-    const el = document.getElementById('modal-status');
-    if(el) el.classList.add('open'); 
-}
-function closeModal() { 
-    const el = document.getElementById('modal-status');
-    if(el) el.classList.remove('open'); 
-}
-
-function openPaymentModal(type) {
-    window.pendingPaymentType = type;
-    const el = document.getElementById('modal-payment');
+    if(titleEl) titleEl.innerText = title;
+    if(msgEl) msgEl.innerText = msg;
     if(el) el.classList.add('open');
 }
 
-function closePaymentModal() {
-    const el = document.getElementById('modal-payment');
+function closeAlertModal() {
+    const el = document.getElementById('modal-alert');
     if(el) el.classList.remove('open');
-    window.pendingPaymentType = null;
 }
 
 // --- НОВАЯ ФУНКЦИЯ ПРОВЕРКИ ШТРАФА ---
@@ -149,7 +85,7 @@ function checkPenaltyAndPay() {
     }
 }
 
-// --- ОТКРЫТИЕ РАЗДЕЛОВ ---
+// --- ЛОГИКА "МОИ СКЛАДЧИНЫ" ---
 function openMyItems(type) {
     window.isMyItemsContext = true;
     window.currentCategoryDetailsId = null;
@@ -163,38 +99,6 @@ function openMyItems(type) {
     switchView('my-items');
     loadMyItems(type);
 }
-
-function openCategoryDetails(id, name) {
-    window.currentCategoryDetailsId = id;
-    window.isMyItemsContext = false;
-    
-    const titleEl = document.getElementById('cat-details-title');
-    if (titleEl) titleEl.innerText = name;
-    
-    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-cat-active').classList.add('active');
-    
-    switchView('category-details');
-    loadCategoryItems('active');
-}
-
-function openFilter() { switchView('filter'); }
-function closeFilter() { switchView('catalog'); }
-
-// --- ВСПОМОГАТЕЛЬНЫЕ ---
-function formatDate(isoString) {
-    if(!isoString) return "";
-    try {
-        const d = new Date(isoString);
-        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-    } catch(e) { return ""; }
-}
-
-// ==========================================
-// ЧАСТЬ 2: ЗАГРУЗКА ДАННЫХ И ЛОГИКА ТОВАРА
-// ==========================================
-
-// --- ЗАГРУЗЧИКИ СПИСКОВ ---
 
 async function loadMyItems(type) {
     const container = document.getElementById('my-items-container');
@@ -210,6 +114,28 @@ async function loadMyItems(type) {
         console.error("My items error:", error);
         container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
     }
+}
+
+// --- ЛОГИКА "ВНУТРИ КАТЕГОРИИ" ---
+function openCategoryDetails(id, name) {
+    window.currentCategoryDetailsId = id;
+    window.isMyItemsContext = false;
+    
+    const titleEl = document.getElementById('cat-details-title');
+    if (titleEl) titleEl.innerText = name;
+    
+    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-cat-active').classList.add('active');
+    
+    switchView('category-details');
+    loadCategoryItems('active');
+}
+
+function selectCategoryInnerTab(type) {
+    document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
+    const activeTabId = type === 'active' ? 'tab-cat-active' : 'tab-cat-completed';
+    document.getElementById(activeTabId).classList.add('active');
+    loadCategoryItems(type);
 }
 
 async function loadCategoryItems(type) {
@@ -229,6 +155,7 @@ async function loadCategoryItems(type) {
     }
 }
 
+// --- ЛОГИКА ОБЩЕГО КАТАЛОГА ---
 async function loadItems(type) {
     const container = document.querySelector('#view-catalog .item-container');
     if(!container) return;
@@ -236,7 +163,7 @@ async function loadItems(type) {
 
     try {
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
-        if (type === 'all') url += '&joined=true'; // Для "Моих" во вкладках каталога
+        if (type === 'all') url += '&joined=true'; 
 
         if (window.filterState.categories.length > 0) url += `&cat=${window.filterState.categories.join(',')}`;
         if (window.filterState.tags.length > 0) url += `&tags=${window.filterState.tags.join(',')}`;
@@ -246,23 +173,7 @@ async function loadItems(type) {
 
         const response = await fetch(url, { headers: getHeaders() });
         const items = await response.json();
-        
-        container.innerHTML = '';
-        if (items.length === 0) {
-            let msg = "Здесь пока ничего нет...";
-            let img = "icons/Ничего нет без фона.png";
-            if (window.currentSearchQuery || window.filterState.categories.length > 0) {
-                msg = "Ничего не найдено...";
-                img = "icons/Поиск без фона.png";
-            }
-            container.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
-                    <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
-                    <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">${msg}</div>
-                </div>`;
-            return;
-        }
-        items.forEach(item => container.appendChild(createItemCard(item)));
+        renderItems(container, items);
     } catch (error) { 
         console.error("Load Items Error:", error); 
         container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff7675;">Ошибка загрузки</div>';
@@ -272,11 +183,16 @@ async function loadItems(type) {
 function renderItems(container, items) {
     container.innerHTML = '';
     if (items.length === 0) {
+        let msg = "Здесь пока ничего нет...";
         let img = "icons/Ничего нет без фона.png";
+        if (window.currentSearchQuery || window.filterState.categories.length > 0) {
+            msg = "Ничего не найдено...";
+            img = "icons/Поиск без фона.png";
+        }
         container.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; height: 50vh;">
                 <img src="${img}" style="width: 140px; margin-bottom: 20px; opacity: 0.9;">
-                <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">Список пуст</div>
+                <div style="color: #a2a5b9; font-size: 16px; font-weight: 600;">${msg}</div>
             </div>`;
         return;
     }
@@ -294,7 +210,6 @@ function createItemCard(item) {
     let percent = 0;
     let barClass = "progress-fill";
 
-    // Логика прогресса
     if (item.needed_participants > 0) {
         if (item.status === 'fundraising') {
             percent = (item.paid_participants / item.needed_participants) * 100;
@@ -306,7 +221,6 @@ function createItemCard(item) {
     }
     if (percent > 100) percent = 100;
 
-    // Логика статусов
     if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
         if (item.is_joined) statusText = "✅ Вы участвуете";
     } else if (item.status === 'fundraising') {
@@ -356,7 +270,6 @@ async function openProduct(id) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-product').classList.add('active');
     
-    // Сброс UI
     document.getElementById('product-header-title').innerText = "Загрузка...";
     switchVideo('none');
     window.currentItemId = id;
@@ -431,6 +344,53 @@ function closeProduct() {
     }
 }
 
+function switchVideo(platform) {
+    const wrapper = document.getElementById('video-wrapper-el');
+    const iframe = document.getElementById('main-video-frame');
+    const placeholder = document.getElementById('no-video-placeholder');
+    const btns = document.querySelectorAll('.platform-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(`btn-${platform}`);
+    if(btn) btn.classList.add('active');
+
+    let videoUrl = "";
+    if (window.currentVideoLinks) {
+        if (platform === 'youtube') videoUrl = window.currentVideoLinks.youtube;
+        if (platform === 'vk') videoUrl = window.currentVideoLinks.vk;
+        if (platform === 'rutube') videoUrl = window.currentVideoLinks.rutube;
+    }
+    
+    if (!videoUrl) { showPlaceholder(); return; }
+
+    if (videoUrl.includes('<iframe')) {
+        const match = videoUrl.match(/src=["']([^"']+)["']/);
+        if (match) videoUrl = match[1];
+    } else if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+        if (videoUrl.includes('watch?v=')) videoUrl = videoUrl.replace('watch?v=', 'embed/').split('&')[0];
+        else if (videoUrl.includes('youtu.be/')) videoUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
+    } else if (videoUrl.includes('vk.com/video')) {
+        const match = videoUrl.match(/video(-?\d+)_(\d+)/);
+        if (match) videoUrl = `https://vk.com/video_ext.php?oid=${match[1]}&id=${match[2]}&hd=2`;
+    } else if (videoUrl.includes('rutube.ru/video/')) {
+        videoUrl = videoUrl.replace('rutube.ru/video/', 'rutube.ru/play/embed/');
+    }
+
+    if (platform !== 'none') {
+        if (iframe) { iframe.style.display = 'block'; iframe.src = videoUrl; }
+        if (placeholder) placeholder.style.display = 'none';
+        if (wrapper) wrapper.classList.add('video-mode');
+    } else { showPlaceholder(); }
+}
+
+function showPlaceholder() {
+    const wrapper = document.getElementById('video-wrapper-el');
+    const iframe = document.getElementById('main-video-frame');
+    const placeholder = document.getElementById('no-video-placeholder');
+    if (iframe) iframe.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'block';
+    if (wrapper) wrapper.classList.remove('video-mode');
+}
+
 function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) {
     const actionBtn = document.getElementById('product-action-btn');
     const statusText = document.getElementById('product-status-text');
@@ -441,31 +401,24 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
     if (leaveBtn) leaveBtn.style.display = 'none';
     statusText.style.color = "";
 
-    // Сброс кнопки
     actionBtn.disabled = false;
     actionBtn.style.opacity = "1";
     actionBtn.style.backgroundColor = ""; 
     actionBtn.onclick = handleProductAction;
 
     if (status === 'published' || status === 'active' || status === 'scheduled') {
-        statusText.innerText = "Активная складчина";
         if (isJoined) {
             actionBtn.innerText = "Вы записаны"; actionBtn.disabled = true; actionBtn.style.opacity = "0.7";
             leaveBtn.style.display = 'flex'; 
         } else { actionBtn.innerText = "Записаться"; }
     } 
     else if (status === 'fundraising_scheduled') {
-        const dateStr = formatDate(startAt);
-        statusText.innerText = `Сбор средств назначен на ${dateStr}`;
         if (isJoined) {
             actionBtn.innerText = "Вы записаны"; actionBtn.disabled = true; actionBtn.style.opacity = "0.7";
         } else { actionBtn.innerText = "Записаться"; }
     }
     else if (status === 'fundraising') {
-        const endDate = formatDate(endAt);
-        statusText.innerText = `Идёт сбор средств до ${endDate}`;
         if (fundraisingRow) fundraisingRow.style.display = 'flex';
-        
         if (isJoined) {
             if (paymentStatus === 'paid') {
                 actionBtn.innerText = "Оплачено"; actionBtn.disabled = true; actionBtn.style.backgroundColor = "#2ecc71";
@@ -476,7 +429,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
         } else { actionBtn.innerText = "Набор закрыт"; actionBtn.disabled = true; }
     } 
     else if (status === 'completed') {
-        statusText.innerText = "Складчина завершена";
         if (isJoined && paymentStatus !== 'paid') {
             actionBtn.innerText = "Оплатить (200₽)";
             actionBtn.style.backgroundColor = "#fdcb6e"; actionBtn.style.color = "#2d3436";
@@ -507,33 +459,48 @@ async function handleProductAction() {
                 updateStatusModal('Штрафник', 0);
                 openModal();
             } else {
-                alert("Ошибка: " + (result.message || "Не удалось"));
+                showCustomAlert(result.message || "Не удалось записаться", "Ошибка");
             }
             btn.innerText = originalText; btn.disabled = false;
         }
     } catch (error) {
-        console.error(error); alert("Ошибка соединения"); btn.innerText = originalText; btn.disabled = false;
+        console.error(error); showCustomAlert("Ошибка соединения", "Ошибка"); btn.innerText = originalText; btn.disabled = false;
     }
 }
 
 async function leaveProduct() {
-    if (!confirm("Точно хотите выйти?")) return;
-    const btn = document.getElementById('product-leave-btn');
-    btn.disabled = true;
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/leave`, {
+    tg.showConfirm("Точно хотите выйти из складчины?", (ok) => {
+        if (!ok) return;
+        
+        const btn = document.getElementById('product-leave-btn');
+        btn.disabled = true;
+        
+        fetch(`${API_BASE_URL}/api/leave`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ user_id: USER_ID, item_id: window.currentItemId })
-        });
-        const result = await response.json();
-        if (result.success) openProduct(window.currentItemId);
-        else {
-            if(result.error === 'locked') alert('Уже нельзя выйти.');
-            else alert("Ошибка выхода");
-            btn.disabled = false;
-        }
-    } catch (error) { console.error(error); alert("Ошибка"); btn.disabled = false; }
+        }).then(r => r.json()).then(result => {
+            if (result.success) openProduct(window.currentItemId);
+            else {
+                if(result.error === 'locked') showCustomAlert('После объявления сбора средств выйти нельзя.', 'Внимание');
+                else showCustomAlert(result.error || "Ошибка выхода", "Ошибка");
+                btn.disabled = false;
+            }
+        }).catch(e => { showCustomAlert("Ошибка соединения"); btn.disabled = false; });
+    });
+}
+
+function openModal() { document.getElementById('modal-status').classList.add('open'); }
+function closeModal() { document.getElementById('modal-status').classList.remove('open'); }
+
+function openPaymentModal(type) {
+    window.pendingPaymentType = type;
+    document.getElementById('modal-payment').classList.add('open');
+}
+
+function closePaymentModal() {
+    document.getElementById('modal-payment').classList.remove('open');
+    window.pendingPaymentType = null;
 }
 
 async function selectPaymentMethod(method) {
@@ -550,33 +517,26 @@ async function selectPaymentMethod(method) {
         });
         const result = await response.json();
         if (result.success) tg.close(); 
-        else { alert("Ошибка: " + result.error); modalContent.style.opacity = '1'; }
-    } catch (error) { console.error(error); alert("Ошибка"); modalContent.style.opacity = '1'; }
+        else { showCustomAlert("Ошибка создания счета: " + (result.error || "Unknown")); modalContent.style.opacity = '1'; }
+    } catch (error) { console.error(error); showCustomAlert("Ошибка соединения"); modalContent.style.opacity = '1'; }
 }
 
-// --- ПРОФИЛЬ И ЗАГРУЗЧИКИ ---
 async function loadUserProfile() {
     if (!USER_ID) return;
     try {
         const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
         const user = await response.json();
-        
         window.currentUserStatus = user.status;
         
-        const headerName = document.getElementById('header-username');
-        if(headerName) headerName.innerText = user.first_name || user.username || "Пользователь";
+        const ids = ['header-username', 'profile-username'];
+        ids.forEach(id => { const el = document.getElementById(id); if(el) el.innerText = user.first_name || user.username || "Пользователь"; });
 
-        const profileName = document.getElementById('profile-username');
-        if(profileName) profileName.innerText = user.first_name || user.username || "Пользователь";
-
-        const profileStatus = document.getElementById('profile-status-text');
-        if(profileStatus) profileStatus.innerText = user.status;
-
-        const profileActive = document.getElementById('profile-active-count');
-        if(profileActive) profileActive.innerText = user.active_count;
-
-        const profileCompleted = document.getElementById('profile-completed-count');
-        if(profileCompleted) profileCompleted.innerText = user.completed_count;
+        const els = {
+            'profile-status-text': user.status,
+            'profile-active-count': user.active_count,
+            'profile-completed-count': user.completed_count
+        };
+        for (const [id, val] of Object.entries(els)) { const el = document.getElementById(id); if(el) el.innerText = val; }
 
         const dateEl = document.getElementById('profile-join-date');
         if(dateEl && user.registration_date) {
@@ -613,59 +573,62 @@ function updateStatusModal(status, completedCount) {
     }
 }
 
-// --- VIDEO PLAYER UTILS ---
-function switchVideo(platform) {
-    const wrapper = document.getElementById('video-wrapper-el');
-    const iframe = document.getElementById('main-video-frame');
-    const placeholder = document.getElementById('no-video-placeholder');
-    const btns = document.querySelectorAll('.platform-btn');
-    btns.forEach(b => b.classList.remove('active'));
-    const btn = document.getElementById(`btn-${platform}`);
-    if(btn) btn.classList.add('active');
-
-    let videoUrl = "";
-    if (window.currentVideoLinks) {
-        if (platform === 'youtube') videoUrl = window.currentVideoLinks.youtube;
-        if (platform === 'vk') videoUrl = window.currentVideoLinks.vk;
-        if (platform === 'rutube') videoUrl = window.currentVideoLinks.rutube;
-    }
-    
-    if (!videoUrl) { showPlaceholder(); return; }
-
-    if (videoUrl.includes('<iframe')) {
-        const match = videoUrl.match(/src=["']([^"']+)["']/);
-        if (match) videoUrl = match[1];
-    }
-    
-    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-        if (videoUrl.includes('watch?v=')) videoUrl = videoUrl.replace('watch?v=', 'embed/').split('&')[0];
-        else if (videoUrl.includes('youtu.be/')) videoUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
-    }
-    else if (videoUrl.includes('vk.com/video')) {
-        const match = videoUrl.match(/video(-?\d+)_(\d+)/);
-        if (match) videoUrl = `https://vk.com/video_ext.php?oid=${match[1]}&id=${match[2]}&hd=2`;
-    }
-    else if (videoUrl.includes('rutube.ru/video/')) {
-        videoUrl = videoUrl.replace('rutube.ru/video/', 'rutube.ru/play/embed/');
-    }
-
-    if (platform !== 'none') {
-        if (iframe) { iframe.style.display = 'block'; iframe.src = videoUrl; }
-        if (placeholder) placeholder.style.display = 'none';
-        if (wrapper) wrapper.classList.add('video-mode');
-    } else { showPlaceholder(); }
+// --- UTILS & SEARCH ---
+function performSearch(query) {
+    window.currentSearchQuery = query.trim();
+    switchView('catalog'); 
+    let activeTabType = 'active';
+    const activeTab = document.querySelector('.tab.active');
+    if(activeTab && activeTab.innerText.includes('Завершённые')) activeTabType = 'completed';
+    loadItems(activeTabType);
 }
 
-function showPlaceholder() {
-    const wrapper = document.getElementById('video-wrapper-el');
-    const iframe = document.getElementById('main-video-frame');
-    const placeholder = document.getElementById('no-video-placeholder');
-    if (iframe) iframe.style.display = 'none';
-    if (placeholder) placeholder.style.display = 'block';
-    if (wrapper) wrapper.classList.remove('video-mode');
+function formatDate(isoString) {
+    if(!isoString) return "";
+    try {
+        const d = new Date(isoString);
+        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    } catch(e) { return ""; }
 }
 
-// --- TABS & FILTERS ---
+// --- НАВИГАЦИЯ ---
+function switchView(viewName) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById(`view-${viewName}`).classList.add('active');
+    
+    const bottomNav = document.querySelector('.bottom-nav');
+    if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
+        if(bottomNav) bottomNav.style.display = 'none';
+    } else {
+        if(bottomNav) bottomNav.style.display = 'flex';
+    }
+
+    if (['home', 'catalog', 'profile'].includes(viewName)) updateBottomNav(viewName);
+    if (viewName === 'categories') loadFullCategoriesList();
+}
+
+function updateBottomNav(activeView) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const iconHome = document.getElementById('icon-home');
+    const iconCatalog = document.getElementById('icon-catalog');
+    const iconProfile = document.getElementById('icon-profile');
+    
+    if(iconHome) iconHome.src = 'icons/home.svg';
+    if(iconCatalog) iconCatalog.src = 'icons/apps.svg';
+    if(iconProfile) iconProfile.src = 'icons/user.svg';
+
+    if(activeView === 'home') {
+        document.querySelector('.nav-item:nth-child(2)')?.classList.add('active');
+        if(iconHome) iconHome.src = 'icons/home active.svg';
+    } else if(activeView === 'catalog') {
+        document.querySelector('.nav-item:nth-child(1)')?.classList.add('active');
+        if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
+    } else if(activeView === 'profile') {
+        document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
+        if(iconProfile) iconProfile.src = 'icons/user active.svg';
+    }
+}
+
 function selectTab(el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
@@ -680,8 +643,12 @@ function selectTabByName(name) {
     tabs.forEach(t => { if(t.innerText.includes(name)) selectTab(t); });
 }
 
-function selectSort(sort, btn) {
-    window.filterState.sort = sort;
+// --- FILTERS ---
+function openFilter() { switchView('filter'); }
+function closeFilter() { switchView('catalog'); }
+
+window.selectSort = function(sortType, btn) {
+    window.filterState.sort = sortType;
     document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 }
@@ -710,16 +677,18 @@ function applyFilter() {
     let type = 'active';
     const activeTab = document.querySelector('.tab.active');
     if(activeTab && activeTab.innerText.includes('Завершённые')) type = 'completed';
-    else if(activeTab && activeTab.innerText.includes('Мои')) type = 'all';
     loadItems(type);
 }
 
-function loadCategories() {
-    fetch(`${API_BASE_URL}/api/categories`, {headers:getHeaders()}).then(r=>r.json()).then(cats=>{
+// --- LOADERS ---
+async function loadCategories() {
+    try {
+        const r = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
+        const cats = await r.json();
         const homeGrid = document.querySelector('.categories-grid');
-        if(homeGrid) {
+        if (homeGrid) {
             homeGrid.innerHTML = '';
-            cats.slice(0,4).forEach(c => {
+            cats.slice(0, 4).forEach(c => {
                 const d = document.createElement('div'); d.className='category-card'; d.innerText=c.name;
                 d.onclick=()=>{ openCategoryDetails(c.id, c.name); };
                 homeGrid.appendChild(d);
@@ -734,11 +703,13 @@ function loadCategories() {
                 filterCont.appendChild(b);
             });
         }
-    });
+    } catch(e){ console.error(e); }
 }
 
-function loadTags() {
-    fetch(`${API_BASE_URL}/api/tags`, {headers:getHeaders()}).then(r=>r.json()).then(tags=>{
+async function loadTags() {
+    try {
+        const r = await fetch(`${API_BASE_URL}/api/tags`, { headers: getHeaders() });
+        const tags = await r.json();
         const cont = document.getElementById('filter-tags-container');
         if(cont) {
             cont.innerHTML='';
@@ -748,25 +719,44 @@ function loadTags() {
                 cont.appendChild(b);
             });
         }
-    });
+    } catch(e){ console.error(e); }
 }
 
-function loadHomeItems() {
+async function loadHomeItems() {
     const cont = document.getElementById('home-item-container');
     if(!cont) return;
-    fetch(`${API_BASE_URL}/api/items?type=active&page=1&sort=new`, {headers:getHeaders()}).then(r=>r.json()).then(items=>{
+    try {
+        const r = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&sort=new`, { headers: getHeaders() });
+        const items = await r.json();
         cont.innerHTML='';
         if(items.length===0) cont.innerHTML='<div style="padding:20px;text-align:center;">Пусто</div>';
-        items.slice(0,5).forEach(i=>cont.appendChild(createItemCard(i)));
-    });
+        else items.slice(0,5).forEach(i=>cont.appendChild(createItemCard(i)));
+    } catch(e){ console.error(e); }
 }
 
-function performSearch(q) {
-    window.currentSearchQuery = q.trim();
-    switchView('catalog');
-    const activeTab = document.querySelector('.tab.active');
-    let type = 'active';
-    if(activeTab && activeTab.innerText.includes('Завершённые')) type = 'completed';
-    else if(activeTab && activeTab.innerText.includes('Мои')) type = 'all';
-    loadItems(type);
+async function loadFullCategoriesList() {
+    const container = document.getElementById('all-categories-container');
+    if (!container) return;
+    try {
+        const r = await fetch(`${API_BASE_URL}/api/categories`, { headers: getHeaders() });
+        const cats = await r.json();
+        container.innerHTML = '';
+        cats.forEach(cat => {
+            const row = document.createElement('div');
+            row.className = 'category-row';
+            const iconSrc = cat.icon_url || "icons/folder.svg";
+            row.innerHTML = `
+                <img src="${iconSrc}" class="cat-icon" onerror="this.src='icons/folder.svg'">
+                <div class="cat-info">
+                    <div class="cat-name">${cat.name}</div>
+                    <div class="cat-stats">
+                        <span style="color: #00cec9;">Активные: ${cat.active_count || 0}</span>
+                        <span style="color: #a2a5b9; margin-left: 8px;">Завершённые: ${cat.completed_count || 0}</span>
+                    </div>
+                </div>
+            `;
+            row.onclick = () => openCategoryDetails(cat.id, cat.name);
+            container.appendChild(row);
+        });
+    } catch(e){ console.error(e); }
 }
