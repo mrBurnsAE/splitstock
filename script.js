@@ -352,14 +352,16 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
     } 
     else if (status === 'fundraising_scheduled') {
         const dateStr = formatDate(startAt);
-        statusText.innerText = `Сбор средств назначен на ${dateStr}`;
+        // Добавлено время и (МСК)
+        statusText.innerText = `Сбор средств назначен на ${dateStr} (МСК)`;
         if (isJoined) {
             actionBtn.innerText = "Вы записаны"; actionBtn.disabled = true; actionBtn.style.opacity = "0.7";
         } else { actionBtn.innerText = "Записаться"; }
     }
     else if (status === 'fundraising') {
         const endDate = formatDate(endAt);
-        statusText.innerText = `Идёт сбор средств до ${endDate}`;
+        // Добавлено время и (МСК)
+        statusText.innerText = `Идёт сбор средств до ${endDate} (МСК)`;
         if (fundraisingRow) fundraisingRow.style.display = 'flex';
         
         if (isJoined) {
@@ -407,7 +409,14 @@ function formatDate(isoString) {
     if(!isoString) return "";
     try {
         const d = new Date(isoString);
-        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+        // Форматируем в вид: 00:00 07.12.2025
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        
+        return `${hours}:${minutes} ${day}.${month}.${year}`;
     } catch(e) { return ""; }
 }
 
