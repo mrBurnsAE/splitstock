@@ -10,13 +10,26 @@ tg.expand();
 
 // --- ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ И ПАРАМЕТРОВ ---
 const urlParams = new URLSearchParams(window.location.search);
+
+// 1. Парсинг ID пользователя
 let USER_ID = tg.initDataUnsafe?.user?.id;
 const debugId = urlParams.get('uid');
 if (debugId) USER_ID = parseInt(debugId);
 if (!USER_ID) USER_ID = 0;
 
-// Проверяем параметр item_id из URL (для Deep Link)
-const startItemId = urlParams.get('item_id');
+// 2. Парсинг ID товара для Deep Link
+// Ищем 'item_id' в URL (приходит из кнопки) или в start_param (приходит из меню бота)
+let startItemId = urlParams.get('item_id');
+
+// Если в URL нет, проверяем tg.initDataUnsafe.start_param
+// (на случай если Telegram передал параметры иначе)
+if (!startItemId && tg.initDataUnsafe?.start_param) {
+    const param = tg.initDataUnsafe.start_param;
+    if (param.startsWith('open_item_')) {
+        startItemId = param.replace('open_item_', '');
+    }
+}
+
 if (startItemId) {
     window.currentItemId = parseInt(startItemId);
 }
@@ -25,7 +38,7 @@ console.log("WebApp initialized. User ID:", USER_ID, "Start Item:", startItemId)
 
 // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 window.currentVideoLinks = {};
-window.currentItemId = null;
+// window.currentItemId уже может быть установлен выше
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
 window.currentUserStatus = null; 
@@ -38,7 +51,7 @@ window.currentMyItemsType = 'active';
 // Фильтр
 window.filterState = { sort: 'new', categories: [], tags: [] };
 
-// --- ИНИЦИАЛИЗАЦИЯ ---
+// --- ИНИЦИАЛИЗАЦИЯ DOM ---
 document.addEventListener("DOMContentLoaded", () => {
     try {
         console.log("DOM Loaded. Starting...");
@@ -63,7 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // --- АВТОМАТИЧЕСКОЕ ОТКРЫТИЕ ТОВАРА ---
         if (window.currentItemId) {
-            openProduct(window.currentItemId);
+            // Небольшая задержка помогает интерфейсу прогрузиться перед переключением
+            setTimeout(() => {
+                openProduct(window.currentItemId);
+            }, 100);
         }
 
     } catch (e) { console.error("Init error:", e); }
