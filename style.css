@@ -174,7 +174,17 @@ h1, h2, h3, p { margin: 0; }
 .modal-text { color: var(--text-secondary); font-size: 16px; margin-bottom: 24px; line-height: 1.5; }
 
 /* --- Buttons --- */
-.btn-primary { background: var(--accent-gradient); color: white; border: none; width: 100%; padding: 16px; border-radius: 8px; font-size: 17px; font-weight: 700; cursor: pointer; }
+.btn-primary { 
+    background: var(--accent-gradient); 
+    color: white; 
+    border: none; 
+    width: 100%; 
+    padding: 16px; 
+    border-radius: 8px; 
+    font-size: 17px;
+    font-weight: 700; 
+    cursor: pointer; 
+}
 
 /* --- PRODUCT PAGE --- */
 #view-product { padding-bottom: 110px; background: var(--bg-color); min-height: 100vh; position: relative; z-index: 200; }
