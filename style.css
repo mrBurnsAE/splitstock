@@ -556,3 +556,48 @@ h1, h2, h3, p { margin: 0; }
     flex: 1 !important; /* Занимает 1 часть места */
     width: auto !important; /* Отключаем 100% ширину */
 }
+
+/* --- PRELOADER --- */
+#preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    transition: opacity 0.3s ease;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(108, 92, 231, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 15px;
+}
+
+.loader-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Скрываем контент пока он не готов (опционально, но полезно) */
+.view {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.view.active.loaded {
+    opacity: 1;
+}

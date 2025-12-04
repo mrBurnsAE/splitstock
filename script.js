@@ -2,7 +2,6 @@
 // ЧАСТЬ 1: НАСТРОЙКИ, НАВИГАЦИЯ, МОДАЛКИ
 // ==========================================
 
-// ⚠️ ВАЖНО: При локальном тесте замените на http://127.0.0.1:8000
 const API_BASE_URL = "https://api.splitstock.ru";
 
 const tg = window.Telegram.WebApp;
@@ -12,16 +11,12 @@ tg.expand();
 // --- ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ И ПАРАМЕТРОВ ---
 const urlParams = new URLSearchParams(window.location.search);
 
-// 1. Парсинг ID пользователя
 let USER_ID = tg.initDataUnsafe?.user?.id;
 const debugId = urlParams.get('uid');
 if (debugId) USER_ID = parseInt(debugId);
 if (!USER_ID) USER_ID = 0;
 
-// 2. Парсинг ID товара для Deep Link
 let startItemId = urlParams.get('item_id');
-
-// Если в URL нет, проверяем tg.initDataUnsafe.start_param
 if (!startItemId && tg.initDataUnsafe?.start_param) {
     const param = tg.initDataUnsafe.start_param;
     if (param.startsWith('open_item_')) {
@@ -35,32 +30,32 @@ if (startItemId) {
 
 console.log("WebApp initialized. User ID:", USER_ID, "Start Item:", startItemId);
 
-// --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 window.currentVideoLinks = {};
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
 window.currentUserStatus = null; 
-
-// Навигация
 window.currentCategoryDetailsId = null;
 window.isMyItemsContext = false;
 window.currentMyItemsType = 'active';
-
-// Фильтр
 window.filterState = { sort: 'new', categories: [], tags: [] };
 
-// --- ИНИЦИАЛИЗАЦИЯ DOM ---
-document.addEventListener("DOMContentLoaded", () => {
+// --- ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (LOADING) ---
+document.addEventListener("DOMContentLoaded", async () => {
     try {
-        console.log("DOM Loaded. Starting...");
+        console.log("DOM Loaded. Starting App Initialization...");
         
-        // Загружаем профиль (аватарка теперь грузится внутри этой функции)
-        loadUserProfile();
-        
-        loadCategories(); 
-        loadTags();       
-        loadHomeItems(); 
-        loadItems('active'); 
+        // Показываем прелоадер (хотя он и так есть в HTML, для надежности)
+        const preloader = document.getElementById('preloader');
+        if(preloader) preloader.style.opacity = '1';
+
+        // Запускаем все запросы параллельно и ждем их выполнения
+        await Promise.all([
+            loadUserProfile(),
+            loadCategories(),
+            loadTags(),
+            loadHomeItems(),
+            loadItems('active')
+        ]);
 
         const searchInput = document.querySelector('.search-input');
         const filterBtn = document.querySelector('.filter-btn');
@@ -75,14 +70,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (filterBtn) filterBtn.onclick = openFilter;
 
-        // --- АВТОМАТИЧЕСКОЕ ОТКРЫТИЕ ТОВАРА ---
+        // Если есть стартовый товар - открываем его
         if (window.currentItemId) {
-            setTimeout(() => {
-                openProduct(window.currentItemId);
-            }, 100);
+            await openProduct(window.currentItemId);
         }
 
-    } catch (e) { console.error("Init error:", e); }
+        // Все загружено, скрываем прелоадер
+        if(preloader) {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+                
+                // Плавно показываем основной вид
+                const activeView = document.querySelector('.view.active');
+                if(activeView) activeView.classList.add('loaded');
+                
+            }, 300); // Ждем пока пройдет анимация opacity
+        }
+
+    } catch (e) { 
+        console.error("Init error:", e);
+        // Даже если ошибка, убираем прелоадер, чтобы не висел вечно
+        const preloader = document.getElementById('preloader');
+        if(preloader) preloader.style.display = 'none';
+        showCustomAlert("Ошибка загрузки данных. Проверьте интернет.", "Ошибка");
+    }
 });
 
 function getHeaders() {
@@ -90,7 +102,6 @@ function getHeaders() {
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
 }
 
-// --- ФУНКЦИЯ ПРОВЕРКИ ШТРАФА ---
 function checkPenaltyAndPay() {
     if (window.currentUserStatus === 'Штрафник') {
         updateStatusModal('Штрафник', 0);
@@ -100,7 +111,6 @@ function checkPenaltyAndPay() {
     }
 }
 
-// --- ПОЛУЧЕНИЕ ФАЙЛОВ ---
 async function getFiles() {
     const btn = document.getElementById('product-action-btn');
     const originalText = btn.innerText;
@@ -129,11 +139,18 @@ async function getFiles() {
     }
 }
 
-// --- НАВИГАЦИЯ ---
 function switchView(viewName) {
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(el => {
+        el.classList.remove('active');
+        el.classList.remove('loaded'); // Сбрасываем анимацию
+    });
+    
     const target = document.getElementById(`view-${viewName}`);
-    if (target) target.classList.add('active');
+    if (target) {
+        target.classList.add('active');
+        // Небольшой хак для плавного появления при переключении
+        setTimeout(() => target.classList.add('loaded'), 10);
+    }
     
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) {
@@ -175,7 +192,6 @@ function updateBottomNav(activeView) {
     }
 }
 
-// --- УВЕДОМЛЕНИЯ И МОДАЛКИ ---
 function showCustomAlert(msg, title = "SplitStockBot") {
     const el = document.getElementById('modal-alert');
     const titleEl = document.getElementById('modal-alert-title');
@@ -204,7 +220,6 @@ function closePaymentModal() {
     window.pendingPaymentType = null;
 }
 
-// --- ОТКРЫТИЕ РАЗДЕЛОВ ---
 function openMyItems(type) {
     window.isMyItemsContext = true;
     window.currentCategoryDetailsId = null;
@@ -233,17 +248,14 @@ function closeFilter() { switchView('catalog'); }
 // ЧАСТЬ 2: ЗАГРУЗКА И UI
 // ==========================================
 
-// --- ЗАГРУЗКА ПРОФИЛЯ (С НОВОЙ ЛОГИКОЙ АВАТАРКИ) ---
 async function loadUserProfile() {
     if (!USER_ID) return;
     try {
-        // Добавляем timestamp для сброса кэша запроса
         const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}?t=${Date.now()}`, { headers: getHeaders() });
         const user = await response.json();
         
         window.currentUserStatus = user.status;
         
-        // Заполняем текстовые поля
         const ids = ['header-username', 'profile-username'];
         ids.forEach(id => { 
             const el = document.getElementById(id); 
@@ -266,18 +278,26 @@ async function loadUserProfile() {
             dateEl.innerText = `Участник с ${d.toLocaleDateString('ru-RU')}`; 
         }
         
-        // --- АВАТАРКА ИЗ API ---
         if (user.avatar_url) {
             const headerAvatar = document.getElementById('header-avatar');
             const profileAvatar = document.getElementById('profile-avatar');
-            
-            // Добавляем timestamp к URL картинки, чтобы браузер обновил её, если она изменилась
             const avatarSrc = `${user.avatar_url}?v=${new Date().getTime()}`;
             
-            if (headerAvatar) headerAvatar.src = avatarSrc;
-            if (profileAvatar) profileAvatar.src = avatarSrc;
+            if (headerAvatar) {
+                headerAvatar.src = avatarSrc;
+                headerAvatar.style.opacity = '1';
+            }
+            if (profileAvatar) {
+                profileAvatar.src = avatarSrc;
+                profileAvatar.style.opacity = '1';
+            }
+        } else {
+            // Если аватарки нет, показываем заглушку
+            const headerAvatar = document.getElementById('header-avatar');
+            const profileAvatar = document.getElementById('profile-avatar');
+            if (headerAvatar) headerAvatar.style.opacity = '1';
+            if (profileAvatar) profileAvatar.style.opacity = '1';
         }
-        // -----------------------
 
         updateStatusModal(user.status, user.completed_count);
     } catch (e) { console.error("Profile load error:", e); }

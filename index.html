@@ -9,11 +9,16 @@
 </head>
 <body>
 
+    <div id="preloader">
+        <div class="spinner"></div>
+        <div class="loader-text">Загрузка...</div>
+    </div>
+
     <div id="view-home" class="view active">
         <div class="header">
             <div class="user-info">
-                <img src="icons/Logo Telegram.svg" alt="Avatar" class="user-avatar" id="header-avatar">
-                <div class="user-name" id="header-username">Загрузка...</div>
+                <img src="icons/Logo Telegram.svg" alt="Avatar" class="user-avatar" id="header-avatar" style="opacity: 0; transition: opacity 0.3s;">
+                <div class="user-name" id="header-username"></div>
             </div>
         </div>
 
@@ -22,8 +27,7 @@
                 <h2 class="section-title">Категории</h2>
                 <a href="#" class="link-all" onclick="switchView('categories')">Смотреть все</a>
             </div>
-            <div class="categories-grid">
-                </div>
+            <div class="categories-grid"></div>
         </div>
 
         <div class="banner">
@@ -41,8 +45,7 @@
             <div class="section-header">
                 <h2 class="section-title">Топ 5 новых складчин</h2>
             </div>
-            <div class="home-item-list" id="home-item-container">
-               </div>
+            <div class="home-item-list" id="home-item-container"></div>
         </div>
     </div>
 
@@ -55,8 +58,7 @@
         </div>
 
         <div class="section">
-            <div class="full-categories-list" id="all-categories-container">
-                </div>
+            <div class="full-categories-list" id="all-categories-container"></div>
         </div>
     </div>
 
@@ -82,16 +84,15 @@
         </div>
 
         <div class="section">
-            <div class="item-container">
-                </div>
+            <div class="item-container"></div>
         </div>
     </div>
 
     <div id="view-profile" class="view">
         <div class="section" style="text-align: center; padding-top: 40px;">
-            <img src="icons/Logo Telegram.svg" class="user-avatar" id="profile-avatar" style="width: 80px; height: 80px; margin-bottom: 10px;">
-            <h2 style="font-size: 22px; font-weight: 700;" id="profile-username">Username</h2>
-            <p style="color: var(--text-secondary); font-size: 14px;" id="profile-join-date">Участник с ...</p>
+            <img src="icons/Logo Telegram.svg" class="user-avatar" id="profile-avatar" style="width: 80px; height: 80px; margin-bottom: 10px; opacity: 0; transition: opacity 0.3s;">
+            <h2 style="font-size: 22px; font-weight: 700;" id="profile-username"></h2>
+            <p style="color: var(--text-secondary); font-size: 14px;" id="profile-join-date"></p>
         </div>
 
         <div class="section">
@@ -100,7 +101,7 @@
                     <img src="icons/status.svg" alt="Статус" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Статус</div>
-                        <div style="font-size: 16px; font-weight: 700;" id="profile-status-text">Загрузка...</div>
+                        <div style="font-size: 16px; font-weight: 700;" id="profile-status-text">...</div>
                     </div>
                 </button>
 
@@ -108,7 +109,7 @@
                     <img src="icons/folder.svg" alt="Активные" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Активные складчины</div>
-                        <div style="font-size: 16px; font-weight: 700;" id="profile-active-count">0</div>
+                        <div style="font-size: 16px; font-weight: 700;" id="profile-active-count">...</div>
                     </div>
                 </button>
 
@@ -116,7 +117,7 @@
                     <img src="icons/archive.svg" alt="Завершенные" class="profile-btn-icon">
                     <div style="text-align: left;">
                         <div style="font-size: 12px; color: var(--text-secondary);">Завершённые складчины</div>
-                        <div style="font-size: 16px; font-weight: 700;" id="profile-completed-count">0</div>
+                        <div style="font-size: 16px; font-weight: 700;" id="profile-completed-count">...</div>
                     </div>
                 </button>
             </div>
@@ -128,7 +129,7 @@
             <button class="back-btn" onclick="closeProduct()">
                 <img src="icons/undo.svg" alt="Назад">
             </button>
-            <div class="header-title" id="product-header-title">Название</div>
+            <div class="header-title" id="product-header-title"></div>
         </div>
 
         <div class="media-container">
@@ -156,29 +157,27 @@
         </div>
 
         <div class="product-info">
-            <p class="product-desc" id="product-desc">
-                ...
-            </p>
+            <p class="product-desc" id="product-desc"></p>
             <a href="#" class="product-link-external" id="product-link-ext">🔗 Подробная информация</a>
 
             <div class="tags-block">
-                <div id="product-category" class="tag-category">#Категория</div>
-                <div id="product-tags" class="tag-list">#Tag1 #Tag2</div>
+                <div id="product-category" class="tag-category"></div>
+                <div id="product-tags" class="tag-list"></div>
             </div>
 
             <div class="price-block">
-                <div>Стоимость <span id="product-price-orig" style="color: white; font-weight: 700;">$0</span></div>
-                <div>Взнос <span id="product-price-contrib" style="color: white; font-weight: 700;">0₽</span></div>
+                <div>Стоимость <span id="product-price-orig" style="color: white; font-weight: 700;"></span></div>
+                <div>Взнос <span id="product-price-contrib" style="color: white; font-weight: 700;"></span></div>
             </div>
 
             <div class="progress-section-large">
                 <div class="progress-labels">
                     <span id="participants-label">Количество участников</span>
-                    <span id="participants-count" style="font-weight: 700;">0/0</span>
+                    <span id="participants-count" style="font-weight: 700;"></span>
                 </div>
                 <div class="progress-labels" id="fundraising-label-row" style="display:none; margin-top:4px;">
                     <span style="color: #a2a5b9;">Прогресс сбора средств</span>
-                    <span id="fundraising-count" style="font-weight: 700;">0/0</span>
+                    <span id="fundraising-count" style="font-weight: 700;"></span>
                 </div>
 
                 <div class="progress-bar large">
@@ -186,15 +185,11 @@
                 </div>
             </div>
 
-            <div class="product-status-text" id="product-status-text">
-                ...
-            </div>
+            <div class="product-status-text" id="product-status-text"></div>
         </div>
 
         <div class="product-action-bar">
-            <button class="btn-primary" id="product-action-btn" onclick="handleProductAction()">
-                Записаться
-            </button>
+            <button class="btn-primary" id="product-action-btn" onclick="handleProductAction()">Записаться</button>
             <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
                 <img src="icons/cross.svg" width="24">
             </button>
@@ -219,14 +214,10 @@
     <div class="modal-overlay" id="modal-status">
         <div class="modal-content">
             <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 5px;">Ваш статус</div>
-            
             <img src="icons/Новичок Без фона.png" class="modal-img" id="modal-status-img">
-            
-            <div class="modal-title" id="modal-status-title">Новичок</div>
-            <div class="modal-text" id="modal-status-desc">Загрузка информации...</div>
-            
+            <div class="modal-title" id="modal-status-title"></div>
+            <div class="modal-text" id="modal-status-desc"></div>
             <button class="btn-primary" id="modal-status-ok-btn" onclick="closeModal()">OK</button>
-
             <div id="modal-status-penalty-btns" style="display: none; gap: 10px; margin-top: 15px;">
                 <button class="btn-primary" style="background: linear-gradient(90deg, #ff4757 0%, #ff6b81 100%);" onclick="closeModal(); openPaymentModal('penalty')">Оплатить штраф</button>
                 <button class="btn-secondary" onclick="closeModal()">Назад</button>
@@ -238,7 +229,6 @@
         <div class="modal-content">
             <img src="icons/Оплата Без фона.png" class="payment-img" alt="Payment">
             <div class="payment-title">Выберите способ оплаты</div>
-            
             <div class="payment-buttons">
                 <button class="pay-method-btn yoo" onclick="selectPaymentMethod('yoomoney')">
                     <img src="icons/ЮMoney.svg" alt="ЮMoney">
@@ -249,10 +239,7 @@
                     CryptoPay
                 </button>
             </div>
-            
-            <button class="payment-cancel-btn" onclick="closePaymentModal()">
-                Отмена
-            </button>
+            <button class="payment-cancel-btn" onclick="closePaymentModal()">Отмена</button>
         </div>
     </div>
 
@@ -263,7 +250,6 @@
             </button>
             <div class="filter-title">Фильтр</div>
         </div>
-
         <div class="filter-section">
             <div class="sort-buttons">
                 <button class="sort-btn active" onclick="selectSort('new', this)">Новые</button>
@@ -271,19 +257,14 @@
                 <button class="sort-btn" onclick="selectSort('popular', this)">Популярные</button>
             </div>
         </div>
-
         <div class="filter-section">
             <div class="filter-section-title">Категории</div>
-            <div class="chips-grid" id="filter-categories-container">
-            </div>
+            <div class="chips-grid" id="filter-categories-container"></div>
         </div>
-
         <div class="filter-section">
             <div class="filter-section-title">Теги</div>
-            <div class="chips-grid" id="filter-tags-container">
-            </div>
+            <div class="chips-grid" id="filter-tags-container"></div>
         </div>
-
         <div class="filter-actions">
             <button class="btn-secondary" onclick="resetFilter()">Сбросить</button>
             <button class="btn-primary" onclick="applyFilter()">Применить</button>
@@ -295,17 +276,14 @@
             <button class="back-btn" onclick="switchView('categories')">
                 <img src="icons/undo.svg" alt="Назад">
             </button>
-            <div class="filter-title" id="cat-details-title">Название категории</div>
+            <div class="filter-title" id="cat-details-title"></div>
         </div>
-
         <div class="tabs">
             <div class="tab active" id="tab-cat-active" onclick="selectCategoryInnerTab('active')">Активные</div>
             <div class="tab" id="tab-cat-completed" onclick="selectCategoryInnerTab('completed')">Завершённые</div>
         </div>
-
         <div class="section">
-            <div class="item-container" id="category-details-container">
-                </div>
+            <div class="item-container" id="category-details-container"></div>
         </div>
     </div>
 
@@ -316,24 +294,20 @@
             </button>
             <div class="filter-title" id="my-items-title">Мои складчины</div>
         </div>
-
         <div class="section">
-            <div class="item-container" id="my-items-container">
-                </div>
+            <div class="item-container" id="my-items-container"></div>
         </div>
     </div>
 
     <div class="modal-overlay" id="modal-alert">
         <div class="modal-content">
             <img src="icons/info.svg" class="modal-img" id="modal-alert-img" style="width: 80px !important; height: 80px !important; margin-bottom: 15px;">
-            
             <div class="modal-title" id="modal-alert-title">SplitStockBot</div>
             <div class="modal-text" id="modal-alert-msg">Сообщение</div>
-            
             <button class="btn-primary" onclick="closeAlertModal()">Понятно</button>
         </div>
     </div>
 
-    <script src="script.js?v=66"></script>
+    <script src="script.js?v=67"></script>
 </body>
 </html>
