@@ -951,13 +951,17 @@ async function loadBanners() {
             condition: () => hasUnpaidItems && status !== 'Штрафник',
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Неоплаченная складчина</div>
-                    <div class="banner-subtitle">Оплати взнос, чтобы не получить штраф.</div>
+                    <div class="banner-title">Не забудь<br>оплатить!</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        Оплати взнос,<br>
+                        чтобы не стать<br>
+                        Штрафником
+                    </div>
                     <button class="banner-btn" onclick="openMyItems('active')">
-                        К оплате
+                        Оплатить
                     </button>
                 </div>
-                <img src="icons/status.svg" class="banner-img" style="filter: brightness(10) opacity(0.5);">
+                <img src="icons/Времени мало без фона.png" class="banner-img">
             `
         },
         {

@@ -744,9 +744,50 @@ h1, h2, h3, p { margin: 0; }
     z-index: 2;
 }
 
-/* 3. Unpaid (Неоплачено - Оранжевый/Предупреждение) */
+/* 3. Unpaid (Неоплачено - Плавный Оранжевый) */
 .banner.unpaid {
-    background: linear-gradient(135deg, #e17055 0%, #fab1a0 100%);
+    /* Градиент: от темного к оранжевому (#e17055) */
+    background: linear-gradient(90deg, #25283a 0%, #4a3b3b 50%, #e17055 100%);
+    display: flex;
+    align-items: center; /* Центрируем контент по вертикали */
+}
+
+/* Настройки картинки (Аналогично Штрафнику) */
+.banner.unpaid .banner-img {
+    height: 85%;
+    width: auto;
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%); /* Идеальный центр */
+    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
+}
+
+/* Заголовок */
+.banner.unpaid .banner-title {
+    font-size: 26px;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Подзаголовок */
+.banner.unpaid .banner-subtitle {
+    position: relative;
+    z-index: 2;
+}
+
+/* Кнопка */
+.banner.unpaid .banner-btn {
+    background: #ffffff;
+    color: #2d3436; /* Темный текст на белой кнопке */
+    font-size: 15px;
+    padding: 12px 22px;
+    margin-top: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
 }
 
 /* 4. Info/Help (Помощь - Синий) */
