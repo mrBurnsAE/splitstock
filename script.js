@@ -752,22 +752,26 @@ async function loadHomeItems() {
 
 function loadUserAvatar() {
     try {
-        // Берем данные юзера из WebApp
+        // Берем данные юзера
         const user = tg.initDataUnsafe?.user;
         
-        // Если у юзера есть фото
+        // ВРЕМЕННАЯ ОТЛАДКА: Раскомментируйте строчку ниже, чтобы увидеть данные при запуске
+        alert(JSON.stringify(user));
+
         if (user && user.photo_url) {
             const headerAvatar = document.getElementById('header-avatar');
             const profileAvatar = document.getElementById('profile-avatar');
             
-            // Обновляем аватарку в шапке (Главная)
+            // Обновляем в шапке
             if (headerAvatar) {
                 headerAvatar.src = user.photo_url;
             }
             
-            // Обновляем аватарку в профиле
+            // Обновляем в профиле
             if (profileAvatar) {
                 profileAvatar.src = user.photo_url;
+            } else {
+                console.warn("Не найден элемент #profile-avatar. Проверьте index.html");
             }
         }
     } catch (e) {
