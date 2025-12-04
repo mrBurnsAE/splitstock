@@ -933,7 +933,11 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Ты стал<br>Штрафником</div>
-                    <div class="banner-subtitle">Оплати штраф 500₽, чтобы продолжить пользоваться ботом!</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        Оплати штраф 500₽,<br>
+                        чтобы продолжить<br>
+                        пользоваться ботом!
+                    </div>
                     <button class="banner-btn" onclick="openPaymentModal('penalty')">
                         Оплатить штраф
                     </button>
