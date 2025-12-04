@@ -986,16 +986,20 @@ async function loadBanners() {
         {
             id: 'novice_tip',
             type: 'success',
+            // Показываем только Новичкам
             condition: () => status === 'Новичок',
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Стань Опытным</div>
-                    <div class="banner-subtitle">Участвуй в 10 складчинах для доступа к архиву.</div>
+                    <div class="banner-title">Получи статус<br>Опытного<br>пользователя</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        чтобы оплачивать взносы<br>
+                        в завершённых складчинах
+                    </div>
                     <button class="banner-btn" onclick="openModal()">
-                        Мой статус
+                        Проверить статус
                     </button>
                 </div>
-                <img src="icons/Новичок Без фона.png" class="banner-img">
+                <img src="icons/Супермэн 2 без фона.png" class="banner-img">
             `
         },
         {

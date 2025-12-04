@@ -846,9 +846,50 @@ h1, h2, h3, p { margin: 0; }
     background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
 }
 
-/* 6. Success/Experienced (Опытный - Зеленый) */
+/* 6. Success/Experienced (Опытный - Плавный Зеленый) */
 .banner.success {
-    background: linear-gradient(135deg, #00b894 0%, #55efc4 100%);
+    /* Градиент: от темного к зеленому (#2ecc71) */
+    background: linear-gradient(90deg, #1f2533 0%, #27ae60 50%, #2ecc71 100%);
+    display: flex;
+    align-items: center;
+}
+
+/* Настройки картинки */
+.banner.success .banner-img {
+    height: 85%;
+    width: auto;
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
+}
+
+/* Заголовок */
+.banner.success .banner-title {
+    font-size: 22px; /* Чуть меньше, так как 3 строки текста */
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Подзаголовок */
+.banner.success .banner-subtitle {
+    position: relative;
+    z-index: 2;
+}
+
+/* Кнопка */
+.banner.success .banner-btn {
+    background: #ffffff;
+    color: #27ae60; /* Зеленый текст */
+    font-size: 15px;
+    padding: 12px 22px;
+    margin-top: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
 }
 
 /* 7. Hot/90% (Горящие - Желтый) */
