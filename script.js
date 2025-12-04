@@ -970,13 +970,17 @@ async function loadBanners() {
             condition: () => !isSubscriber && status !== 'Штрафник',
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Не забудь подписаться</div>
-                    <div class="banner-subtitle">На канал с новостями и анонсами.</div>
-                    <button class="banner-btn" onclick="Telegram.WebApp.openTelegramLink('https://t.me/YOUR_CHANNEL_LINK')">
-                        <img src="icons/Logo Telegram.svg" width="16"> Подписаться
+                    <div class="banner-title">Не забудь<br>подписаться<br>на канал</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        с новостями и<br>
+                        анонсами новых<br>
+                        складчин
+                    </div>
+                    <button class="banner-btn" onclick="Telegram.WebApp.openTelegramLink('https://t.me/+iTqdmfAbMb41YTli')">
+                        <img src="icons/tg.svg" width="18"> Подписаться
                     </button>
                 </div>
-                <img src="icons/Супермэн без фона.png" class="banner-img">
+                <img src="icons/Телеграм без фона.png" class="banner-img">
             `
         },
         {

@@ -691,10 +691,56 @@ h1, h2, h3, p { margin: 0; }
     box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
 }
 
-/* 1. Default (Подписка - Фиолетовый) */
+/* 1. Subscribe (Подписка - Плавный Голубой) */
 .banner.subscribe {
-    background: linear-gradient(135deg, #3b3e5b 0%, #1e1f2a 100%); /* Старый темный */
-    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); /* Или фиолетовый поярче */
+    /* Градиент: от темного (#1f2533) к голубому Telegram (#2AABEE) */
+    background: linear-gradient(90deg, #1f2533 0%, #226b9c 50%, #2AABEE 100%);
+    display: flex;
+    align-items: center;
+}
+
+/* Настройки картинки */
+.banner.subscribe .banner-img {
+    height: 85%;
+    width: auto;
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
+}
+
+/* Заголовок (шрифт чуть меньше, т.к. фраза длинная) */
+.banner.subscribe .banner-title {
+    font-size: 22px; 
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Подзаголовок */
+.banner.subscribe .banner-subtitle {
+    position: relative;
+    z-index: 2;
+}
+
+/* Кнопка */
+.banner.subscribe .banner-btn {
+    background: #ffffff;
+    color: #2AABEE; /* Текст цвета Telegram */
+    font-size: 15px;
+    padding: 12px 22px;
+    margin-top: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
+}
+
+/* Красим иконку svg внутри кнопки в цвет #2AABEE с помощью фильтра */
+.banner.subscribe .banner-btn img {
+    filter: invert(56%) sepia(68%) saturate(2943%) hue-rotate(174deg) brightness(95%) contrast(93%);
+    margin-right: 8px; /* Отступ от иконки до текста */
 }
 
 /* 2. Penalty (Штраф - Плавный градиент) */
