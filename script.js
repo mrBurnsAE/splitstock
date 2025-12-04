@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Запускаем все запросы параллельно и ждем их выполнения
         await Promise.all([
             loadUserProfile(),
+            loadBanners(),
             loadCategories(),
             loadTags(),
             loadHomeItems(),
@@ -895,4 +896,185 @@ async function loadFullCategoriesList() {
             container.appendChild(row);
         });
     } catch(e){ console.error(e); }
+}
+
+// ==========================================
+// ЛОГИКА БАННЕРОВ
+// ==========================================
+
+async function loadBanners() {
+    const container = document.getElementById('banner-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // 🔥 РЕЖИМ ОТЛАДКИ: Если true - показывает ВСЕ баннеры сразу
+    const DEBUG_MODE = true; 
+
+    // Данные для логики (в реальной работе)
+    const status = window.currentUserStatus || 'Новичок';
+    const isSubscriber = true; // Пока заглушка, в будущем проверять API
+    
+    // Получаем список неоплаченных (для логики приоритета)
+    let hasUnpaidItems = false;
+    try {
+        const r = await fetch(`${API_BASE_URL}/api/items?type=active&joined=true`, { headers: getHeaders() });
+        const myItems = await r.json();
+        // Ищем item, где мы участник, статус fundraising, а payment_status != paid
+        hasUnpaidItems = myItems.some(i => i.status === 'fundraising' && i.payment_status !== 'paid');
+    } catch (e) {}
+
+    // --- БАЗА БАННЕРОВ ---
+    const allBanners = [
+        {
+            id: 'penalty',
+            type: 'penalty',
+            condition: () => status === 'Штрафник',
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Ты стал Штрафником</div>
+                    <div class="banner-subtitle">Оплати штраф 500₽, чтобы вернуться.</div>
+                    <button class="banner-btn" onclick="checkPenaltyAndPay()">
+                        Оплатить штраф
+                    </button>
+                </div>
+                <img src="icons/Штрафник без фона.png" class="banner-img">
+            `
+        },
+        {
+            id: 'unpaid',
+            type: 'unpaid',
+            condition: () => hasUnpaidItems && status !== 'Штрафник',
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Неоплаченная складчина</div>
+                    <div class="banner-subtitle">Оплати взнос, чтобы не получить штраф.</div>
+                    <button class="banner-btn" onclick="openMyItems('active')">
+                        К оплате
+                    </button>
+                </div>
+                <img src="icons/status.svg" class="banner-img" style="filter: brightness(10) opacity(0.5);">
+            `
+        },
+        {
+            id: 'subscribe',
+            type: 'subscribe',
+            condition: () => !isSubscriber && status !== 'Штрафник',
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Не забудь подписаться</div>
+                    <div class="banner-subtitle">На канал с новостями и анонсами.</div>
+                    <button class="banner-btn" onclick="Telegram.WebApp.openTelegramLink('https://t.me/YOUR_CHANNEL_LINK')">
+                        <img src="icons/Logo Telegram.svg" width="16"> Подписаться
+                    </button>
+                </div>
+                <img src="icons/Супермэн без фона.png" class="banner-img">
+            `
+        },
+        {
+            id: 'novice_tip',
+            type: 'success',
+            condition: () => status === 'Новичок',
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Стань Опытным</div>
+                    <div class="banner-subtitle">Участвуй в 10 складчинах для доступа к архиву.</div>
+                    <button class="banner-btn" onclick="openModal()">
+                        Мой статус
+                    </button>
+                </div>
+                <img src="icons/Новичок Без фона.png" class="banner-img">
+            `
+        },
+        {
+            id: 'hot_items',
+            type: 'hot',
+            condition: () => true, // Всегда актуально
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title" style="color:#333">Осталось чуть-чуть</div>
+                    <div class="banner-subtitle" style="color:#555">Смотри складчины, где >90% участников.</div>
+                    <button class="banner-btn" onclick="switchView('catalog')">
+                        Смотреть
+                    </button>
+                </div>
+                <img src="icons/fire.svg" class="banner-img" onerror="this.style.display='none'">
+            `
+        },
+        {
+            id: 'payment_info',
+            type: 'payment',
+            condition: () => true,
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Оплата</div>
+                    <div class="banner-subtitle">Принимаем карты РФ (ЮMoney) и криптовалюту.</div>
+                </div>
+                <img src="icons/Оплата Без фона.png" class="banner-img">
+            `
+        },
+        {
+            id: 'help_promo',
+            type: 'info',
+            condition: () => true,
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Обучение</div>
+                    <div class="banner-subtitle">Посмотри видео, чтобы узнать как пользоваться.</div>
+                    <button class="banner-btn" onclick="Telegram.WebApp.openLink('https://youtube.com')">
+                        Инструкции
+                    </button>
+                </div>
+                <img src="icons/info.svg" class="banner-img" style="opacity:0.5; filter: invert(1);">
+            `
+        }
+    ];
+
+    // --- ЛОГИКА ОТРИСОВКИ ---
+    
+    if (DEBUG_MODE) {
+        // Выводим ВСЕ баннеры подряд
+        allBanners.forEach(banner => {
+            const div = document.createElement('div');
+            div.className = `banner ${banner.type}`;
+            div.innerHTML = banner.html;
+            container.appendChild(div);
+        });
+        return;
+    }
+
+    // --- ЛОГИКА ПРИОРИТЕТОВ (Production) ---
+    // 1. Если Штрафник -> ТОЛЬКО баннер штрафа
+    const penaltyBanner = allBanners.find(b => b.id === 'penalty');
+    if (penaltyBanner.condition()) {
+        renderOneBanner(container, penaltyBanner);
+        return;
+    }
+
+    // 2. Если есть неоплаченные -> ТОЛЬКО баннер оплаты
+    const unpaidBanner = allBanners.find(b => b.id === 'unpaid');
+    if (unpaidBanner.condition()) {
+        renderOneBanner(container, unpaidBanner);
+        return;
+    }
+
+    // 3. Ротация остальных (Случайный из доступных)
+    // Исключаем те, что уже проверили (penalty, unpaid)
+    const rotationPool = allBanners.filter(b => 
+        b.id !== 'penalty' && 
+        b.id !== 'unpaid' && 
+        b.condition()
+    );
+
+    if (rotationPool.length > 0) {
+        // Берем случайный баннер из пула (можно менять логику, например раз в день)
+        const randomBanner = rotationPool[Math.floor(Math.random() * rotationPool.length)];
+        renderOneBanner(container, randomBanner);
+    }
+}
+
+function renderOneBanner(container, bannerData) {
+    const div = document.createElement('div');
+    div.className = `banner ${bannerData.type}`;
+    div.innerHTML = bannerData.html;
+    container.appendChild(div);
 }
