@@ -8,14 +8,20 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// Получаем ID пользователя
-let USER_ID = tg.initDataUnsafe?.user?.id;
+// --- ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ И ПАРАМЕТРОВ ---
 const urlParams = new URLSearchParams(window.location.search);
+let USER_ID = tg.initDataUnsafe?.user?.id;
 const debugId = urlParams.get('uid');
 if (debugId) USER_ID = parseInt(debugId);
 if (!USER_ID) USER_ID = 0;
 
-console.log("WebApp initialized. User ID:", USER_ID);
+// Проверяем параметр item_id из URL (для Deep Link)
+const startItemId = urlParams.get('item_id');
+if (startItemId) {
+    window.currentItemId = parseInt(startItemId);
+}
+
+console.log("WebApp initialized. User ID:", USER_ID, "Start Item:", startItemId);
 
 // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 window.currentVideoLinks = {};
@@ -54,6 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         if (filterBtn) filterBtn.onclick = openFilter;
+
+        // --- АВТОМАТИЧЕСКОЕ ОТКРЫТИЕ ТОВАРА ---
+        if (window.currentItemId) {
+            openProduct(window.currentItemId);
+        }
 
     } catch (e) { console.error("Init error:", e); }
 });
