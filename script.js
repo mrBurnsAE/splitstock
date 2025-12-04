@@ -287,7 +287,7 @@ function renderItems(container, items) {
     items.forEach(item => container.appendChild(createItemCard(item)));
 }
 
-// --- КАРТОЧКИ (С ФИКСОМ СТАТУСОВ) ---
+// --- КАРТОЧКИ (С ФИКСОМ КАРТИНОК И СТАТУСОВ) ---
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = 'big-card';
@@ -332,9 +332,10 @@ function createItemCard(item) {
 
     const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
     
+    // ИСПРАВЛЕНИЕ: Убрали height:100% и object-fit:cover, добавили height:auto
     card.innerHTML = `
         <div class="card-media">
-            <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
+            <img src="${imgSrc}" style="width:100%; height:auto; display:block; border-radius: 16px 16px 0 0;">
         </div>
         <div class="card-content">
             <div class="item-name">${item.name}</div>

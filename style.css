@@ -89,7 +89,38 @@ h1, h2, h3, p { margin: 0; }
 
 /* --- Big Card (Catalog) --- */
 .big-card { background: var(--card-bg); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
-.card-media { width: 100%; height: 200px; object-fit: cover; position: relative; }
+/* --- ИСПРАВЛЕНИЕ: КАРТИНКИ В КАТАЛОГЕ --- */
+/* Делаем высоту автоматической, чтобы картинка не обрезалась */
+.card-media { 
+    width: 100%; 
+    height: auto; 
+    min-height: 200px; /* Минимальная высота, чтобы карточка не схлопывалась пока грузится */
+    position: relative; 
+}
+
+/* --- ИСПРАВЛЕНИЕ: КНОПКА ПОДРОБНОЙ ИНФОРМАЦИИ --- */
+/* Возвращаем стиль минималистичной кнопки */
+.product-link-external { 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
+    padding: 12px 18px; 
+    background: rgba(255, 255, 255, 0.05); 
+    border-radius: 10px; 
+    color: var(--text-secondary); 
+    font-size: 15px; 
+    font-weight: 600; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    margin-bottom: 24px; 
+    transition: background 0.2s; 
+    width: fit-content; 
+    text-decoration: none;
+}
+
+.product-link-external:hover { 
+    background: rgba(255, 255, 255, 0.1); 
+    color: white; 
+}
 .card-content { padding: 18px; }
 .item-name { font-weight: 600; font-size: 15px; margin-bottom: 6px; line-height: 1.3; }
 .card-tags { color: #00cec9; font-size: 13px; font-weight: 500; margin-bottom: 12px; }
