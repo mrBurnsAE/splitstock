@@ -30,7 +30,23 @@ html {
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { margin: 0; padding: 0; font-family: 'Gilroy', sans-serif; background-color: var(--bg-color); color: var(--text-main); font-size: 16px; overflow-x: hidden; padding-bottom: 90px; }
+
+body { 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Gilroy', sans-serif; 
+    background-color: var(--bg-color); 
+    color: var(--text-main); 
+    font-size: 16px; 
+    overflow-x: hidden; 
+    padding-bottom: 90px; 
+}
+
+/* --- ПРИНУДИТЕЛЬНЫЙ GILROY ДЛЯ КНОПОК И ФОРМ --- */
+button, input, textarea, select {
+    font-family: 'Gilroy', sans-serif;
+}
+
 a { text-decoration: none; color: inherit; }
 h1, h2, h3, p { margin: 0; }
 
