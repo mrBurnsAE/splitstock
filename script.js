@@ -928,16 +928,17 @@ async function loadBanners() {
         {
             id: 'penalty',
             type: 'penalty',
+            // Показываем, только если юзер Штрафник (или для теста можно поставить true)
             condition: () => status === 'Штрафник',
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Ты стал Штрафником</div>
-                    <div class="banner-subtitle">Оплати штраф 500₽, чтобы вернуться.</div>
-                    <button class="banner-btn" onclick="checkPenaltyAndPay()">
+                    <div class="banner-title">Ты стал<br>Штрафником</div>
+                    <div class="banner-subtitle">Оплати штраф 500₽, чтобы продолжить пользоваться ботом!</div>
+                    <button class="banner-btn" onclick="openPaymentModal('penalty')">
                         Оплатить штраф
                     </button>
                 </div>
-                <img src="icons/Штрафник без фона.png" class="banner-img">
+                <img src="icons/500 Без фона.png" class="banner-img">
             `
         },
         {
