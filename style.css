@@ -697,35 +697,51 @@ h1, h2, h3, p { margin: 0; }
     background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); /* Или фиолетовый поярче */
 }
 
-/* 2. Penalty (Штраф - Темно-синий в Красный) */
+/* 2. Penalty (Штраф - Плавный градиент) */
 .banner.penalty {
-    /* Градиент: Слева темный (#25283a), справа красный (#ff4757) занимающий примерно 1/3 */
-    background: linear-gradient(90deg, #25283a 0%, #30354a 60%, #ff4757 100%);
+    /* Более плавный переход: темный цвет тянется до середины, потом плавно перетекает в красный */
+    background: linear-gradient(90deg, #25283a 0%, #2f344d 50%, #ff4757 100%);
+    display: flex; /* Гарантируем flex для выравнивания контента */
+    align-items: center; /* Центрируем контент по вертикали */
 }
 
 /* Специфичные настройки картинки для баннера Штрафника */
 .banner.penalty .banner-img {
-    height: 95%;         /* Уменьшили на 10% (было 105%) */
-    right: -25px;        /* Сдвинули еще правее */
-    bottom: -5px;
-    transform: none;     /* Убираем наклон, робот стоит ровно */
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3)); /* Тень для объема */
+    height: 85%;         /* Еще немного уменьшили для аккуратности */
+    width: auto;         /* Сохраняем пропорции */
+    position: absolute;  /* Абсолютное позиционирование */
+    right: -20px;        /* Положение справа */
+    top: 50%;            /* Ставим верхнюю точку на середину */
+    bottom: auto;        /* Сбрасываем привязку к низу */
+    /* Сдвигаем на 50% своей высоты вверх — это идеальное центрирование */
+    transform: translateY(-50%); 
+    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
-/* Увеличиваем заголовок */
+/* Заголовок */
 .banner.penalty .banner-title {
     font-size: 26px;
     margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
 }
 
-/* Настройка кнопки (Белая, шрифт крупнее) */
+/* Подзаголовок */
+.banner.penalty .banner-subtitle {
+    position: relative;
+    z-index: 2;
+}
+
+/* Кнопка */
 .banner.penalty .banner-btn {
     background: #ffffff;
     color: #2d3436;
-    font-size: 15px;     /* Шрифт крупнее */
-    padding: 12px 22px;  /* Кнопка массивнее */
+    font-size: 15px;
+    padding: 12px 22px;
     margin-top: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
 }
 
 /* 3. Unpaid (Неоплачено - Оранжевый/Предупреждение) */
