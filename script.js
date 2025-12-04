@@ -752,27 +752,14 @@ async function loadHomeItems() {
 
 function loadUserAvatar() {
     try {
-        // Берем данные юзера
         const user = tg.initDataUnsafe?.user;
-        
-        // ВРЕМЕННАЯ ОТЛАДКА: Раскомментируйте строчку ниже, чтобы увидеть данные при запуске
-        alert(JSON.stringify(user));
-
+        // Никаких alert() здесь быть не должно!
         if (user && user.photo_url) {
             const headerAvatar = document.getElementById('header-avatar');
             const profileAvatar = document.getElementById('profile-avatar');
             
-            // Обновляем в шапке
-            if (headerAvatar) {
-                headerAvatar.src = user.photo_url;
-            }
-            
-            // Обновляем в профиле
-            if (profileAvatar) {
-                profileAvatar.src = user.photo_url;
-            } else {
-                console.warn("Не найден элемент #profile-avatar. Проверьте index.html");
-            }
+            if (headerAvatar) headerAvatar.src = user.photo_url;
+            if (profileAvatar) profileAvatar.src = user.photo_url;
         }
     } catch (e) {
         console.error("Ошибка загрузки аватара:", e);
