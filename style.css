@@ -868,7 +868,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* Заголовок */
 .banner.success .banner-title {
-    font-size: 22px; /* Чуть меньше, так как 3 строки текста */
+    font-size: 22px;
     margin-bottom: 10px;
     position: relative;
     z-index: 2;
@@ -883,7 +883,7 @@ h1, h2, h3, p { margin: 0; }
 /* Кнопка */
 .banner.success .banner-btn {
     background: #ffffff;
-    color: #27ae60; /* Зеленый текст */
+    color: #2d3436; /* Тёмно-серый текст, как на других баннерах */
     font-size: 15px;
     padding: 12px 22px;
     margin-top: 8px;

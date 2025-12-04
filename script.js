@@ -993,7 +993,8 @@ async function loadBanners() {
                     <div class="banner-title">Получи статус<br>Опытного<br>пользователя</div>
                     <div class="banner-subtitle" style="line-height: 1.3;">
                         чтобы оплачивать взносы<br>
-                        в завершённых складчинах
+                        в завершённых<br>
+                        складчинах
                     </div>
                     <button class="banner-btn" onclick="openModal()">
                         Проверить статус
