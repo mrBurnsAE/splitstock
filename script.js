@@ -55,11 +55,15 @@ window.filterState = { sort: 'new', categories: [], tags: [] };
 document.addEventListener("DOMContentLoaded", () => {
     try {
         console.log("DOM Loaded. Starting...");
+        
+        loadUserAvatar(); // <-- ДОБАВИЛИ ВОТ ЭТУ СТРОКУ
         loadUserProfile();
         loadCategories(); 
         loadTags();       
         loadHomeItems(); 
         loadItems('active'); 
+
+        // ... остальной код без изменений ...
 
         const searchInput = document.querySelector('.search-input');
         const filterBtn = document.querySelector('.filter-btn');
@@ -745,6 +749,32 @@ async function loadHomeItems() {
         else items.slice(0,5).forEach(i=>cont.appendChild(createItemCard(i)));
     } catch(e){ console.error(e); }
 }
+
+function loadUserAvatar() {
+    try {
+        // Берем данные юзера из WebApp
+        const user = tg.initDataUnsafe?.user;
+        
+        // Если у юзера есть фото
+        if (user && user.photo_url) {
+            const headerAvatar = document.getElementById('header-avatar');
+            const profileAvatar = document.getElementById('profile-avatar');
+            
+            // Обновляем аватарку в шапке (Главная)
+            if (headerAvatar) {
+                headerAvatar.src = user.photo_url;
+            }
+            
+            // Обновляем аватарку в профиле
+            if (profileAvatar) {
+                profileAvatar.src = user.photo_url;
+            }
+        }
+    } catch (e) {
+        console.error("Ошибка загрузки аватара:", e);
+    }
+}
+
 async function loadFullCategoriesList() {
     const container = document.getElementById('all-categories-container');
     if (!container) return;
