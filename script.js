@@ -763,15 +763,81 @@ async function loadTags() {
     } catch(e){ console.error(e); }
 }
 async function loadHomeItems() {
-    const cont = document.getElementById('home-item-container');
-    if(!cont) return;
+    // 1. Загружаем НОВЫЕ (Active)
+    loadCompactList('active', 'home-new-container');
+    
+    // 2. Загружаем ЗАВЕРШЕННЫЕ (Completed)
+    loadCompactList('completed', 'home-completed-container');
+}
+
+// Универсальная функция для загрузки компактных списков
+async function loadCompactList(type, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
     try {
-        const r = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&sort=new`, { headers: getHeaders() });
+        // Запрашиваем топ-5, сортировка по новизне
+        const r = await fetch(`${API_BASE_URL}/api/items?type=${type}&page=1&sort=new`, { headers: getHeaders() });
         const items = await r.json();
-        cont.innerHTML='';
-        if(items.length===0) cont.innerHTML='<div style="padding:20px;text-align:center;">Пусто</div>';
-        else items.slice(0,5).forEach(i=>cont.appendChild(createItemCard(i)));
-    } catch(e){ console.error(e); }
+        
+        container.innerHTML = '';
+        
+        if (items.length === 0) {
+            container.innerHTML = '<div style="padding:10px; color:#a2a5b9; font-size:14px;">Пока пусто...</div>';
+            return;
+        }
+
+        // Берем только первые 5 штук
+        items.slice(0, 5).forEach(item => {
+            container.appendChild(createCompactCard(item));
+        });
+        
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<div style="padding:10px; color:#ff7675; font-size:14px;">Ошибка загрузки</div>';
+    }
+}
+
+// Функция создания HTML для компактной карточки
+function createCompactCard(item) {
+    const card = document.createElement('div');
+    card.className = 'compact-card';
+    card.onclick = () => openProduct(item.id);
+
+    // Определяем текст подзаголовка
+    let metaText = "";
+    let statusColor = "#00cec9"; // По умолчанию бирюзовый
+
+    if (item.status === 'completed') {
+        metaText = "Завершена • Файлы доступны";
+        statusColor = "#fdcb6e"; // Желтый/Оранжевый для завершенных
+        if(item.payment_status === 'paid') {
+             statusColor = "#2ecc71"; // Зеленый если куплено
+             metaText = "Куплено вами";
+        }
+    } else if (item.status === 'fundraising') {
+        metaText = `Участников: ${item.paid_participants}/${item.needed_participants}`;
+        statusColor = "#0984e3"; // Синий
+    } else {
+        // Active / Published
+        metaText = `Участников: ${item.current_participants}/${item.needed_participants}`;
+        statusColor = "#00cec9"; // Бирюзовый
+    }
+
+    const imgSrc = item.cover_url || "icons/Ничего нет без фона.png";
+
+    card.innerHTML = `
+        <img src="${imgSrc}" class="compact-thumb" onerror="this.src='icons/Ничего нет без фона.png'">
+        <div class="compact-info">
+            <div class="compact-title">${item.name}</div>
+            <div class="compact-meta">
+                <span class="compact-status" style="background-color: ${statusColor};"></span>
+                ${metaText}
+            </div>
+        </div>
+    `;
+    
+    return card;
 }
 
 async function loadFullCategoriesList() {

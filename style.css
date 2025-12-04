@@ -601,3 +601,71 @@ h1, h2, h3, p { margin: 0; }
 .view.active.loaded {
     opacity: 1;
 }
+
+/* --- COMPACT LIST (ГЛАВНАЯ) --- */
+.compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.compact-card {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg); /* Темно-синий фон как на макете */
+    padding: 10px;
+    border-radius: 12px;
+    gap: 14px;
+    transition: transform 0.1s;
+    cursor: pointer;
+}
+
+.compact-card:active {
+    transform: scale(0.98);
+    background: #3d4258;
+}
+
+/* Миниатюра слева (вместо цифры) */
+.compact-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    background-color: #35394f; /* Цвет заглушки пока грузится */
+    flex-shrink: 0;
+}
+
+.compact-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    overflow: hidden; /* Чтобы текст не вылезал */
+}
+
+.compact-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Троеточие если длинное название */
+}
+
+.compact-meta {
+    font-size: 12px;
+    color: var(--text-secondary); /* Серый текст */
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Маленький статус (зеленый/синий) */
+.compact-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
