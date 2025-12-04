@@ -405,16 +405,26 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
 }
 
 // --- ОСТАЛЬНЫЕ ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ---
+// --- ФУНКЦИЯ ФОРМАТИРОВАНИЯ ДАТЫ (ТОЛЬКО МСК UTC+3) ---
 function formatDate(isoString) {
     if(!isoString) return "";
     try {
+        // 1. Создаем объект даты из строки (это UTC время)
         const d = new Date(isoString);
-        // Форматируем в вид: 00:00 07.12.2025
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
+        
+        // 2. Добавляем 3 часа к UTC времени (сдвиг для МСК)
+        // 3 часа * 60 минут * 60 секунд * 1000 миллисекунд
+        const mskOffset = 3 * 60 * 60 * 1000;
+        const mskDate = new Date(d.getTime() + mskOffset);
+
+        // 3. Используем методы getUTC..., чтобы получить компоненты времени
+        // Мы используем getUTC, потому что мы уже вручную сдвинули время на +3 часа.
+        // Если использовать обычные getHours, браузер добавит еще и свой часовой пояс.
+        const day = String(mskDate.getUTCDate()).padStart(2, '0');
+        const month = String(mskDate.getUTCMonth() + 1).padStart(2, '0');
+        const year = mskDate.getUTCFullYear();
+        const hours = String(mskDate.getUTCHours()).padStart(2, '0');
+        const minutes = String(mskDate.getUTCMinutes()).padStart(2, '0');
         
         return `${hours}:${minutes} ${day}.${month}.${year}`;
     } catch(e) { return ""; }
