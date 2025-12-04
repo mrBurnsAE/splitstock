@@ -2,6 +2,7 @@
 // ЧАСТЬ 1: НАСТРОЙКИ, НАВИГАЦИЯ, МОДАЛКИ
 // ==========================================
 
+// ⚠️ ВАЖНО: При локальном тесте замените на http://127.0.0.1:8000
 const API_BASE_URL = "https://api.splitstock.ru";
 
 const tg = window.Telegram.WebApp;
@@ -18,11 +19,9 @@ if (debugId) USER_ID = parseInt(debugId);
 if (!USER_ID) USER_ID = 0;
 
 // 2. Парсинг ID товара для Deep Link
-// Ищем 'item_id' в URL (приходит из кнопки) или в start_param (приходит из меню бота)
 let startItemId = urlParams.get('item_id');
 
 // Если в URL нет, проверяем tg.initDataUnsafe.start_param
-// (на случай если Telegram передал параметры иначе)
 if (!startItemId && tg.initDataUnsafe?.start_param) {
     const param = tg.initDataUnsafe.start_param;
     if (param.startsWith('open_item_')) {
@@ -38,7 +37,6 @@ console.log("WebApp initialized. User ID:", USER_ID, "Start Item:", startItemId)
 
 // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 window.currentVideoLinks = {};
-// window.currentItemId уже может быть установлен выше
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
 window.currentUserStatus = null; 
@@ -56,14 +54,13 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
         console.log("DOM Loaded. Starting...");
         
-        loadUserAvatar(); // <-- ДОБАВИЛИ ВОТ ЭТУ СТРОКУ
+        // Загружаем профиль (аватарка теперь грузится внутри этой функции)
         loadUserProfile();
+        
         loadCategories(); 
         loadTags();       
         loadHomeItems(); 
         loadItems('active'); 
-
-        // ... остальной код без изменений ...
 
         const searchInput = document.querySelector('.search-input');
         const filterBtn = document.querySelector('.filter-btn');
@@ -80,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // --- АВТОМАТИЧЕСКОЕ ОТКРЫТИЕ ТОВАРА ---
         if (window.currentItemId) {
-            // Небольшая задержка помогает интерфейсу прогрузиться перед переключением
             setTimeout(() => {
                 openProduct(window.currentItemId);
             }, 100);
@@ -94,7 +90,7 @@ function getHeaders() {
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
 }
 
-// --- НОВАЯ ФУНКЦИЯ ПРОВЕРКИ ШТРАФА ---
+// --- ФУНКЦИЯ ПРОВЕРКИ ШТРАФА ---
 function checkPenaltyAndPay() {
     if (window.currentUserStatus === 'Штрафник') {
         updateStatusModal('Штрафник', 0);
@@ -104,7 +100,7 @@ function checkPenaltyAndPay() {
     }
 }
 
-// --- ПОЛУЧЕНИЕ ФАЙЛОВ (НОВОЕ) ---
+// --- ПОЛУЧЕНИЕ ФАЙЛОВ ---
 async function getFiles() {
     const btn = document.getElementById('product-action-btn');
     const originalText = btn.innerText;
@@ -179,7 +175,7 @@ function updateBottomNav(activeView) {
     }
 }
 
-// --- УВЕДОМЛЕНИЯ ---
+// --- УВЕДОМЛЕНИЯ И МОДАЛКИ ---
 function showCustomAlert(msg, title = "SplitStockBot") {
     const el = document.getElementById('modal-alert');
     const titleEl = document.getElementById('modal-alert-title');
@@ -237,6 +233,56 @@ function closeFilter() { switchView('catalog'); }
 // ЧАСТЬ 2: ЗАГРУЗКА И UI
 // ==========================================
 
+// --- ЗАГРУЗКА ПРОФИЛЯ (С НОВОЙ ЛОГИКОЙ АВАТАРКИ) ---
+async function loadUserProfile() {
+    if (!USER_ID) return;
+    try {
+        // Добавляем timestamp для сброса кэша запроса
+        const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}?t=${Date.now()}`, { headers: getHeaders() });
+        const user = await response.json();
+        
+        window.currentUserStatus = user.status;
+        
+        // Заполняем текстовые поля
+        const ids = ['header-username', 'profile-username'];
+        ids.forEach(id => { 
+            const el = document.getElementById(id); 
+            if(el) el.innerText = user.first_name || user.username || "Пользователь"; 
+        });
+        
+        const els = { 
+            'profile-status-text': user.status, 
+            'profile-active-count': user.active_count, 
+            'profile-completed-count': user.completed_count 
+        };
+        for (const [id, val] of Object.entries(els)) { 
+            const el = document.getElementById(id); 
+            if(el) el.innerText = val; 
+        }
+        
+        const dateEl = document.getElementById('profile-join-date');
+        if(dateEl && user.registration_date) { 
+            const d = new Date(user.registration_date); 
+            dateEl.innerText = `Участник с ${d.toLocaleDateString('ru-RU')}`; 
+        }
+        
+        // --- АВАТАРКА ИЗ API ---
+        if (user.avatar_url) {
+            const headerAvatar = document.getElementById('header-avatar');
+            const profileAvatar = document.getElementById('profile-avatar');
+            
+            // Добавляем timestamp к URL картинки, чтобы браузер обновил её, если она изменилась
+            const avatarSrc = `${user.avatar_url}?v=${new Date().getTime()}`;
+            
+            if (headerAvatar) headerAvatar.src = avatarSrc;
+            if (profileAvatar) profileAvatar.src = avatarSrc;
+        }
+        // -----------------------
+
+        updateStatusModal(user.status, user.completed_count);
+    } catch (e) { console.error("Profile load error:", e); }
+}
+
 async function loadMyItems(type) {
     const container = document.getElementById('my-items-container');
     if (!container) return;
@@ -291,7 +337,6 @@ function renderItems(container, items) {
     items.forEach(item => container.appendChild(createItemCard(item)));
 }
 
-// --- КАРТОЧКИ (С ФИКСОМ КАРТИНОК И СТАТУСОВ) ---
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = 'big-card';
@@ -313,7 +358,6 @@ function createItemCard(item) {
     }
     if (percent > 100) percent = 100;
 
-    // ЛОГИКА СТАТУСОВ ДЛЯ СПИСКА
     if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
         if (item.is_joined) statusText = "✅ Вы участвуете";
     } else if (item.status === 'fundraising') {
@@ -336,7 +380,6 @@ function createItemCard(item) {
 
     const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
     
-    // ИСПРАВЛЕНИЕ: Убрали height:100% и object-fit:cover, добавили height:auto
     card.innerHTML = `
         <div class="card-media">
             <img src="${imgSrc}" style="width:100%; height:auto; display:block; border-radius: 16px 16px 0 0;">
@@ -357,7 +400,6 @@ function createItemCard(item) {
     return card;
 }
 
-// --- UI ОБНОВЛЕНИЯ СТАТУСОВ (ОБНОВЛЕНО) ---
 function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) {
     const actionBtn = document.getElementById('product-action-btn');
     const statusText = document.getElementById('product-status-text');
@@ -366,7 +408,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
 
     if (fundraisingRow) fundraisingRow.style.display = 'none';
     
-    // По умолчанию скрываем выход, покажем если можно
     if (leaveBtn) leaveBtn.style.display = 'none';
     statusText.style.color = "";
 
@@ -379,12 +420,11 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
         statusText.innerText = "Активная складчина";
         if (isJoined) {
             actionBtn.innerText = "Вы записаны"; actionBtn.disabled = true; actionBtn.style.opacity = "0.7";
-            if(leaveBtn) leaveBtn.style.display = 'flex'; // МОЖНО ВЫЙТИ
+            if(leaveBtn) leaveBtn.style.display = 'flex'; 
         } else { actionBtn.innerText = "Записаться"; }
     } 
     else if (status === 'fundraising_scheduled') {
         const dateStr = formatDate(startAt);
-        // Добавлено время и (МСК)
         statusText.innerText = `Сбор средств назначен на ${dateStr} (МСК)`;
         if (isJoined) {
             actionBtn.innerText = "Вы записаны"; actionBtn.disabled = true; actionBtn.style.opacity = "0.7";
@@ -392,7 +432,6 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
     }
     else if (status === 'fundraising') {
         const endDate = formatDate(endAt);
-        // Добавлено время и (МСК)
         statusText.innerText = `Идёт сбор средств до ${endDate} (МСК)`;
         if (fundraisingRow) fundraisingRow.style.display = 'flex';
         
@@ -408,27 +447,23 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
     else if (status === 'completed') {
         statusText.innerText = "Складчина завершена";
         
-        // 1. Если КУПЛЕНО -> "Получить файлы"
         if (paymentStatus === 'paid') {
             actionBtn.innerText = "Получить файлы";
             actionBtn.style.backgroundColor = "#2ecc71";
             actionBtn.disabled = false;
             actionBtn.onclick = () => getFiles();
         } 
-        // 2. Если НЕ куплено -> Проверяем 10 дней
         else {
             const endDate = new Date(endAt);
             const now = new Date();
             const diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
 
             if (diffDays > 10) {
-                // Прошло 10 дней -> Можно купить
                 actionBtn.innerText = "Купить (200₽)";
                 actionBtn.style.backgroundColor = "#fdcb6e"; actionBtn.style.color = "#2d3436";
                 actionBtn.disabled = false;
                 actionBtn.onclick = () => checkPenaltyAndPay();
             } else {
-                // Не прошло 10 дней -> Ждем
                 actionBtn.innerText = "Завершена";
                 actionBtn.disabled = true;
             }
@@ -436,22 +471,13 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
     }
 }
 
-// --- ОСТАЛЬНЫЕ ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ---
-// --- ФУНКЦИЯ ФОРМАТИРОВАНИЯ ДАТЫ (ТОЛЬКО МСК UTC+3) ---
 function formatDate(isoString) {
     if(!isoString) return "";
     try {
-        // 1. Создаем объект даты из строки (это UTC время)
         const d = new Date(isoString);
-        
-        // 2. Добавляем 3 часа к UTC времени (сдвиг для МСК)
-        // 3 часа * 60 минут * 60 секунд * 1000 миллисекунд
         const mskOffset = 3 * 60 * 60 * 1000;
         const mskDate = new Date(d.getTime() + mskOffset);
 
-        // 3. Используем методы getUTC..., чтобы получить компоненты времени
-        // Мы используем getUTC, потому что мы уже вручную сдвинули время на +3 часа.
-        // Если использовать обычные getHours, браузер добавит еще и свой часовой пояс.
         const day = String(mskDate.getUTCDate()).padStart(2, '0');
         const month = String(mskDate.getUTCMonth() + 1).padStart(2, '0');
         const year = mskDate.getUTCFullYear();
@@ -523,10 +549,6 @@ function closeProduct() {
     else { switchView('catalog'); loadItems('active'); }
 }
 
-// ... ОСТАЛЬНЫЕ ФУНКЦИИ (switchVideo, selectTab и т.д.) ТЕ ЖЕ САМЫЕ ...
-// (Чтобы не загромождать ответ, просто используй код из предыдущих версий для switchVideo, performSearch, и т.д., они не менялись)
-// Но для целостности я рекомендую использовать версию выше + стандартные функции из прошлого сообщения.
-
 async function handleProductAction() {
     const btn = document.getElementById('product-action-btn');
     const originalText = btn.innerText;
@@ -576,22 +598,6 @@ async function selectPaymentMethod(method) {
     } catch (error) { showCustomAlert("Ошибка соединения", "Ошибка"); modalContent.style.opacity = '1'; }
 }
 
-async function loadUserProfile() {
-    if (!USER_ID) return;
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}`, { headers: getHeaders() });
-        const user = await response.json();
-        window.currentUserStatus = user.status;
-        const ids = ['header-username', 'profile-username'];
-        ids.forEach(id => { const el = document.getElementById(id); if(el) el.innerText = user.first_name || user.username || "Пользователь"; });
-        const els = { 'profile-status-text': user.status, 'profile-active-count': user.active_count, 'profile-completed-count': user.completed_count };
-        for (const [id, val] of Object.entries(els)) { const el = document.getElementById(id); if(el) el.innerText = val; }
-        const dateEl = document.getElementById('profile-join-date');
-        if(dateEl && user.registration_date) { const d = new Date(user.registration_date); dateEl.innerText = `Участник с ${d.toLocaleDateString('ru-RU')}`; }
-        updateStatusModal(user.status, user.completed_count);
-    } catch (e) { console.error("Profile load error:", e); }
-}
-
 function updateStatusModal(status, completedCount) {
     const title = document.getElementById('modal-status-title');
     const desc = document.getElementById('modal-status-desc');
@@ -616,8 +622,6 @@ function updateStatusModal(status, completedCount) {
     }
 }
 
-// ... Остальные функции (switchVideo, selectTab, etc) ...
-// (Они есть в коде выше, я их не дублирую тут для краткости, но они должны быть в файле)
 function switchVideo(platform) {
     const wrapper = document.getElementById('video-wrapper-el');
     const iframe = document.getElementById('main-video-frame');
@@ -748,22 +752,6 @@ async function loadHomeItems() {
         if(items.length===0) cont.innerHTML='<div style="padding:20px;text-align:center;">Пусто</div>';
         else items.slice(0,5).forEach(i=>cont.appendChild(createItemCard(i)));
     } catch(e){ console.error(e); }
-}
-
-function loadUserAvatar() {
-    try {
-        const user = tg.initDataUnsafe?.user;
-        // Никаких alert() здесь быть не должно!
-        if (user && user.photo_url) {
-            const headerAvatar = document.getElementById('header-avatar');
-            const profileAvatar = document.getElementById('profile-avatar');
-            
-            if (headerAvatar) headerAvatar.src = user.photo_url;
-            if (profileAvatar) profileAvatar.src = user.photo_url;
-        }
-    } catch (e) {
-        console.error("Ошибка загрузки аватара:", e);
-    }
 }
 
 async function loadFullCategoriesList() {
