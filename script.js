@@ -512,43 +512,70 @@ async function openProduct(id) {
     const bottomNav = document.querySelector('.bottom-nav');
     if(bottomNav) bottomNav.style.display = 'none';
     
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById('view-product').classList.add('active');
+    // --- ИСПРАВЛЕНИЕ: Сбрасываем классы active и loaded у всех view ---
+    document.querySelectorAll('.view').forEach(el => {
+        el.classList.remove('active');
+        el.classList.remove('loaded');
+    });
+    
+    const viewProduct = document.getElementById('view-product');
+    viewProduct.classList.add('active');
+    
+    // Добавляем класс loaded с небольшой задержкой для анимации появления
+    setTimeout(() => {
+        viewProduct.classList.add('loaded');
+    }, 10);
+    // ------------------------------------------------------------------
     
     document.getElementById('product-header-title').innerText = "Загрузка...";
     switchVideo('none');
     window.currentItemId = id;
     
     try {
+        // Добавляем timestamp для сброса кэша
         const response = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: getHeaders() });
         const item = await response.json();
         
         document.getElementById('product-header-title').innerText = item.name;
         document.getElementById('product-desc').innerText = item.description || "Описание отсутствует";
+        
         const linkEl = document.getElementById('product-link-ext');
         linkEl.onclick = (e) => { e.preventDefault(); tg.openLink(item.link); };
+        
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
         document.getElementById('product-tags').innerText = (item.tags || []).map(t => "#" + t).join(" ");
         document.getElementById('product-price-orig').innerText = "$" + item.price;
+        
         let contribution = (item.status === 'completed') ? "200₽" : "100₽";
         document.getElementById('product-price-contrib').innerText = contribution;
+        
         document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
+        
         const paidCount = item.paid_participants || 0;
         const fundCountEl = document.getElementById('fundraising-count');
         if(fundCountEl) fundCountEl.innerText = `${paidCount}/${item.needed_participants}`;
+        
         let percent = 0;
         const bar = document.getElementById('product-progress-fill');
         bar.className = 'progress-fill';
+        
         if (item.needed_participants > 0) {
-            if (item.status === 'fundraising') { percent = (paidCount / item.needed_participants) * 100; bar.classList.add('blue'); }
-            else { percent = (item.current_participants / item.needed_participants) * 100; bar.classList.add('gradient'); }
+            if (item.status === 'fundraising') { 
+                percent = (paidCount / item.needed_participants) * 100; 
+                bar.classList.add('blue'); 
+            } else { 
+                percent = (item.current_participants / item.needed_participants) * 100; 
+                bar.classList.add('gradient'); 
+            }
         }
         if (percent > 100) percent = 100;
         bar.style.width = percent + "%";
         
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at, item.end_at);
+        
         const coverImg = document.getElementById('product-cover-img');
         coverImg.src = item.cover_url || "icons/Ничего нет без фона.png";
+        
         window.currentVideoLinks = item.videos || {};
         if (Object.keys(window.currentVideoLinks).length > 0) {
             document.getElementById('video-switchers').style.display = 'flex';
@@ -559,7 +586,10 @@ async function openProduct(id) {
             document.getElementById('video-switchers').style.display = 'none';
             switchVideo('none');
         }
-    } catch (error) { console.error(error); closeProduct(); }
+    } catch (error) { 
+        console.error(error); 
+        closeProduct(); 
+    }
 }
 
 function closeProduct() {
