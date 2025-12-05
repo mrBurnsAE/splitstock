@@ -1006,16 +1006,19 @@ async function loadBanners() {
         {
             id: 'hot_items',
             type: 'hot',
-            condition: () => true, // Всегда актуально
+            condition: () => true, // Пока показываем всегда (или можно проверять наличие таких складчин)
             html: `
                 <div class="banner-content">
-                    <div class="banner-title" style="color:#333">Осталось чуть-чуть</div>
-                    <div class="banner-subtitle" style="color:#555">Смотри складчины, где >90% участников.</div>
-                    <button class="banner-btn" onclick="switchView('catalog')">
+                    <div class="banner-title">Осталось совсем<br>чуть-чуть</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        Посмотри складчины, в которых<br>
+                        уже собралось 90% участников.
+                    </div>
+                    <button class="banner-btn" onclick="openHotItems()">
                         Смотреть
                     </button>
                 </div>
-                <img src="icons/fire.svg" class="banner-img" onerror="this.style.display='none'">
+                <img src="icons/Загрузка-без-фона.png" class="banner-img">
             `
         },
         {
@@ -1095,4 +1098,41 @@ function renderOneBanner(container, bannerData) {
     div.className = `banner ${bannerData.type}`;
     div.innerHTML = bannerData.html;
     container.appendChild(div);
+}
+
+async function openHotItems() {
+    // 1. Переключаем на вид каталога
+    switchView('catalog');
+    
+    // 2. Сбрасываем активные табы визуально (так как это спец. выборка)
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    
+    // 3. Показываем лоадер в контейнере
+    const container = document.querySelector('#view-catalog .item-container');
+    if(container) container.innerHTML = '<div style="padding:20px; text-align:center;">Ищем горящие предложения...</div>';
+    
+    try {
+        // 4. Загружаем ВСЕ активные складчины (без пагинации или первую страницу, 
+        // но лучше бы api отдавал фильтр. Пока берем active и фильтруем на клиенте)
+        // Для точности загрузим 50 штук (или реализуем на бэке, но пока фронт-онли)
+        let url = `${API_BASE_URL}/api/items?type=active&page=1&items_per_page=100&t=${Date.now()}`;
+        const response = await fetch(url, { headers: getHeaders() });
+        const items = await response.json();
+        
+        // 5. Фильтруем > 90%
+        const hotItems = items.filter(item => {
+            if (item.needed_participants <= 0) return false;
+            // Считаем прогресс (оплаченные или просто записавшиеся - зависит от статуса)
+            // Обычно "собралось" = записалось (current_participants)
+            const progress = item.current_participants / item.needed_participants;
+            return progress >= 0.9;
+        });
+        
+        // 6. Рендерим
+        renderItems(container, hotItems);
+        
+    } catch (error) {
+        console.error(error);
+        if(container) container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
+    }
 }
