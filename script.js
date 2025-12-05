@@ -1046,13 +1046,16 @@ async function loadBanners() {
             condition: () => true,
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Обучение</div>
-                    <div class="banner-subtitle">Посмотри видео, чтобы узнать как пользоваться.</div>
-                    <button class="banner-btn" onclick="Telegram.WebApp.openLink('https://youtube.com')">
-                        Инструкции
+                    <div class="banner-title">Посмотри<br>обучающие видео</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        чтобы узнать как<br>
+                        пользоваться этим ботом
+                    </div>
+                    <button class="banner-btn" onclick="requestHelp()">
+                        Посмотреть обучение
                     </button>
                 </div>
-                <img src="icons/info.svg" class="banner-img" style="opacity:0.5; filter: invert(1);">
+                <img src="icons/Учитель без фона.png" class="banner-img">
             `
         }
     ];
@@ -1133,4 +1136,11 @@ async function openHotItems() {
         console.error(error);
         if(container) container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
     }
+}
+
+function requestHelp() {
+    // Отправляем данные боту
+    tg.sendData("cmd_help");
+    // Закрываем окно
+    // (на самом деле sendData и так часто закрывает окно, но для надежности)
 }

@@ -836,9 +836,52 @@ h1, h2, h3, p { margin: 0; }
     z-index: 2;
 }
 
-/* 4. Info/Help (Помощь - Синий) */
+/* 4. Info/Help (Помощь - Темный в Бирюзовый) */
 .banner.info {
-    background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
+    /* Градиент: темная подложка -> бирюзовый акцент */
+    background: linear-gradient(90deg, #1f2533 0%, #00b894 60%, #00cec9 100%);
+    display: flex;
+    align-items: center;
+}
+
+/* Настройки картинки */
+.banner.info .banner-img {
+    height: 85%;
+    width: auto;
+    position: absolute;
+    right: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
+}
+
+/* Заголовок (Белый) */
+.banner.info .banner-title {
+    font-size: 22px;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+    color: white;
+}
+
+/* Подзаголовок (Светлый) */
+.banner.info .banner-subtitle {
+    position: relative;
+    z-index: 2;
+    color: rgba(255,255,255,0.9);
+}
+
+/* Кнопка (Белая) */
+.banner.info .banner-btn {
+    background: #ffffff;
+    color: #2d3436;
+    font-size: 15px;
+    padding: 12px 22px;
+    margin-top: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
+    /* border-radius и font-weight берутся из глобального класса */
 }
 
 /* 5. Payment Methods (Оплата - Серо-голубой в Темно-синий) */
@@ -851,7 +894,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* Настройки картинки */
 .banner.payment .banner-img {
-    height: 90%;         /* Увеличили на 10% (было 85%) */
+    height: 85%;         
     width: auto;
     position: absolute;
     right: -20px;
