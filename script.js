@@ -907,29 +907,39 @@ async function loadBanners() {
     if (!container) return;
     container.innerHTML = '';
 
-    // 🔥 РЕЖИМ ОТЛАДКИ: Если true - показывает ВСЕ баннеры сразу
-    const DEBUG_MODE = true; 
+    const DEBUG_MODE = false; 
 
-    // Данные для логики (в реальной работе)
+    // 1. Получаем статус пользователя (если еще не загрузился, считаем Новичком)
     const status = window.currentUserStatus || 'Новичок';
-    const isSubscriber = true; // Пока заглушка, в будущем проверять API
     
-    // Получаем список неоплаченных (для логики приоритета)
+    // Заглушка для подписки (пока считаем, что не подписан)
+    const isSubscriber = false; 
+
+    // 2. ПРОВЕРКА: Неоплаченные складчины
     let hasUnpaidItems = false;
     try {
-        const r = await fetch(`${API_BASE_URL}/api/items?type=active&joined=true`, { headers: getHeaders() });
-        const myItems = await r.json();
-        // Ищем item, где мы участник, статус fundraising, а payment_status != paid
+        const rMy = await fetch(`${API_BASE_URL}/api/items?type=active&joined=true`, { headers: getHeaders() });
+        const myItems = await rMy.json();
+        // Ищем: статус 'fundraising' (сбор идет) И статус участника НЕ 'paid'
         hasUnpaidItems = myItems.some(i => i.status === 'fundraising' && i.payment_status !== 'paid');
-    } catch (e) {}
+    } catch (e) { console.error("Err unpaid:", e); }
 
-    // --- БАЗА БАННЕРОВ ---
-    const allBanners = [
-        {
-            id: 'penalty',
+    // 3. ПРОВЕРКА: Горящие складчины (90%+)
+    let hasHotItems = false;
+    try {
+        // Берем топ-50 активных (обычно горящие среди популярных)
+        const rHot = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&items_per_page=50&sort=popular`, { headers: getHeaders() });
+        const hotItemsList = await rHot.json();
+        hasHotItems = hotItemsList.some(item => {
+            if (item.needed_participants <= 0) return false;
+            return (item.current_participants / item.needed_participants) >= 0.9;
+        });
+    } catch (e) { console.error("Err hot:", e); }
+
+    // --- БАЗА ВСЕХ БАННЕРОВ ---
+    const allBanners = {
+        'penalty': {
             type: 'penalty',
-            // Показываем, только если юзер Штрафник (или для теста можно поставить true)
-            condition: () => status === 'Штрафник',
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Ты стал<br>Штрафником</div>
@@ -945,10 +955,8 @@ async function loadBanners() {
                 <img src="icons/500 Без фона.png" class="banner-img">
             `
         },
-        {
-            id: 'unpaid',
+        'unpaid': {
             type: 'unpaid',
-            condition: () => hasUnpaidItems && status !== 'Штрафник',
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Не забудь<br>оплатить!</div>
@@ -964,10 +972,8 @@ async function loadBanners() {
                 <img src="icons/Времени мало без фона.png" class="banner-img">
             `
         },
-        {
-            id: 'subscribe',
+        'subscribe': {
             type: 'subscribe',
-            condition: () => !isSubscriber && status !== 'Штрафник',
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Не забудь<br>подписаться<br>на канал</div>
@@ -983,11 +989,40 @@ async function loadBanners() {
                 <img src="icons/Телеграм без фона.png" class="banner-img">
             `
         },
-        {
-            id: 'novice_tip',
+        'payment_info': {
+            type: 'payment',
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Оплатить взнос<br>можно картой<br>или криптой</div>
+                    <div class="banner-subtitle" style="line-height: 1.3; margin-bottom: 0;">
+                        Оплата картой<br>
+                        производится через<br>
+                        сервис ЮMoney,<br>
+                        а оплата криптовалютой<br>
+                        через Crypto Pay
+                    </div>
+                </div>
+                <img src="icons/Оплата Без фона.png" class="banner-img">
+            `
+        },
+        'help_promo': {
+            type: 'info',
+            html: `
+                <div class="banner-content">
+                    <div class="banner-title">Посмотри<br>обучающие видео</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        чтобы узнать как<br>
+                        пользоваться этим ботом
+                    </div>
+                    <button class="banner-btn" onclick="requestHelp()">
+                        Посмотреть
+                    </button>
+                </div>
+                <img src="icons/Учитель без фона.png" class="banner-img">
+            `
+        },
+        'novice_tip': {
             type: 'success',
-            // Показываем только Новичкам
-            condition: () => status === 'Новичок',
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Получи статус<br>Опытного<br>пользователя</div>
@@ -1003,10 +1038,8 @@ async function loadBanners() {
                 <img src="icons/Супермэн 2 без фона.png" class="banner-img">
             `
         },
-        {
-            id: 'hot_items',
+        'hot_items': {
             type: 'hot',
-            condition: () => true, 
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Осталось совсем<br>чуть-чуть</div>
@@ -1021,83 +1054,53 @@ async function loadBanners() {
                 </div>
                 <img src="icons/Загрузка-без-фона.png" class="banner-img">
             `
-        },
-        {
-            id: 'payment_info',
-            type: 'payment',
-            condition: () => true,
-            html: `
-                <div class="banner-content">
-                    <div class="banner-title">Оплатить взнос<br>можно картой<br>или криптой</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        Оплата картой<br>
-                        производится через<br>
-                        сервис ЮMoney,<br>
-                        а оплата криптовалютой<br>
-                        через Crypto Pay
-                    </div>
-                </div>
-                <img src="icons/Оплата Без фона.png" class="banner-img">
-            `
-        },
-        {
-            id: 'help_promo',
-            type: 'info',
-            condition: () => true,
-            html: `
-                <div class="banner-content">
-                    <div class="banner-title">Посмотри<br>обучающие видео</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        чтобы узнать как<br>
-                        пользоваться этим ботом
-                    </div>
-                    <button class="banner-btn" onclick="requestHelp()">
-                        Посмотреть
-                    </button>
-                </div>
-                <img src="icons/Учитель без фона.png" class="banner-img">
-            `
         }
-    ];
+    };
 
     // --- ЛОГИКА ОТРИСОВКИ ---
-    
+
     if (DEBUG_MODE) {
-        // Выводим ВСЕ баннеры подряд
-        allBanners.forEach(banner => {
-            const div = document.createElement('div');
-            div.className = `banner ${banner.type}`;
-            div.innerHTML = banner.html;
-            container.appendChild(div);
-        });
+        Object.values(allBanners).forEach(b => renderOneBanner(container, b));
         return;
     }
 
-    // --- ЛОГИКА ПРИОРИТЕТОВ (Production) ---
-    // 1. Если Штрафник -> ТОЛЬКО баннер штрафа
-    const penaltyBanner = allBanners.find(b => b.id === 'penalty');
-    if (penaltyBanner.condition()) {
-        renderOneBanner(container, penaltyBanner);
-        return;
+    // 1. ШТРАФНИК (Высший приоритет)
+    if (status === 'Штрафник') {
+        renderOneBanner(container, allBanners['penalty']);
+        return; // Остальные не показываем
     }
 
-    // 2. Если есть неоплаченные -> ТОЛЬКО баннер оплаты
-    const unpaidBanner = allBanners.find(b => b.id === 'unpaid');
-    if (unpaidBanner.condition()) {
-        renderOneBanner(container, unpaidBanner);
-        return;
+    // 2. ДОЛЖНИК (Высокий приоритет)
+    if (hasUnpaidItems) {
+        renderOneBanner(container, allBanners['unpaid']);
+        return; // Остальные не показываем
     }
 
-    // 3. Ротация остальных (Случайный из доступных)
-    // Исключаем те, что уже проверили (penalty, unpaid)
-    const rotationPool = allBanners.filter(b => 
-        b.id !== 'penalty' && 
-        b.id !== 'unpaid' && 
-        b.condition()
-    );
+    // 3. РОТАЦИЯ (Обычный режим)
+    // Собираем пул доступных баннеров
+    const rotationPool = [];
 
+    // Базовые баннеры (всегда доступны для ротации)
+    rotationPool.push(allBanners['payment_info']);
+    rotationPool.push(allBanners['help_promo']);
+    
+    // Подписка (если не подписан)
+    if (!isSubscriber) {
+        rotationPool.push(allBanners['subscribe']);
+    }
+
+    // Опытный (только для Новичков)
+    if (status === 'Новичок') {
+        rotationPool.push(allBanners['novice_tip']);
+    }
+
+    // Горящие (только если они есть)
+    if (hasHotItems) {
+        rotationPool.push(allBanners['hot_items']);
+    }
+
+    // Выбираем один случайный из пула
     if (rotationPool.length > 0) {
-        // Берем случайный баннер из пула (можно менять логику, например раз в день)
         const randomBanner = rotationPool[Math.floor(Math.random() * rotationPool.length)];
         renderOneBanner(container, randomBanner);
     }
