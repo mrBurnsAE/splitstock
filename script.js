@@ -352,7 +352,14 @@ function renderItems(container, items) {
     if (items.length === 0) {
         let img = "icons/Ничего нет без фона.png";
         if(window.currentSearchQuery) img = "icons/Поиск без фона.png";
-        container.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; height:50vh;"><img src="${img}" style="width:140px; margin-bottom:20px; opacity:0.9;"><div style="color:#a2a5b9; font-size:16px; font-weight:600;">Ничего нет</div></div>`;
+        
+        // ИЗМЕНЕНИЕ: width увеличили с 140px до 210px
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; height:50vh;">
+                <img src="${img}" style="width:210px; margin-bottom:20px; opacity:0.9;">
+                <div style="color:#a2a5b9; font-size:16px; font-weight:600;">Ничего нет</div>
+            </div>
+        `;
         return;
     }
     items.forEach(item => container.appendChild(createItemCard(item)));
