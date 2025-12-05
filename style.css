@@ -722,6 +722,7 @@ h1, h2, h3, p { margin: 0; }
 .banner.subscribe .banner-subtitle {
     position: relative;
     z-index: 2;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Кнопка */
@@ -774,6 +775,7 @@ h1, h2, h3, p { margin: 0; }
 .banner.penalty .banner-subtitle {
     position: relative;
     z-index: 2;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Кнопка */
@@ -819,6 +821,7 @@ h1, h2, h3, p { margin: 0; }
 .banner.unpaid .banner-subtitle {
     position: relative;
     z-index: 2;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Кнопка */
@@ -902,6 +905,7 @@ h1, h2, h3, p { margin: 0; }
 .banner.success .banner-subtitle {
     position: relative;
     z-index: 2;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Кнопка */
@@ -947,7 +951,7 @@ h1, h2, h3, p { margin: 0; }
 .banner.hot .banner-subtitle {
     position: relative;
     z-index: 2;
-    color: rgba(255,255,255,0.9);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Кнопка */
