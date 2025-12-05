@@ -841,17 +841,17 @@ h1, h2, h3, p { margin: 0; }
     background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
 }
 
-/* 5. Payment Methods (Оплата - Серо-голубой) */
+/* 5. Payment Methods (Оплата - Серо-голубой в Темно-синий) */
 .banner.payment {
-    /* Градиент: спокойный серо-голубой, светлее темного фона */
-    background: linear-gradient(90deg, #34495e 0%, #546e7a 100%);
+    /* Градиент: спокойный серо-голубой слева -> глубокий темно-синий справа */
+    background: linear-gradient(90deg, #34495e 0%, #2c3e50 50%, #1e2749 100%);
     display: flex;
     align-items: center;
 }
 
 /* Настройки картинки */
 .banner.payment .banner-img {
-    height: 85%;
+    height: 95%;         /* Увеличили на 10% (было 85%) */
     width: auto;
     position: absolute;
     right: -20px;
@@ -860,12 +860,19 @@ h1, h2, h3, p { margin: 0; }
     filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
-/* Заголовок и подзаголовок (Белые) */
-.banner.payment .banner-title,
-.banner.payment .banner-subtitle {
+/* Заголовок */
+.banner.payment .banner-title {
     position: relative;
     z-index: 2;
     color: white;
+    margin-bottom: 20px; /* Увеличили отступ в 2 раза */
+}
+
+/* Подзаголовок */
+.banner.payment .banner-subtitle {
+    position: relative;
+    z-index: 2;
+    color: rgba(255,255,255,0.9);
 }
 
 /* 6. Success/Experienced (Опытный - Плавный Зеленый) */
