@@ -892,10 +892,10 @@ h1, h2, h3, p { margin: 0; }
     z-index: 2;
 }
 
-/* 7. Hot/90% (Горящие - Темный в Фиолетовый) */
+/* 7. Hot/90% (Горящие - Темный в Глубокий Фиолетовый) */
 .banner.hot {
-    /* Градиент: темная подложка слева -> фиолетовый акцент справа */
-    background: linear-gradient(90deg, #1f2533 0%, #6c5ce7 60%, #8e44ad 100%);
+    /* Градиент: от темного фона (#1f2533) к глубокому фиолетовому (#311b92) без розовых оттенков */
+    background: linear-gradient(90deg, #1f2533 0%, #4527a0 60%, #311b92 100%);
     display: flex;
     align-items: center;
 }
@@ -907,7 +907,7 @@ h1, h2, h3, p { margin: 0; }
     position: absolute;
     right: -25px;
     top: 50%;
-    transform: translateY(-50%); /* Убрали rotate, робот стоит ровно */
+    transform: translateY(-50%);
     filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
