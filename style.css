@@ -708,7 +708,6 @@ h1, h2, h3, p { margin: 0; }
     top: 50%;
     bottom: auto;
     transform: translateY(-50%);
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
 /* Заголовок (шрифт чуть меньше, т.к. фраза длинная) */
@@ -761,7 +760,6 @@ h1, h2, h3, p { margin: 0; }
     bottom: auto;        /* Сбрасываем привязку к низу */
     /* Сдвигаем на 50% своей высоты вверх — это идеальное центрирование */
     transform: translateY(-50%); 
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
 /* Заголовок */
@@ -807,7 +805,6 @@ h1, h2, h3, p { margin: 0; }
     top: 50%;
     bottom: auto;
     transform: translateY(-50%); /* Идеальный центр */
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
 /* Заголовок */
@@ -857,7 +854,6 @@ h1, h2, h3, p { margin: 0; }
     right: -20px;
     top: 50%;
     transform: translateY(-50%);
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
 /* Заголовок */
@@ -892,7 +888,6 @@ h1, h2, h3, p { margin: 0; }
     top: 50%;
     bottom: auto;
     transform: translateY(-50%);
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
 /* Заголовок */
@@ -937,7 +932,6 @@ h1, h2, h3, p { margin: 0; }
     right: -25px;
     top: 50%;
     transform: translateY(-50%);
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
 /* Заголовок */
