@@ -1028,8 +1028,13 @@ async function loadBanners() {
             condition: () => true,
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Оплата</div>
-                    <div class="banner-subtitle">Принимаем карты РФ (ЮMoney) и криптовалюту.</div>
+                    <div class="banner-title">Оплатить взнос<br>можно картой<br>или криптой</div>
+                    <div class="banner-subtitle" style="line-height: 1.3;">
+                        Оплата картой производится<br>
+                        через сервис ЮMoney,<br>
+                        а оплата криптовалютой<br>
+                        через Crypto Pay
+                    </div>
                 </div>
                 <img src="icons/Оплата Без фона.png" class="banner-img">
             `
