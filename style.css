@@ -844,7 +844,7 @@ h1, h2, h3, p { margin: 0; }
 /* 5. Payment Methods (Оплата - Серо-голубой в Темно-синий) */
 .banner.payment {
     /* Градиент: спокойный серо-голубой слева -> глубокий темно-синий справа */
-    background: linear-gradient(90deg, #34495e 0%, #2c3e50 50%, #1e2749 100%);
+    background: linear-gradient(90deg, #25283a 0%, #2c3e50 50%, #1e2749 100%);
     display: flex;
     align-items: center;
 }
@@ -878,7 +878,7 @@ h1, h2, h3, p { margin: 0; }
 /* 6. Success/Experienced (Опытный - Плавный Зеленый) */
 .banner.success {
     /* Градиент: от темного к зеленому (#2ecc71) */
-    background: linear-gradient(90deg, #1f2533 0%, #27ae60 50%, #2ecc71 100%);
+    background: linear-gradient(90deg, #25283a 0%, #27ae60 50%, #2ecc71 100%);
     display: flex;
     align-items: center;
 }
@@ -924,7 +924,7 @@ h1, h2, h3, p { margin: 0; }
 /* 7. Hot/90% (Горящие - Темный в Глубокий Фиолетовый) */
 .banner.hot {
     /* Градиент: от темного фона (#1f2533) к глубокому фиолетовому (#311b92) без розовых оттенков */
-    background: linear-gradient(90deg, #1f2533 0%, #4527a0 60%, #311b92 100%);
+    background: linear-gradient(90deg, #25283a 0%, #4527a0 60%, #311b92 100%);
     display: flex;
     align-items: center;
 }
