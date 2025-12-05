@@ -851,7 +851,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* Настройки картинки */
 .banner.payment .banner-img {
-    height: 95%;         /* Увеличили на 10% (было 85%) */
+    height: 100%;         /* Увеличили на 10% (было 85%) */
     width: auto;
     position: absolute;
     right: -20px;
@@ -865,7 +865,7 @@ h1, h2, h3, p { margin: 0; }
     position: relative;
     z-index: 2;
     color: white;
-    margin-bottom: 20px; /* Увеличили отступ в 2 раза */
+    margin-bottom: 30px; /* Увеличили отступ в 2 раза */
 }
 
 /* Подзаголовок */
