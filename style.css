@@ -753,7 +753,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* Специфичные настройки картинки для баннера Штрафника */
 .banner.penalty .banner-img {
-    height: 85%;         /* Еще немного уменьшили для аккуратности */
+    height: 90%;         /* Еще немного уменьшили для аккуратности */
     width: auto;         /* Сохраняем пропорции */
     position: absolute;  /* Абсолютное позиционирование */
     right: -20px;        /* Положение справа */
@@ -800,7 +800,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* Настройки картинки (Аналогично Штрафнику) */
 .banner.unpaid .banner-img {
-    height: 85%;
+    height: 90%;
     width: auto;
     position: absolute;
     right: -20px;
