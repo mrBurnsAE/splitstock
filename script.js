@@ -1030,8 +1030,9 @@ async function loadBanners() {
                 <div class="banner-content">
                     <div class="banner-title">Оплатить взнос<br>можно картой<br>или криптой</div>
                     <div class="banner-subtitle" style="line-height: 1.3;">
-                        Оплата картой производится<br>
-                        через сервис ЮMoney,<br>
+                        Оплата картой<br>
+                        производится через<br>
+                        сервис ЮMoney,<br>
                         а оплата криптовалютой<br>
                         через Crypto Pay
                     </div>
