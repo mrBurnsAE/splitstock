@@ -892,10 +892,10 @@ h1, h2, h3, p { margin: 0; }
     z-index: 2;
 }
 
-/* 7. Hot/90% (Горящие - Темный в Желтый) */
+/* 7. Hot/90% (Горящие - Темный в Фиолетовый) */
 .banner.hot {
-    /* Градиент: темная подложка слева -> ярко-желтый акцент справа */
-    background: linear-gradient(90deg, #1f2533 0%, #f1c40f 60%, #f39c12 100%);
+    /* Градиент: темная подложка слева -> фиолетовый акцент справа */
+    background: linear-gradient(90deg, #1f2533 0%, #6c5ce7 60%, #8e44ad 100%);
     display: flex;
     align-items: center;
 }
@@ -907,11 +907,11 @@ h1, h2, h3, p { margin: 0; }
     position: absolute;
     right: -25px;
     top: 50%;
-    transform: translateY(-50%) rotate(-10deg); /* Легкий наклон для динамики */
+    transform: translateY(-50%); /* Убрали rotate, робот стоит ровно */
     filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
 }
 
-/* Заголовок (Белый, так как фон слева темный) */
+/* Заголовок */
 .banner.hot .banner-title {
     font-size: 22px;
     margin-bottom: 10px;
@@ -920,14 +920,14 @@ h1, h2, h3, p { margin: 0; }
     color: white; 
 }
 
-/* Подзаголовок (Светло-серый) */
+/* Подзаголовок */
 .banner.hot .banner-subtitle {
     position: relative;
     z-index: 2;
     color: rgba(255,255,255,0.9);
 }
 
-/* Кнопка (Белая с темным текстом + скругление) */
+/* Кнопка */
 .banner.hot .banner-btn {
     background: #ffffff;
     color: #2d3436;
@@ -937,8 +937,7 @@ h1, h2, h3, p { margin: 0; }
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     position: relative;
     z-index: 2;
-    border-radius: 10px; /* <--- ВЕРНУЛИ СКРУГЛЕНИЕ */
-    border: none;
+    /* border-radius и font-weight берутся из глобального класса .banner-btn */
 }
 
 .banner-btn {
