@@ -864,8 +864,8 @@ h1, h2, h3, p { margin: 0; }
     position: relative;
     z-index: 2;
     color: white;
-    margin-bottom: 30px; /* Увеличили отступ в 2 раза */
-    font-size: 26px;
+    margin-bottom: 40px; /* Увеличили отступ в 2 раза */
+    font-size: 24px;
 }
 
 /* Подзаголовок */
