@@ -916,6 +916,7 @@ h1, h2, h3, p { margin: 0; }
     position: relative;
     z-index: 2;
     color: rgba(255,255,255,0.9);
+    margin-bottom: 8px;
 }
 
 /* 6. Success/Experienced (Опытный - Плавный Зеленый) */

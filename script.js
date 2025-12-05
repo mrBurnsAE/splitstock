@@ -1052,7 +1052,7 @@ async function loadBanners() {
                         пользоваться этим ботом
                     </div>
                     <button class="banner-btn" onclick="requestHelp()">
-                        Посмотреть обучение
+                        Посмотреть
                     </button>
                 </div>
                 <img src="icons/Учитель без фона.png" class="banner-img">
