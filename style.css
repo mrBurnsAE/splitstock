@@ -902,7 +902,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* Настройки картинки */
 .banner.hot .banner-img {
-    height: 85%;
+    height: 95%;
     width: auto;
     position: absolute;
     right: -25px;
