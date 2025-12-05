@@ -846,13 +846,13 @@ h1, h2, h3, p { margin: 0; }
 
 /* Настройки картинки */
 .banner.info .banner-img {
-    height: 85%;
+    height: 95%;
     width: auto;
     position: absolute;
-    right: -25px;
+    right: -15px;
     top: 50%;
     transform: translateY(-50%);
-    filter: drop-shadow(-10px 5px 15px rgba(0,0,0,0.3));
+
 }
 
 /* Заголовок (Белый) */
