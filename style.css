@@ -940,3 +940,25 @@ h1, h2, h3, p { margin: 0; }
     border-radius: 10px; /* <--- ВЕРНУЛИ СКРУГЛЕНИЕ */
     border: none;
 }
+
+.banner-btn {
+    border: none;
+    padding: 12px 22px; /* Чуть побольше, чтобы удобно нажимать */
+    border-radius: 12px !important; /* <--- ВОЗВРАЩАЕМ СКРУГЛЕНИЕ (Принудительно) */
+    font-weight: 700 !important;    /* <--- ВОЗВРАЩАЕМ ЖИРНОСТЬ (Принудительно) */
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    background: white;
+    color: #2d3436;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.1s;
+    position: relative;
+    z-index: 5; /* Чтобы кнопка всегда была поверх картинок */
+}
+
+.banner-btn:active {
+    transform: scale(0.95);
+}
