@@ -851,7 +851,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* Настройки картинки */
 .banner.payment .banner-img {
-    height: 100%;         /* Увеличили на 10% (было 85%) */
+    height: 90%;         /* Увеличили на 10% (было 85%) */
     width: auto;
     position: absolute;
     right: -20px;
