@@ -141,20 +141,24 @@ async function getFiles() {
 }
 
 function switchView(viewName) {
+    // 1. Сбрасываем активные классы у всех экранов
     document.querySelectorAll('.view').forEach(el => {
         el.classList.remove('active');
-        el.classList.remove('loaded'); // Сбрасываем анимацию
+        el.classList.remove('loaded');
     });
     
+    // 2. Активируем нужный экран
     const target = document.getElementById(`view-${viewName}`);
     if (target) {
         target.classList.add('active');
-        // Небольшой хак для плавного появления при переключении
+        // Небольшая задержка для анимации opacity
         setTimeout(() => target.classList.add('loaded'), 10);
     }
     
+    // 3. Управление видимостью нижнего меню
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) {
+        // Скрываем меню на внутренних страницах
         if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
             bottomNav.style.display = 'none';
         } else {
@@ -162,12 +166,24 @@ function switchView(viewName) {
         }
     }
 
+    // 4. Обновляем иконки в нижнем меню (активная/неактивная)
     if (['home', 'catalog', 'profile'].includes(viewName)) {
         updateBottomNav(viewName);
     }
 
+    // 5. Если перешли в категории - грузим их список
     if (viewName === 'categories') {
         loadFullCategoriesList();
+    }
+
+    // --- ИСПРАВЛЕНИЕ НАВИГАЦИИ (Твой баг) ---
+    // Если мы нажали в нижнем меню на "Главная" или "Складчины",
+    // мы должны забыть, что до этого смотрели "Мои складчины" или "Детали категории".
+    // Иначе кнопка "Назад" будет пытаться вернуть нас в Профиль.
+    if (viewName === 'catalog' || viewName === 'home') {
+        window.isMyItemsContext = false;
+        window.currentCategoryDetailsId = null;
+        window.currentMyItemsType = null;
     }
 }
 
