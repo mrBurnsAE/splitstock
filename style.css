@@ -402,8 +402,12 @@ h1, h2, h3, p { margin: 0; }
 }
 
 .filter-title {
-    font-size: 22px;
+    font-size: 18px; /* Уменьшили (было 22px), чтобы влезали длинные названия */
     font-weight: 700;
+    white-space: nowrap; /* Запрещаем перенос строк */
+    overflow: hidden;    /* Обрезаем лишнее */
+    text-overflow: ellipsis; /* Ставим троеточие, если не влезает */
+    line-height: 1.2;
 }
 
 .filter-section {
