@@ -546,6 +546,9 @@ async function openProduct(id) {
     
     const viewProduct = document.getElementById('view-product');
     viewProduct.classList.add('active');
+
+    // --- ИСПРАВЛЕНИЕ: Прокручиваем страницу в самый верх ---
+    window.scrollTo(0, 0);
     
     // Добавляем класс loaded с небольшой задержкой для анимации появления
     setTimeout(() => {
