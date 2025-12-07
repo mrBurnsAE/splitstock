@@ -729,6 +729,23 @@ function selectTab(el) {
     else if (el.innerText.includes('Мои')) type = 'all';
     loadItems(type);
 }
+function selectCategoryInnerTab(type) {
+    // 1. Переключаем визуальный класс active
+    const tabActive = document.getElementById('tab-cat-active');
+    const tabCompleted = document.getElementById('tab-cat-completed');
+    
+    if (tabActive) tabActive.classList.remove('active');
+    if (tabCompleted) tabCompleted.classList.remove('active');
+    
+    if (type === 'active' && tabActive) {
+        tabActive.classList.add('active');
+    } else if (type === 'completed' && tabCompleted) {
+        tabCompleted.classList.add('active');
+    }
+
+    // 2. Загружаем данные
+    loadCategoryItems(type);
+}
 function selectTabByName(name) {
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(t => { if(t.innerText.includes(name)) selectTab(t); });
