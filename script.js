@@ -38,6 +38,7 @@ window.currentCategoryDetailsId = null;
 window.isMyItemsContext = false;
 window.currentMyItemsType = 'active';
 window.filterState = { sort: 'new', categories: [], tags: [] };
+window.isHomeContext = false; // Флаг перехода с Главной
 
 // --- ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (LOADING) ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -554,6 +555,8 @@ async function openProduct(id) {
     document.getElementById('product-header-title').innerText = "Загрузка...";
     switchVideo('none');
     window.currentItemId = id;
+
+    window.currentCatalogTabType = 'active'; // Запоминаем текущую вкладку каталога
     
     try {
         // Добавляем timestamp для сброса кэша
@@ -617,10 +620,27 @@ async function openProduct(id) {
 }
 
 function closeProduct() {
+    // Останавливаем видео
     document.getElementById('main-video-frame').src = "";
-    if(window.isMyItemsContext) { switchView('my-items'); loadMyItems(window.currentMyItemsType); }
-    else if(window.currentCategoryDetailsId) { switchView('category-details'); }
-    else { switchView('catalog'); loadItems('active'); }
+
+    if(window.isMyItemsContext) { 
+        // Если пришли из профиля
+        switchView('my-items'); 
+        loadMyItems(window.currentMyItemsType); 
+    }
+    else if(window.currentCategoryDetailsId) { 
+        // Если пришли из категории
+        switchView('category-details'); 
+    }
+    else if(window.isHomeContext) { 
+        // --- НОВОЕ: Если пришли с Главной (Топ 5) ---
+        switchView('home');
+    }
+    else { 
+        // Иначе (по умолчанию) в Каталог
+        switchView('catalog'); 
+        loadItems(window.currentCatalogTabType || 'active'); 
+    }
 }
 
 async function handleProductAction() {
@@ -740,9 +760,14 @@ function showPlaceholder() {
 function selectTab(el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
+    
     let type = 'active';
     if (el.innerText.includes('Завершённые')) type = 'completed';
-    else if (el.innerText.includes('Мои')) type = 'all';
+    else if (el.innerText.includes('Мои')) type = 'all'; // "Мои складчины" в общем каталоге
+    
+    // Запоминаем выбор
+    window.currentCatalogTabType = type;
+    
     loadItems(type);
 }
 function selectCategoryInnerTab(type) {
@@ -873,7 +898,12 @@ async function loadCompactList(type, containerId) {
 function createCompactCard(item) {
     const card = document.createElement('div');
     card.className = 'compact-card';
-    card.onclick = () => openProduct(item.id);
+    
+    // Ставим флаг, что открываем с Главной
+    card.onclick = () => {
+        window.isHomeContext = true;
+        openProduct(item.id);
+    };
 
     // Определяем текст подзаголовка
     let metaText = "";
@@ -881,9 +911,9 @@ function createCompactCard(item) {
 
     if (item.status === 'completed') {
         metaText = "Завершена • Файлы доступны";
-        statusColor = "#fdcb6e"; // Желтый/Оранжевый для завершенных
+        statusColor = "#fdcb6e"; // Желтый
         if(item.payment_status === 'paid') {
-             statusColor = "#2ecc71"; // Зеленый если куплено
+             statusColor = "#2ecc71"; // Зеленый
              metaText = "Куплено вами";
         }
     } else if (item.status === 'fundraising') {
@@ -1153,31 +1183,41 @@ function renderOneBanner(container, bannerData) {
     container.appendChild(div);
 }
 
-async function openHotItems() {
-    switchView('catalog');
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+function switchView(viewName) {
+    document.querySelectorAll('.view').forEach(el => {
+        el.classList.remove('active');
+        el.classList.remove('loaded');
+    });
     
-    const container = document.querySelector('#view-catalog .item-container');
-    if(container) container.innerHTML = '<div style="padding:20px; text-align:center;">Ищем горящие предложения...</div>';
+    const target = document.getElementById(`view-${viewName}`);
+    if (target) {
+        target.classList.add('active');
+        setTimeout(() => target.classList.add('loaded'), 10);
+    }
     
-    try {
-        // Загружаем 100 активных складчин для фильтрации
-        let url = `${API_BASE_URL}/api/items?type=active&page=1&items_per_page=100&t=${Date.now()}`;
-        const response = await fetch(url, { headers: getHeaders() });
-        const items = await response.json();
-        
-        // Фильтруем >= 90%
-        const hotItems = items.filter(item => {
-            if (item.needed_participants <= 0) return false;
-            const progress = item.current_participants / item.needed_participants;
-            return progress >= 0.9;
-        });
-        
-        renderItems(container, hotItems);
-        
-    } catch (error) {
-        console.error(error);
-        if(container) container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) {
+        if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
+            bottomNav.style.display = 'none';
+        } else {
+            bottomNav.style.display = 'flex';
+        }
+    }
+
+    if (['home', 'catalog', 'profile'].includes(viewName)) {
+        updateBottomNav(viewName);
+    }
+
+    if (viewName === 'categories') {
+        loadFullCategoriesList();
+    }
+
+    // Сброс контекстов навигации при переходе в главные разделы
+    if (viewName === 'catalog' || viewName === 'home') {
+        window.isMyItemsContext = false;
+        window.currentCategoryDetailsId = null;
+        window.currentMyItemsType = null;
+        window.isHomeContext = false; // <-- СБРОС ФЛАГА ГЛАВНОЙ
     }
 }
 
