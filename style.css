@@ -223,7 +223,11 @@ h1, h2, h3, p { margin: 0; }
 
 .product-header { display: flex; align-items: center; padding: 15px 20px; background: var(--bg-color); gap: 15px; position: sticky; top: 0; z-index: 50; flex-shrink: 0; }
 .back-btn { background: transparent; border: none; padding: 0; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-.back-btn img { width: 28px; height: 28px; display: block; }
+.back-btn img {
+    width: 22px;  /* Было 28px, уменьшили на ~20% */
+    height: 22px;
+    display: block;
+}
 .header-title { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* --- МЕДИА БЛОК --- */
@@ -380,6 +384,21 @@ h1, h2, h3, p { margin: 0; }
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
+    /* Добавляем отступы для Моих складчин и Категорий */
+    padding: 15px 20px; 
+    /* Добавляем фон и фиксацию, чтобы при скролле красиво смотрелось (как в товаре) */
+    background: var(--bg-color);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+/* ИСКЛЮЧЕНИЕ: На странице фильтра убираем отступы у заголовка, 
+   так как там уже есть отступы у самого контейнера страницы */
+#view-filter .filter-header {
+    padding: 0;
+    margin-bottom: 24px;
+    position: static; /* На фильтре можно не фиксировать, если не нужно */
 }
 
 .filter-title {
