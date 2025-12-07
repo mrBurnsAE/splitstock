@@ -39,6 +39,7 @@ window.isMyItemsContext = false;
 window.currentMyItemsType = 'active';
 window.filterState = { sort: 'new', categories: [], tags: [] };
 window.isHomeContext = false; // Флаг перехода с Главной
+window.currentCatalogTabType = 'active'; // <--- ДОБАВИТЬ ЭТУ СТРОКУ
 
 // --- ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (LOADING) ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -555,8 +556,6 @@ async function openProduct(id) {
     document.getElementById('product-header-title').innerText = "Загрузка...";
     switchVideo('none');
     window.currentItemId = id;
-
-    window.currentCatalogTabType = 'active'; // Запоминаем текущую вкладку каталога
     
     try {
         // Добавляем timestamp для сброса кэша
