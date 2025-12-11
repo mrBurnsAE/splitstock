@@ -192,6 +192,18 @@
 
         <div class="product-action-bar">
             <button class="btn-primary" id="product-action-btn" onclick="handleProductAction()">Записаться</button>
+            <div id="view-product" class="view">
+        <div class="product-footer">
+            <div class="product-price-block">
+                <div class="price-label">Стоимость взноса:</div>
+                <div class="price-value" id="product-price">100₽</div>
+            </div>
+            <button class="main-btn" id="product-action-btn" onclick="handleProductAction()">Записаться</button>
+            
+            <button class="btn-alt-pay" id="product-alt-pay-btn" onclick="sendAltPayRequest()">🟢 Альтернативная оплата</button>
+            
+        </div>
+    </div>
             <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
                 <img src="icons/cross.svg" width="24">
             </button>
@@ -310,6 +322,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=95"></script>
+    <script src="script.js?v=96"></script>
 </body>
 </html>
