@@ -1057,24 +1057,16 @@ h1, h2, h3, p { margin: 0; }
     transform: scale(0.95);
 }
 
-/* Кнопка альтернативной оплаты */
-.btn-alt-pay {
-    background-color: transparent;
-    border: 2px solid #00b894; /* Зеленая рамка */
-    color: #00b894;
-    border-radius: 12px;
-    padding: 14px 0;
+/* --- Стили для кнопки альтернативной оплаты в модалке --- */
+.pay-method-btn.manual {
     width: 100%;
-    font-family: 'Gilroy', sans-serif;
-    font-weight: 600;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 12px;
-    transition: all 0.2s ease;
-    display: none; /* Скрыта по умолчанию */
+    margin-top: 12px; /* Отступ от верхнего ряда кнопок */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 184, 148, 0.5); /* Зеленоватая обводка */
+    justify-content: center; /* Центрируем текст */
 }
 
-.btn-alt-pay:active {
-    background-color: rgba(0, 184, 148, 0.1);
+.pay-method-btn.manual:active {
+    background: rgba(0, 184, 148, 0.1);
     transform: scale(0.98);
 }

@@ -601,7 +601,6 @@ async function openProduct(id) {
         bar.style.width = percent + "%";
         
         updateProductStatusUI(item.status, item.is_joined, item.payment_status, item.start_at, item.end_at);
-        updateAltPayButton(item, item.payment_status);
         
         const coverImg = document.getElementById('product-cover-img');
         coverImg.src = item.cover_url || "icons/Ничего нет без фона.png";
@@ -1241,32 +1240,4 @@ function sendAltPayRequest() {
     // Закрываем WebApp и отправляем данные боту
     // Формат: manual_pay:<item_id>
     tg.sendData(`manual_pay:${window.currentItemId}`);
-}
-
-// --- ОБНОВЛЕНИЕ ВИДИМОСТИ КНОПКИ ---
-// Эту функцию нужно вызывать внутри loadProductDetails
-function updateAltPayButton(item, userStatusInItem) {
-    const altBtn = document.getElementById('product-alt-pay-btn');
-    if (!altBtn) return;
-
-    // Скрываем по умолчанию
-    altBtn.style.display = 'none';
-
-    // Показываем кнопку ТОЛЬКО если сейчас этап оплаты
-    // 1. Сбор средств (fundraising) и статус 'pending' (не оплачено)
-    // 2. Завершено (completed) и статус 'None' (еще не купил) или 'pending' - для покупки из архива
-    
-    const isFundraising = (item.status === 'fundraising');
-    const isCompleted = (item.status === 'completed');
-    const paymentStatus = userStatusInItem || 'none'; // 'none', 'pending', 'paid'
-
-    if (isFundraising && paymentStatus === 'pending') {
-        altBtn.style.display = 'block';
-        altBtn.innerText = "🟢 Альтернативная оплата (Взнос)";
-    } else if (isCompleted && (paymentStatus === 'none' || paymentStatus === 'pending')) {
-        // Проверка на статус Опытный должна быть, но здесь мы просто даем возможность нажать
-        // Бот сам проверит статус Опытного
-        altBtn.style.display = 'block';
-        altBtn.innerText = "🟢 Альтернативная оплата (Купить)";
-    }
 }

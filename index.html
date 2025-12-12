@@ -192,16 +192,9 @@
 
         <div class="product-action-bar">
             <button class="btn-primary" id="product-action-btn" onclick="handleProductAction()">Записаться</button>
-            <div id="view-product" class="view">
-        <div class="product-footer">
-            <div class="product-price-block">
-                <div class="price-label">Стоимость взноса:</div>
-                <div class="price-value" id="product-price">100₽</div>
-            </div>
-            <button class="main-btn" id="product-action-btn" onclick="handleProductAction()">Записаться</button>
-            
-            <button class="btn-alt-pay" id="product-alt-pay-btn" onclick="sendAltPayRequest()">🟢 Альтернативная оплата</button>
-            
+            <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
+                <img src="icons/cross.svg" width="24">
+            </button>
         </div>
     </div>
             <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
@@ -243,6 +236,7 @@
         <div class="modal-content">
             <img src="icons/Оплата Без фона.png" class="payment-img" alt="Payment">
             <div class="payment-title">Выберите способ оплаты</div>
+            
             <div class="payment-buttons">
                 <button class="pay-method-btn yoo" onclick="selectPaymentMethod('yoomoney')">
                     <img src="icons/ЮMoney.svg" alt="ЮMoney">
@@ -253,6 +247,10 @@
                     CryptoPay
                 </button>
             </div>
+
+            <button class="pay-method-btn manual" onclick="sendAltPayRequest()">
+                <span>🟢 Альтернативные способы</span>
+            </button>
             <button class="payment-cancel-btn" onclick="closePaymentModal()">Отмена</button>
         </div>
     </div>
@@ -322,6 +320,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=96"></script>
+    <script src="script.js?v=97"></script>
 </body>
 </html>
