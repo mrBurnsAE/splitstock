@@ -1060,10 +1060,16 @@ h1, h2, h3, p { margin: 0; }
 /* --- Стили для кнопки альтернативной оплаты в модалке --- */
 .pay-method-btn.manual {
     width: 100%;
-    margin-top: 12px; /* Отступ от верхнего ряда кнопок */
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(0, 184, 148, 0.5); /* Зеленоватая обводка */
+    margin-top: 12px;
     justify-content: center; /* Центрируем текст */
+    /* Цвет фона и рамки берется от базового класса .pay-method-btn, 
+       поэтому здесь мы их не переопределяем, чтобы она была "как все" */
+}
+
+/* Зеленое свечение при наведении (как у других кнопок) */
+.pay-method-btn.manual:hover {
+    box-shadow: 0 4px 15px rgba(0, 184, 148, 0.2);
+    border-color: #00b894;
 }
 
 .pay-method-btn.manual:active {
