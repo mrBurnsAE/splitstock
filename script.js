@@ -244,7 +244,11 @@ function openMyItems(type) {
     window.currentCategoryDetailsId = null;
     window.currentMyItemsType = type;
     const titleEl = document.getElementById('my-items-title');
-    if (titleEl) titleEl.innerText = (type === 'active') ? 'Мои активные складчины' : 'Мои завершённые складчины';
+    if (titleEl) {
+        if (type === 'active') titleEl.innerText = 'Мои активные складчины';
+        else if (type === 'completed') titleEl.innerText = 'Мои завершённые складчины';
+        else if (type === 'unpaid') titleEl.innerText = 'Неоплаченные складчины'; // <-- НОВОЕ
+    }
     switchView('my-items');
     loadMyItems(type);
 }
@@ -1037,7 +1041,7 @@ async function loadBanners() {
                         чтобы не стать<br>
                         Штрафником
                     </div>
-                    <button class="banner-btn" onclick="openMyItems('active')">
+                    <button class="banner-btn" onclick="openMyItems('unpaid')">
                         Оплатить
                     </button>
                 </div>
@@ -1149,29 +1153,23 @@ async function loadBanners() {
     }
 
     // 3. РОТАЦИЯ (Обычный режим)
-    // Собираем пул доступных баннеров
     const rotationPool = [];
 
-    // Базовые баннеры (всегда доступны для ротации)
     rotationPool.push(allBanners['payment_info']);
     rotationPool.push(allBanners['help_promo']);
     
-    // Подписка (если не подписан)
     if (!isSubscriber) {
         rotationPool.push(allBanners['subscribe']);
     }
 
-    // Опытный (только для Новичков)
     if (status === 'Новичок') {
         rotationPool.push(allBanners['novice_tip']);
     }
 
-    // Горящие (только если они есть)
     if (hasHotItems) {
         rotationPool.push(allBanners['hot_items']);
     }
 
-    // Выбираем один случайный из пула
     if (rotationPool.length > 0) {
         const randomBanner = rotationPool[Math.floor(Math.random() * rotationPool.length)];
         renderOneBanner(container, randomBanner);
