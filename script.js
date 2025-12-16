@@ -1176,6 +1176,152 @@ async function loadBanners() {
     }
 }
 
+async function loadProductDetails(id) {
+    showPreloader(true);
+    window.currentItemId = id;
+
+    try {
+        const r = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: getHeaders() });
+        if (!r.ok) throw new Error('Network error');
+        const item = await r.json();
+
+        // Заполняем UI
+        const coverEl = document.getElementById('product-cover');
+        if (coverEl) coverEl.src = item.cover_url || 'placeholder.jpg';
+        
+        const catEl = document.getElementById('product-category');
+        if (catEl) catEl.innerText = item.category || 'Категория';
+        
+        const titleEl = document.getElementById('product-title');
+        if (titleEl) titleEl.innerText = item.name;
+        
+        const descEl = document.getElementById('product-desc');
+        if (descEl) descEl.innerHTML = item.description.replace(/\n/g, '<br>');
+        
+        // Теги
+        const tagsContainer = document.getElementById('product-tags');
+        if (tagsContainer) {
+            tagsContainer.innerHTML = '';
+            if (item.tags && item.tags.length > 0) {
+                item.tags.forEach(tag => {
+                    const sp = document.createElement('span');
+                    sp.className = 'tag';
+                    sp.innerText = tag;
+                    tagsContainer.appendChild(sp);
+                });
+            }
+        }
+
+        // Прогресс бар
+        const current = item.current_participants || 0;
+        const needed = item.needed_participants || 1;
+        const percent = Math.min(100, Math.round((current / needed) * 100));
+        
+        const fillEl = document.getElementById('progress-fill');
+        if (fillEl) fillEl.style.width = `${percent}%`;
+        
+        const countEl = document.getElementById('participants-count');
+        if (countEl) countEl.innerText = `${current} / ${needed}`;
+        
+        // Цена
+        let displayPrice = item.price;
+        if (item.status === 'completed') displayPrice = 200; // Цена покупки из архива
+        if (item.status === 'fundraising') displayPrice = 100; // Цена взноса
+        
+        const priceEl = document.getElementById('product-price');
+        if (priceEl) priceEl.innerText = `${displayPrice}₽`;
+
+        // Видео (если есть)
+        const videoContainer = document.getElementById('product-video-container');
+        if (videoContainer) {
+            videoContainer.innerHTML = '';
+            if (item.videos && Object.keys(item.videos).length > 0) {
+                videoContainer.style.display = 'block';
+                // Здесь можно добавить логику вывода плееров, если нужно
+            } else {
+                videoContainer.style.display = 'none';
+            }
+        }
+
+        // --- ЛОГИКА ГЛАВНОЙ КНОПКИ ---
+        const btn = document.getElementById('product-action-btn');
+        const leaveBtn = document.getElementById('product-leave-btn');
+        
+        if (!btn) return;
+
+        // Сброс состояний
+        btn.className = 'btn-primary';
+        btn.disabled = false;
+        btn.onclick = null;
+        if (leaveBtn) leaveBtn.style.display = 'none';
+
+        const isJoined = item.is_joined; 
+        const pStatus = item.payment_status; 
+
+        // 1. DRAFT / SCHEDULED
+        if (item.status === 'draft' || item.status === 'scheduled') {
+            btn.innerText = "Скоро публикация";
+            btn.className = 'btn-secondary';
+            return;
+        }
+
+        // 2. ACTIVE (Published / Fundraising Scheduled)
+        if (item.status === 'published' || item.status === 'fundraising_scheduled') {
+            if (isJoined) {
+                btn.innerText = "Вы записаны";
+                btn.className = 'btn-success';
+                if (leaveBtn) leaveBtn.style.display = 'flex'; // Показываем крестик
+            } else {
+                btn.innerText = "Записаться";
+                btn.onclick = () => joinItem(item.id);
+            }
+            return;
+        }
+
+        // 3. FUNDRAISING (Сбор средств)
+        if (item.status === 'fundraising') {
+            if (isJoined) {
+                if (pStatus === 'paid') {
+                    btn.innerText = "Оплачено (Ждем завершения)";
+                    btn.className = 'btn-success';
+                } else {
+                    btn.innerText = "Оплатить взнос (100₽)";
+                    btn.onclick = () => openPaymentModal('pay');
+                }
+            } else {
+                btn.innerText = "Записаться (Сбор идет)";
+                btn.onclick = () => joinItem(item.id);
+            }
+            return;
+        }
+
+        // 4. COMPLETED (Завершена)
+        if (item.status === 'completed') {
+            if (isJoined && pStatus === 'paid') {
+                btn.innerText = "Получить файлы";
+                btn.onclick = () => getFiles(item.id);
+            } else {
+                // Разрешаем покупку, если юзер Опытный ИЛИ если он уже участник (должник)
+                if (window.currentUserStatus === 'Опытный' || isJoined) {
+                    btn.innerText = "Купить (200₽)";
+                    btn.onclick = () => openPaymentModal('buy');
+                } else {
+                    btn.innerText = "Завершена (Нужен статус Опытный)";
+                    btn.className = 'btn-secondary';
+                    btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
+                }
+            }
+            return;
+        }
+
+    } catch (e) {
+        console.error(e);
+        showToast("Ошибка загрузки данных");
+    } finally {
+        showPreloader(false);
+    }
+}
+
 function renderOneBanner(container, bannerData) {
     const div = document.createElement('div');
     div.className = `banner ${bannerData.type}`;
