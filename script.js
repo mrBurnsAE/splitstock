@@ -1231,13 +1231,13 @@ async function loadProductDetails(id) {
         const priceEl = document.getElementById('product-price');
         if (priceEl) priceEl.innerText = `${displayPrice}₽`;
 
-        // Видео (если есть)
+        // Видео
         const videoContainer = document.getElementById('product-video-container');
         if (videoContainer) {
             videoContainer.innerHTML = '';
             if (item.videos && Object.keys(item.videos).length > 0) {
                 videoContainer.style.display = 'block';
-                // Здесь можно добавить логику вывода плееров, если нужно
+                // Здесь можно добавить логику плееров
             } else {
                 videoContainer.style.display = 'none';
             }
@@ -1270,7 +1270,7 @@ async function loadProductDetails(id) {
             if (isJoined) {
                 btn.innerText = "Вы записаны";
                 btn.className = 'btn-success';
-                if (leaveBtn) leaveBtn.style.display = 'flex'; // Показываем крестик
+                if (leaveBtn) leaveBtn.style.display = 'flex'; 
             } else {
                 btn.innerText = "Записаться";
                 btn.onclick = () => joinItem(item.id);
@@ -1301,7 +1301,8 @@ async function loadProductDetails(id) {
                 btn.innerText = "Получить файлы";
                 btn.onclick = () => getFiles(item.id);
             } else {
-                // Разрешаем покупку, если юзер Опытный ИЛИ если он уже участник (должник)
+                // --- ВАЖНОЕ ИЗМЕНЕНИЕ НИЖЕ ---
+                // Кнопка доступна если: статус Опытный ИЛИ пользователь участник этой складчины
                 if (window.currentUserStatus === 'Опытный' || isJoined) {
                     btn.innerText = "Купить (200₽)";
                     btn.onclick = () => openPaymentModal('buy');
