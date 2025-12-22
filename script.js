@@ -713,13 +713,24 @@ function updateStatusModal(status, completedCount) {
         if(img) img.src = "icons/Новичок Без фона.png";
     } else if (status === 'Опытный') {
         if(desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
-        if(img) img.src = "icons/Супермэн без фона.png";
+        if(img) {
+            img.src = "icons/Супермэн без фона.png";
+            // --- ПЕРСОНАЛЬНЫЕ НАСТРОЙКИ ДЛЯ РОБОТА ---
+            img.style.width = "242px";        // +10%
+            img.style.height = "242px";
+            img.style.transform = "translateX(15px)"; // Сдвиг вправо
+        }
     } else if (status === 'Штрафник') {
         if(desc) desc.innerText = "Вы не можете записываться в новые складчины и оплачивать взносы, пока не оплатите штраф";
         if(img) img.src = "icons/Штрафник без фона.png";
         if(okBtn) okBtn.style.display = 'none';
         if(penaltyBtns) penaltyBtns.style.display = 'flex';
     }
+    if(img) {
+            img.style.width = ""; 
+            img.style.height = "";
+            img.style.transform = "";
+        }
 }
 
 function switchVideo(platform) {
