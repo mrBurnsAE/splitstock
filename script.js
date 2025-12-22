@@ -50,9 +50,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         const preloader = document.getElementById('preloader');
         if(preloader) preloader.style.opacity = '1';
 
-        // Запускаем все запросы параллельно и ждем их выполнения
+        // 1. Сначала железно загружаем профиль, чтобы знать статус (Новичок/Опытный)
+        await loadUserProfile();
+
+        // 2. Теперь, когда статус известен, грузим всё остальное (включая баннеры)
         await Promise.all([
-            loadUserProfile(),
             loadBanners(),
             loadCategories(),
             loadTags(),
