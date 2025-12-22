@@ -245,14 +245,63 @@ function openMyItems(type) {
     window.isMyItemsContext = true;
     window.currentCategoryDetailsId = null;
     window.currentMyItemsType = type;
+    
+    // --- ДОБАВЛЕНО: Кнопка "Назад" ведет в Профиль ---
+    const backBtn = document.querySelector('#view-my-items .back-btn');
+    if(backBtn) backBtn.onclick = () => switchView('profile');
+    // -------------------------------------------------
+
     const titleEl = document.getElementById('my-items-title');
     if (titleEl) {
         if (type === 'active') titleEl.innerText = 'Мои активные складчины';
         else if (type === 'completed') titleEl.innerText = 'Мои завершённые складчины';
-        else if (type === 'unpaid') titleEl.innerText = 'Неоплаченные складчины'; // <-- НОВОЕ
+        else if (type === 'unpaid') titleEl.innerText = 'Неоплаченные складчины';
     }
     switchView('my-items');
     loadMyItems(type);
+}
+
+// --- НОВАЯ ФУНКЦИЯ ДЛЯ БАННЕРА ---
+async function openHotItems() {
+    // Используем тот же экран, что и для "Моих складчин", но меняем контент
+    window.isMyItemsContext = true; 
+    window.currentMyItemsType = 'hot'; // Специальный тип, чтобы знать, что обновлять
+
+    // 1. Настраиваем заголовок и кнопку "Назад"
+    const titleEl = document.getElementById('my-items-title');
+    if (titleEl) titleEl.innerText = 'Осталось чуть-чуть (90-99%)';
+
+    const backBtn = document.querySelector('#view-my-items .back-btn');
+    // Важно: кнопка "Назад" должна возвращать на ГЛАВНУЮ, где был баннер
+    if(backBtn) backBtn.onclick = () => switchView('home');
+
+    switchView('my-items');
+
+    // 2. Показываем загрузку
+    const container = document.getElementById('my-items-container');
+    if (!container) return;
+    container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка горящих предложений...</div>';
+
+    try {
+        // 3. Загружаем популярные активные (обычно они и есть горящие)
+        // Берем с запасом (50 штук), чтобы после фильтрации что-то осталось
+        const r = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&items_per_page=50&sort=popular`, { headers: getHeaders() });
+        const allItems = await r.json();
+
+        // 4. Фильтруем на клиенте (90% <= x < 100%)
+        const hotItems = allItems.filter(item => {
+            if (item.needed_participants <= 0) return false;
+            const ratio = item.current_participants / item.needed_participants;
+            return ratio >= 0.9 && ratio < 1.0;
+        });
+
+        // 5. Рисуем
+        renderItems(container, hotItems);
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<div style="padding:20px; text-align:center;">Ошибка загрузки</div>';
+    }
 }
 
 function openCategoryDetails(id, name) {
@@ -632,9 +681,15 @@ function closeProduct() {
     document.getElementById('main-video-frame').src = "";
 
     if(window.isMyItemsContext) { 
-        // Если пришли из профиля
+        // Если пришли из профиля или из списка "Горящие"
         switchView('my-items'); 
-        loadMyItems(window.currentMyItemsType); 
+        
+        // Если это был список Hot Items - перезагружаем его спец. функцией
+        if (window.currentMyItemsType === 'hot') {
+            openHotItems(); 
+        } else {
+            loadMyItems(window.currentMyItemsType); 
+        }
     }
     else if(window.currentCategoryDetailsId) { 
         // Если пришли из категории
@@ -1011,12 +1066,13 @@ async function loadBanners() {
     // 3. ПРОВЕРКА: Горящие складчины (90%+)
     let hasHotItems = false;
     try {
-        // Берем топ-50 активных (обычно горящие среди популярных)
         const rHot = await fetch(`${API_BASE_URL}/api/items?type=active&page=1&items_per_page=50&sort=popular`, { headers: getHeaders() });
         const hotItemsList = await rHot.json();
         hasHotItems = hotItemsList.some(item => {
             if (item.needed_participants <= 0) return false;
-            return (item.current_participants / item.needed_participants) >= 0.9;
+            const ratio = item.current_participants / item.needed_participants;
+            // Строго: больше или равно 0.9 И меньше 1.0 (то есть не 100%)
+            return ratio >= 0.9 && ratio < 1.0;
         });
     } catch (e) { console.error("Err hot:", e); }
 
