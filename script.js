@@ -720,7 +720,7 @@ function updateStatusModal(status, completedCount) {
             // --- ПЕРСОНАЛЬНЫЕ НАСТРОЙКИ ДЛЯ РОБОТА ---
             img.style.width = "242px";        // +10%
             img.style.height = "242px";
-            img.style.transform = "translateX(15px)"; // Сдвиг вправо
+            img.style.transform = "translateX(30px)"; // Сдвиг вправо
         }
     } else if (status === 'Штрафник') {
         if(desc) desc.innerText = "Вы не можете записываться в новые складчины и оплачивать взносы, пока не оплатите штраф";
