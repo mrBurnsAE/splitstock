@@ -728,11 +728,6 @@ function updateStatusModal(status, completedCount) {
         if(okBtn) okBtn.style.display = 'none';
         if(penaltyBtns) penaltyBtns.style.display = 'flex';
     }
-    if(img) {
-            img.style.width = ""; 
-            img.style.height = "";
-            img.style.transform = "";
-        }
 }
 
 function switchVideo(platform) {
