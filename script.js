@@ -525,10 +525,9 @@ function formatDate(isoString) {
 }
 
 // ============================================================
-// ИСПРАВЛЕННАЯ ВЕРСИЯ openProduct (Фикс картинок, цифр и кнопки)
+// openProduct: СЧЕТЧИК ОК, КНОПКА ОК, КАРТИНКИ - КАК РАНЬШЕ
 // ============================================================
 async function openProduct(id) {
-    // 1. Скрываем нижнее меню и готовим экран
     const bottomNav = document.querySelector('.bottom-nav');
     if(bottomNav) bottomNav.style.display = 'none';
     
@@ -543,7 +542,6 @@ async function openProduct(id) {
     
     setTimeout(() => viewProduct.classList.add('loaded'), 10);
     
-    // Сбрасываем старые данные
     document.getElementById('product-header-title').innerText = "Загрузка...";
     document.getElementById('product-action-btn').disabled = true;
     switchVideo('none');
@@ -562,7 +560,6 @@ async function openProduct(id) {
         
         const item = await r.json();
         
-        // 3. Заполняем интерфейс
         document.getElementById('product-header-title').innerText = item.name;
         document.getElementById('product-desc').innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : 'Описание отсутствует';
         
@@ -571,7 +568,7 @@ async function openProduct(id) {
         
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
         
-        // --- ТЕГИ (Безопасно) ---
+        // Теги
         const tagsContainer = document.getElementById('product-tags');
         if (tagsContainer) {
             tagsContainer.innerHTML = '';
@@ -596,13 +593,12 @@ async function openProduct(id) {
         const contribution = (item.status === 'completed') ? "200₽" : "100₽";
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // --- ИСПРАВЛЕНО: УЧАСТНИКИ (undefined) ---
-        // Берем или needed_participants, или participants_needed (как прислал сервер)
+        // Участники (Фикс undefined)
         const currentPart = item.current_participants || 0;
         const neededPart = item.needed_participants || item.participants_needed || 1; 
         document.getElementById('participants-count').innerText = `${currentPart}/${neededPart}`;
 
-        // Прогресс-бар
+        // Прогресс
         const bar = document.getElementById('product-progress-fill');
         bar.className = 'progress-fill';
         let percent = 0;
@@ -614,10 +610,11 @@ async function openProduct(id) {
         }
         bar.style.width = Math.min(100, percent) + "%";
 
-        // --- ИСПРАВЛЕНО: КАРТИНКА (ID) ---
-        // В твоем HTML id="product-cover-img", а не "product-cover"
+        // --- КАРТИНКА: ВЕРНУЛИ ПРОСТУЮ ЛОГИКУ ---
         const coverImg = document.getElementById('product-cover-img'); 
         if (coverImg) {
+            // Если ссылка есть - ставим её. Если нет - заглушку.
+            // Никаких проверок на http, никаких блокировок.
             coverImg.src = item.cover_url || "icons/Ничего нет без фона.png";
         }
 
@@ -633,7 +630,7 @@ async function openProduct(id) {
             switchVideo('none');
         }
 
-        // --- ЛОГИКА КНОПОК ---
+        // Логика кнопок (Фикс стиля)
         const btn = document.getElementById('product-action-btn');
         const leaveBtn = document.getElementById('product-leave-btn');
         const statusText = document.getElementById('product-status-text');
@@ -642,31 +639,26 @@ async function openProduct(id) {
         if (fundLabel) fundLabel.style.display = 'none';
         if (leaveBtn) leaveBtn.style.display = 'none';
         
-        // Сброс кнопки
         btn.disabled = false;
         btn.style.opacity = "1";
-        btn.className = 'btn-primary'; // Всегда используем btn-primary как базу
-        btn.style.backgroundColor = ""; // Сбрасываем цвет
+        btn.className = 'btn-primary'; 
+        btn.style.backgroundColor = ""; 
         btn.onclick = null;
 
         const isJoined = item.is_joined;
         const pStatus = item.payment_status;
 
-        // 1. Активная
         if (['published', 'active', 'scheduled'].includes(item.status)) {
             statusText.innerText = "Активная складчина";
             if (isJoined) {
                 btn.innerText = "Вы записаны";
-                // --- ИСПРАВЛЕНО: СТИЛЬ КНОПКИ ---
-                // Не меняем className на btn-success (его нет в css), а красим btn-primary
-                btn.style.backgroundColor = "#2ecc71"; // Зеленый
+                btn.style.backgroundColor = "#2ecc71";
                 if(leaveBtn) leaveBtn.style.display = 'flex';
             } else {
                 btn.innerText = "Записаться";
                 btn.onclick = () => handleProductAction();
             }
         }
-        // 2. Сбор средств
         else if (item.status === 'fundraising') {
             statusText.innerText = `Идёт сбор средств до ${formatDate(item.end_at)}`;
             if (fundLabel) fundLabel.style.display = 'flex';
@@ -676,10 +668,10 @@ async function openProduct(id) {
             if (isJoined) {
                 if (pStatus === 'paid') {
                     btn.innerText = "Оплачено";
-                    btn.style.backgroundColor = "#2ecc71"; // Зеленый
+                    btn.style.backgroundColor = "#2ecc71";
                 } else {
                     btn.innerText = "Оплатить взнос";
-                    btn.style.backgroundColor = "#0984e3"; // Синий
+                    btn.style.backgroundColor = "#0984e3";
                     btn.onclick = () => {
                         if (window.currentUserStatus === 'Штрафник') {
                             updateStatusModal('Штрафник', 0);
@@ -691,16 +683,14 @@ async function openProduct(id) {
                 }
             } else {
                 btn.innerText = "Набор закрыт";
-                btn.className = 'btn-secondary'; // Это можно оставить, если класс есть
+                btn.className = 'btn-secondary';
             }
         }
-        // 3. Завершена
         else if (item.status === 'completed') {
             statusText.innerText = "Складчина завершена";
-            
             if (isJoined && pStatus === 'paid') {
                 btn.innerText = "Получить файлы";
-                btn.style.backgroundColor = "#2ecc71"; // Зеленый
+                btn.style.backgroundColor = "#2ecc71";
                 btn.onclick = () => getFiles();
             } else {
                 let diffDays = 999;
@@ -709,12 +699,10 @@ async function openProduct(id) {
                     const now = new Date();
                     diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
                 }
-
                 const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
-
                 if (canPay) {
                     btn.innerText = "Купить (200₽)";
-                    btn.style.backgroundColor = "#fdcb6e"; // Желтый/Оранжевый для покупки
+                    btn.style.backgroundColor = "#fdcb6e";
                     btn.style.color = "#ffffff";
                     btn.onclick = () => {
                          if (window.currentUserStatus === 'Штрафник') {
@@ -736,7 +724,6 @@ async function openProduct(id) {
                 }
             }
         }
-
     } catch (e) {
         console.error(e);
         showCustomAlert("Ошибка: " + e.message, "Ошибка WebApp");
