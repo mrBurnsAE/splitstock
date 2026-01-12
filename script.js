@@ -1362,19 +1362,44 @@ async function loadProductDetails(id) {
 
         // 4. COMPLETED (Завершена)
         if (item.status === 'completed') {
+            // Если уже всё оплачено — отдаем файлы
             if (isJoined && pStatus === 'paid') {
                 btn.innerText = "Получить файлы";
+                btn.className = 'btn-success'; // Зеленая кнопка
                 btn.onclick = () => getFiles(item.id);
-            } else {
-                // --- ВАЖНОЕ ИЗМЕНЕНИЕ НИЖЕ ---
-                // Кнопка доступна если: статус Опытный ИЛИ пользователь участник этой складчины
-                if (window.currentUserStatus === 'Опытный' || isJoined) {
+            } 
+            else {
+                // Вычисляем, прошло ли 10 дней
+                const endDate = new Date(endAt);
+                const now = new Date();
+                const diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
+
+                // ЛОГИКА ОПЛАТЫ
+                // Разрешаем кнопку, если:
+                // 1. Пользователь УЧАСТНИК (isJoined) — пускаем всегда, даже если прошло мало дней.
+                // 2. ИЛИ пользователь ОПЫТНЫЙ и прошло 10 дней (покупка из архива).
+                
+                const isParticipant = isJoined; // Вы участник (неважно, платили штраф или нет)
+                const isArchiveAvailable = (window.currentUserStatus === 'Опытный' && diffDays > 10);
+
+                if (isParticipant || isArchiveAvailable) {
                     btn.innerText = "Купить (200₽)";
+                    btn.className = 'btn-primary';
+                    btn.style.color = "#ffffff"; // Белый текст
                     btn.onclick = () => openPaymentModal('buy');
                 } else {
-                    btn.innerText = "Завершена (Нужен статус Опытный)";
+                    // Иначе объясняем причину блокировки
                     btn.className = 'btn-secondary';
-                    btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
+                    btn.style.color = "#ffffff";
+                    
+                    if (window.currentUserStatus !== 'Опытный') {
+                         btn.innerText = "Завершена (Нужен статус Опытный)";
+                         btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
+                    } else {
+                         // Если опытный, но 10 дней не прошло
+                         btn.innerText = "Архив откроется позже";
+                         btn.onclick = () => showToast("Покупка из архива доступна через 10 дней после завершения");
+                    }
                 }
             }
             return;
