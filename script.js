@@ -1240,213 +1240,116 @@ async function loadBanners() {
     }
 }
 
+// Функция для записи в черное окно (вставь её перед loadProductDetails или в начало файла)
+function debugLog(msg) {
+    const consoleDiv = document.getElementById('debug-console');
+    if (consoleDiv) {
+        consoleDiv.innerHTML += `> ${msg}<br>`;
+        // Автопрокрутка вниз
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+    console.log(msg); // Дублируем в обычную консоль
+}
+
 // ============================================================
-// ПОЛНАЯ ФУНКЦИЯ loadProductDetails (Скопируй и замени целиком)
+// ОТЛАДОЧНАЯ ВЕРСИЯ loadProductDetails
 // ============================================================
 async function loadProductDetails(id) {
-    showPreloader(true);
-    window.currentItemId = id;
-
-    // 1. Подготовка контейнера (чтобы не мелькало старое)
-    const container = document.getElementById('product-view-container');
-    if (container) {
-        // Очищаем старые данные пока грузим новые
-        document.getElementById('product-title').innerText = 'Загрузка...';
-        document.getElementById('product-action-btn').disabled = true;
-    }
+    debugLog(`--- START loadProductDetails(${id}) ---`);
     
-    // Переключаем экран
-    switchView('product');
-
     try {
-        // 2. Делаем запрос к серверу
-        // Добавляем заголовок User-Id, чтобы сервер знал, кто мы (для is_joined)
+        const container = document.getElementById('product-view-container');
+        if (!container) {
+            debugLog("ERROR: Container not found!");
+            return;
+        }
+
+        // 1. Показываем экран (если тут закроется - значит switchView виноват)
+        debugLog("Switching view...");
+        switchView('product');
+        window.currentItemId = id;
+
+        // 2. Готовим заголовки
+        debugLog("Preparing headers...");
         const headers = getHeaders();
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             headers['X-Telegram-User-Id'] = window.Telegram.WebApp.initDataUnsafe.user.id;
+            debugLog(`User ID found: ${headers['X-Telegram-User-Id']}`);
+        } else {
+            debugLog("User ID NOT found in WebApp data");
         }
 
+        // 3. Делаем запрос (самое опасное место)
+        debugLog(`Fetching URL: ${API_BASE_URL}/api/items/${id}`);
         const r = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: headers });
         
+        debugLog(`Response status: ${r.status}`);
+        
         if (!r.ok) {
-            throw new Error(`Ошибка сервера: ${r.status}`);
+            throw new Error(`Server returned ${r.status}`);
         }
         
         const item = await r.json();
+        debugLog("JSON parsed successfully");
+        debugLog(`Item Status: ${item.status}`);
+        debugLog(`Is Joined: ${item.is_joined}`);
+        debugLog(`User Status (Global): ${window.currentUserStatus}`);
 
-        // 3. Заполняем UI
-        const coverEl = document.getElementById('product-cover');
-        if (coverEl) coverEl.src = item.cover_url || 'placeholder.jpg';
+        // 4. Заполняем UI
+        document.getElementById('product-title').innerText = item.name;
         
-        const catEl = document.getElementById('product-category');
-        if (catEl) catEl.innerText = item.category || 'Категория';
-        
-        const titleEl = document.getElementById('product-title');
-        if (titleEl) titleEl.innerText = item.name;
-        
-        const descEl = document.getElementById('product-desc');
-        if (descEl) descEl.innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : '';
-        
-        // Теги
-        const tagsContainer = document.getElementById('product-tags');
-        if (tagsContainer) {
-            tagsContainer.innerHTML = '';
-            if (item.tags && item.tags.length > 0) {
-                item.tags.forEach(tag => {
-                    const sp = document.createElement('span');
-                    sp.className = 'tag';
-                    sp.innerText = tag;
-                    tagsContainer.appendChild(sp);
-                });
-            }
-        }
-
-        // Прогресс бар
-        const current = item.current_participants || 0;
-        const needed = item.needed_participants || 1;
-        const percent = Math.min(100, Math.round((current / needed) * 100));
-        
-        const fillEl = document.getElementById('progress-fill');
-        if (fillEl) fillEl.style.width = `${percent}%`;
-        
-        const countEl = document.getElementById('participants-count');
-        if (countEl) countEl.innerText = `${current} / ${needed}`;
-        
-        // Цена
-        let displayPrice = item.price;
-        if (item.status === 'completed') displayPrice = 200; // Цена покупки из архива
-        if (item.status === 'fundraising') displayPrice = 100; // Цена взноса
-        
-        const priceEl = document.getElementById('product-price');
-        if (priceEl) priceEl.innerText = `${displayPrice}₽`;
-
-        // Видео
-        const videoContainer = document.getElementById('product-video-container');
-        if (videoContainer) {
-            videoContainer.innerHTML = '';
-            if (item.videos && Object.keys(item.videos).length > 0) {
-                videoContainer.style.display = 'block';
-            } else {
-                videoContainer.style.display = 'none';
-            }
-        }
-
-        // --- ЛОГИКА ГЛАВНОЙ КНОПКИ ---
+        // --- ЛОГИКА КНОПКИ (Упрощенная для теста) ---
         const btn = document.getElementById('product-action-btn');
-        const leaveBtn = document.getElementById('product-leave-btn');
-        
-        if (!btn) return; // Если кнопки нет, выходим
+        if (!btn) throw new Error("Button not found in DOM");
 
-        // Сброс состояний кнопки
-        btn.className = 'btn-primary';
-        btn.style.color = ""; // Сбрасываем цвета
-        btn.style.backgroundColor = "";
         btn.disabled = false;
         btn.onclick = null;
-        if (leaveBtn) leaveBtn.style.display = 'none';
+        btn.style.display = 'block';
 
-        // Берем данные, которые прислал сервер
-        const isJoined = item.is_joined; 
-        const pStatus = item.payment_status; 
-
-        // 1. DRAFT / SCHEDULED
-        if (item.status === 'draft' || item.status === 'scheduled') {
-            btn.innerText = "Скоро публикация";
-            btn.className = 'btn-secondary';
-            btn.style.color = "#ffffff";
-            return;
-        }
-
-        // 2. ACTIVE (Published / Fundraising Scheduled)
-        if (item.status === 'published' || item.status === 'fundraising_scheduled') {
-            if (isJoined) {
-                btn.innerText = "Вы записаны";
-                btn.className = 'btn-success';
-                btn.style.color = "#ffffff";
-                if (leaveBtn) leaveBtn.style.display = 'flex'; 
-            } else {
-                btn.innerText = "Записаться";
-                btn.style.color = "#ffffff";
-                btn.onclick = () => joinItem(item.id);
-            }
-            return;
-        }
-
-        // 3. FUNDRAISING (Сбор средств)
-        if (item.status === 'fundraising') {
-            if (isJoined) {
-                if (pStatus === 'paid') {
-                    btn.innerText = "Оплачено (Ждем завершения)";
-                    btn.className = 'btn-success';
-                    btn.style.color = "#ffffff";
-                } else {
-                    btn.innerText = "Оплатить взнос (100₽)";
-                    btn.style.color = "#ffffff";
-                    btn.onclick = () => openPaymentModal('pay');
-                }
-            } else {
-                btn.innerText = "Записаться (Сбор идет)";
-                btn.style.color = "#ffffff";
-                btn.onclick = () => joinItem(item.id);
-            }
-            return;
-        }
-
-        // 4. COMPLETED (Завершена)
         if (item.status === 'completed') {
-            // Если уже оплачено -> Файлы
-            if (isJoined && pStatus === 'paid') {
-                btn.innerText = "Получить файлы";
-                btn.className = 'btn-success';
-                btn.style.color = "#ffffff";
-                btn.onclick = () => getFiles(item.id);
-            } 
-            else {
-                // ПРОВЕРКА ДОСТУПА К ОПЛАТЕ
-                // 1. Считаем дни (защита от отсутствия даты)
-                let diffDays = 999;
-                const endDateVal = item.end_at || item.completed_at || item.created_at; 
-                if (endDateVal) {
-                     const endDate = new Date(endDateVal);
-                     const now = new Date();
-                     diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
-                }
-
-                // 2. Разрешаем, если:
-                //    - Пользователь участник (isJoined) -> Платит долг (200р)
-                //    - ИЛИ Опытный и прошло 10 дней -> Покупает архив (200р)
-                const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
-
-                if (canPay) {
-                    btn.innerText = "Купить (200₽)";
-                    btn.className = 'btn-primary';
-                    btn.style.color = "#ffffff"; // Белый текст
-                    btn.onclick = () => openPaymentModal('buy');
-                } else {
-                    // БЛОКИРОВКА
-                    btn.className = 'btn-secondary';
-                    btn.style.color = "#ffffff";
-                    
-                    if (window.currentUserStatus !== 'Опытный') {
-                         btn.innerText = "Завершена (Нужен статус Опытный)";
-                         btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
-                    } else {
-                         btn.innerText = "Архив откроется позже";
-                         btn.onclick = () => showToast(`Покупка доступна через ${Math.ceil(10 - diffDays)} дн.`);
-                    }
-                }
+            debugLog("Processing COMPLETED logic...");
+            
+            // Расчет дней
+            let diffDays = 999;
+            const endDateVal = item.end_at || item.completed_at || item.created_at; 
+            if (endDateVal) {
+                 const diff = (new Date()) - (new Date(endDateVal));
+                 diffDays = diff / (1000 * 60 * 60 * 24);
             }
-            return;
+            debugLog(`Days passed: ${diffDays}`);
+
+            const canPay = item.is_joined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
+            debugLog(`Can Pay decision: ${canPay}`);
+
+            if (canPay) {
+                btn.innerText = "Купить (200₽) [DEBUG]";
+                btn.className = 'btn-primary';
+                btn.onclick = () => {
+                    debugLog("Click: Buying...");
+                    openPaymentModal('buy');
+                };
+            } else {
+                btn.innerText = "Недоступно [DEBUG]";
+                btn.className = 'btn-secondary';
+                btn.onclick = () => showToast("Недоступно (Debug Mode)");
+            }
+        } else {
+            debugLog("Not completed status, standard render.");
+            if (typeof updateProductStatusUI === 'function') {
+                updateProductStatusUI(item);
+            } else {
+                debugLog("Warning: updateProductStatusUI missing");
+            }
         }
+        
+        debugLog("--- END SUCCESS ---");
 
     } catch (e) {
-        console.error(e);
-        // ВАЖНО: Если произошла ошибка, выводим её на экран, чтобы ты увидел!
-        // И НЕ закрываем окно (closeProduct убрали)
-        alert("ОШИБКА WebApp:\n" + e.name + ": " + e.message);
-        showToast("Ошибка загрузки");
-    } finally {
-        showPreloader(false);
+        debugLog(`!!! CRITICAL ERROR !!!`);
+        debugLog(`${e.name}: ${e.message}`);
+        debugLog(`${e.stack}`);
+        // ВАЖНО: Мы НЕ вызываем closeProduct(), мы просто смотрим на ошибку.
+        alert("ОШИБКА: " + e.message); 
     }
 }
 
@@ -1514,4 +1417,4 @@ function sendAltPayRequest() {
     tg.sendData(`manual_pay:${window.currentItemId}`);
 }
 
-<script src="script.js?v=111"></script>
+<script src="script.js?v=112"></script>
