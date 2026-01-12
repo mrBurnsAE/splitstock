@@ -1240,16 +1240,41 @@ async function loadBanners() {
     }
 }
 
+// ============================================================
+// ПОЛНАЯ ФУНКЦИЯ loadProductDetails (Скопируй и замени целиком)
+// ============================================================
 async function loadProductDetails(id) {
     showPreloader(true);
     window.currentItemId = id;
 
+    // 1. Подготовка контейнера (чтобы не мелькало старое)
+    const container = document.getElementById('product-view-container');
+    if (container) {
+        // Очищаем старые данные пока грузим новые
+        document.getElementById('product-title').innerText = 'Загрузка...';
+        document.getElementById('product-action-btn').disabled = true;
+    }
+    
+    // Переключаем экран
+    switchView('product');
+
     try {
-        const r = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: getHeaders() });
-        if (!r.ok) throw new Error('Network error');
+        // 2. Делаем запрос к серверу
+        // Добавляем заголовок User-Id, чтобы сервер знал, кто мы (для is_joined)
+        const headers = getHeaders();
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+            headers['X-Telegram-User-Id'] = window.Telegram.WebApp.initDataUnsafe.user.id;
+        }
+
+        const r = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: headers });
+        
+        if (!r.ok) {
+            throw new Error(`Ошибка сервера: ${r.status}`);
+        }
+        
         const item = await r.json();
 
-        // Заполняем UI
+        // 3. Заполняем UI
         const coverEl = document.getElementById('product-cover');
         if (coverEl) coverEl.src = item.cover_url || 'placeholder.jpg';
         
@@ -1260,7 +1285,7 @@ async function loadProductDetails(id) {
         if (titleEl) titleEl.innerText = item.name;
         
         const descEl = document.getElementById('product-desc');
-        if (descEl) descEl.innerHTML = item.description.replace(/\n/g, '<br>');
+        if (descEl) descEl.innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : '';
         
         // Теги
         const tagsContainer = document.getElementById('product-tags');
@@ -1301,7 +1326,6 @@ async function loadProductDetails(id) {
             videoContainer.innerHTML = '';
             if (item.videos && Object.keys(item.videos).length > 0) {
                 videoContainer.style.display = 'block';
-                // Здесь можно добавить логику плееров
             } else {
                 videoContainer.style.display = 'none';
             }
@@ -1311,15 +1335,17 @@ async function loadProductDetails(id) {
         const btn = document.getElementById('product-action-btn');
         const leaveBtn = document.getElementById('product-leave-btn');
         
-        if (!btn) return;
+        if (!btn) return; // Если кнопки нет, выходим
 
-        // Сброс состояний
+        // Сброс состояний кнопки
         btn.className = 'btn-primary';
-        btn.style.color = "";
+        btn.style.color = ""; // Сбрасываем цвета
+        btn.style.backgroundColor = "";
         btn.disabled = false;
         btn.onclick = null;
         if (leaveBtn) leaveBtn.style.display = 'none';
 
+        // Берем данные, которые прислал сервер
         const isJoined = item.is_joined; 
         const pStatus = item.payment_status; 
 
@@ -1327,6 +1353,7 @@ async function loadProductDetails(id) {
         if (item.status === 'draft' || item.status === 'scheduled') {
             btn.innerText = "Скоро публикация";
             btn.className = 'btn-secondary';
+            btn.style.color = "#ffffff";
             return;
         }
 
@@ -1335,9 +1362,11 @@ async function loadProductDetails(id) {
             if (isJoined) {
                 btn.innerText = "Вы записаны";
                 btn.className = 'btn-success';
+                btn.style.color = "#ffffff";
                 if (leaveBtn) leaveBtn.style.display = 'flex'; 
             } else {
                 btn.innerText = "Записаться";
+                btn.style.color = "#ffffff";
                 btn.onclick = () => joinItem(item.id);
             }
             return;
@@ -1349,76 +1378,73 @@ async function loadProductDetails(id) {
                 if (pStatus === 'paid') {
                     btn.innerText = "Оплачено (Ждем завершения)";
                     btn.className = 'btn-success';
+                    btn.style.color = "#ffffff";
                 } else {
                     btn.innerText = "Оплатить взнос (100₽)";
+                    btn.style.color = "#ffffff";
                     btn.onclick = () => openPaymentModal('pay');
                 }
             } else {
                 btn.innerText = "Записаться (Сбор идет)";
+                btn.style.color = "#ffffff";
                 btn.onclick = () => joinItem(item.id);
             }
             return;
         }
 
-        // 4. COMPLETED (Завершена) - ВЕРСИЯ С ОТЛАДКОЙ
+        // 4. COMPLETED (Завершена)
         if (item.status === 'completed') {
-            try {
-                // ПРОВЕРКА: Если isJoined или pStatus не определены — объявим их
-                // (На случай, если в твоем коде они называются иначе)
-                const _isJoined = (typeof isJoined !== 'undefined') ? isJoined : (item.is_joined || false);
-                const _pStatus = (typeof pStatus !== 'undefined') ? pStatus : (item.payment_status || null);
+            // Если уже оплачено -> Файлы
+            if (isJoined && pStatus === 'paid') {
+                btn.innerText = "Получить файлы";
+                btn.className = 'btn-success';
+                btn.style.color = "#ffffff";
+                btn.onclick = () => getFiles(item.id);
+            } 
+            else {
+                // ПРОВЕРКА ДОСТУПА К ОПЛАТЕ
+                // 1. Считаем дни (защита от отсутствия даты)
+                let diffDays = 999;
+                const endDateVal = item.end_at || item.completed_at || item.created_at; 
+                if (endDateVal) {
+                     const endDate = new Date(endDateVal);
+                     const now = new Date();
+                     diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
+                }
 
-                if (_isJoined && _pStatus === 'paid') {
-                    btn.innerText = "Получить файлы";
-                    btn.className = 'btn-success';
-                    btn.onclick = () => getFiles(item.id);
-                } 
-                else {
-                    // Пробуем получить дату завершения
-                    let endDateVal = item.end_at || item.completed_at || item.created_at; 
-                    if (!endDateVal) throw new Error("Нет даты завершения (item.end_at)");
+                // 2. Разрешаем, если:
+                //    - Пользователь участник (isJoined) -> Платит долг (200р)
+                //    - ИЛИ Опытный и прошло 10 дней -> Покупает архив (200р)
+                const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
 
-                    const endDate = new Date(endDateVal);
-                    const now = new Date();
-                    const diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
-
-                    // Логика доступа
-                    const canPay = _isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
-
-                    if (canPay) {
-                        btn.innerText = "Купить (200₽)";
-                        btn.className = 'btn-primary';
-                        btn.style.color = "#ffffff";
-                        // Проверяем, существует ли функция открытия модалки
-                        if (typeof openPaymentModal === 'function') {
-                            btn.onclick = () => openPaymentModal('buy');
-                        } else {
-                            btn.onclick = () => alert("Ошибка: функция openPaymentModal не найдена!");
-                        }
+                if (canPay) {
+                    btn.innerText = "Купить (200₽)";
+                    btn.className = 'btn-primary';
+                    btn.style.color = "#ffffff"; // Белый текст
+                    btn.onclick = () => openPaymentModal('buy');
+                } else {
+                    // БЛОКИРОВКА
+                    btn.className = 'btn-secondary';
+                    btn.style.color = "#ffffff";
+                    
+                    if (window.currentUserStatus !== 'Опытный') {
+                         btn.innerText = "Завершена (Нужен статус Опытный)";
+                         btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
                     } else {
-                        btn.className = 'btn-secondary';
-                        btn.style.color = "#ffffff";
-                        
-                        if (window.currentUserStatus !== 'Опытный') {
-                             btn.innerText = "Завершена (Нужен статус Опытный)";
-                             btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
-                        } else {
-                             btn.innerText = "Архив откроется позже";
-                             btn.onclick = () => showToast(`Доступно через ${Math.ceil(10 - diffDays)} дн.`);
-                        }
+                         btn.innerText = "Архив откроется позже";
+                         btn.onclick = () => showToast(`Покупка доступна через ${Math.ceil(10 - diffDays)} дн.`);
                     }
                 }
-            } catch (err) {
-                // ВОТ ЭТО ПОКАЖЕТ НАМ ОШИБКУ
-                alert("JS ERROR: " + err.message + "\n" + err.stack);
-                console.error(err);
             }
             return;
         }
 
     } catch (e) {
         console.error(e);
-        showToast("Ошибка загрузки данных");
+        // ВАЖНО: Если произошла ошибка, выводим её на экран, чтобы ты увидел!
+        // И НЕ закрываем окно (closeProduct убрали)
+        alert("ОШИБКА WebApp:\n" + e.name + ": " + e.message);
+        showToast("Ошибка загрузки");
     } finally {
         showPreloader(false);
     }
