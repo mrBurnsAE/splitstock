@@ -1513,3 +1513,5 @@ function sendAltPayRequest() {
     // Формат: manual_pay:<item_id>
     tg.sendData(`manual_pay:${window.currentItemId}`);
 }
+
+<script src="script.js?v=111"></script>
