@@ -576,12 +576,34 @@ async function openProduct(id) {
         document.getElementById('product-tags').innerHTML = ''; // Очистка тегов
         if (item.tags && item.tags.length > 0) {
             const tagsContainer = document.getElementById('product-tags');
-            item.tags.forEach(tag => {
-                const sp = document.createElement('span');
-                sp.className = 'tag-list'; 
-                sp.innerText = "#" + tag + " ";
-                tagsContainer.appendChild(sp);
-            });
+            if (tagsContainer) {
+                tagsContainer.innerHTML = ''; // Очистка
+            
+                // Превращаем что угодно в массив
+                let tagsList = [];
+            
+                if (Array.isArray(item.tags)) {
+                // Если это уже массив — отлично
+                tagsList = item.tags;
+                } else if (typeof item.tags === 'string' && item.tags.trim() !== '') {
+                // Если это строка — разбиваем по запятой
+                tagsList = item.tags.split(',').map(t => t.trim());
+            }
+
+            // Рисуем теги, только если список не пустой
+            if (tagsList.length > 0) {
+                tagsList.forEach(tag => {
+                    // Убираем лишние кавычки или скобки, если они есть
+                    const cleanTag = tag.replace(/[\[\]"']/g, ''); 
+                    if (cleanTag) {
+                        const sp = document.createElement('span');
+                        sp.className = 'tag-list'; 
+                        sp.innerText = "#" + cleanTag + " ";
+                        tagsContainer.appendChild(sp);
+                    }
+                });
+            }
+        }
         }
         
         document.getElementById('product-price-orig').innerText = "$" + item.price;
