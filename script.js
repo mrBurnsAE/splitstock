@@ -1240,19 +1240,14 @@ async function loadBanners() {
     }
 }
 
-// ============================================================
-// ФИНАЛЬНАЯ ВЕРСИЯ loadProductDetails (Без Debug, чистая)
-// ============================================================
 async function loadProductDetails(id) {
-    showPreloader(true); // Показываем спиннер
+    showPreloader(true);
     window.currentItemId = id;
 
-    // Очистка контейнера перед показом
     const container = document.getElementById('product-view-container');
     if (container) {
         const title = document.getElementById('product-title');
         if(title) title.innerText = 'Загрузка...';
-        
         const btn = document.getElementById('product-action-btn');
         if(btn) btn.disabled = true;
     }
@@ -1260,19 +1255,17 @@ async function loadProductDetails(id) {
     switchView('product');
 
     try {
-        // 1. Формируем заголовки
         const headers = getHeaders();
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             headers['X-Telegram-User-Id'] = window.Telegram.WebApp.initDataUnsafe.user.id;
         }
 
-        // 2. Запрос к серверу
         const r = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: headers });
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         
         const item = await r.json();
 
-        // 3. Заполняем UI (Картинка, Текст, Теги)
+        // UI
         const coverEl = document.getElementById('product-cover');
         if (coverEl) coverEl.src = item.cover_url || 'placeholder.jpg';
         
@@ -1285,11 +1278,10 @@ async function loadProductDetails(id) {
         const descEl = document.getElementById('product-desc');
         if (descEl) descEl.innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : '';
         
-        // Теги
         const tagsContainer = document.getElementById('product-tags');
         if (tagsContainer) {
             tagsContainer.innerHTML = '';
-            if (item.tags && item.tags.length > 0) {
+            if (item.tags) {
                 item.tags.forEach(tag => {
                     const sp = document.createElement('span');
                     sp.className = 'tag';
@@ -1299,7 +1291,6 @@ async function loadProductDetails(id) {
             }
         }
 
-        // Прогресс бар
         const current = item.current_participants || 0;
         const needed = item.needed_participants || 1;
         const percent = Math.min(100, Math.round((current / needed) * 100));
@@ -1310,7 +1301,6 @@ async function loadProductDetails(id) {
         const countEl = document.getElementById('participants-count');
         if (countEl) countEl.innerText = `${current} / ${needed}`;
         
-        // Цена
         let displayPrice = item.price;
         if (item.status === 'completed') displayPrice = 200;
         if (item.status === 'fundraising') displayPrice = 100;
@@ -1318,7 +1308,6 @@ async function loadProductDetails(id) {
         const priceEl = document.getElementById('product-price');
         if (priceEl) priceEl.innerText = `${displayPrice}₽`;
 
-        // Видео
         const videoContainer = document.getElementById('product-video-container');
         if (videoContainer) {
             videoContainer.innerHTML = '';
@@ -1329,14 +1318,13 @@ async function loadProductDetails(id) {
             }
         }
 
-        // --- ЛОГИКА КНОПОК ---
+        // КНОПКИ
         const btn = document.getElementById('product-action-btn');
         const leaveBtn = document.getElementById('product-leave-btn');
         
         if (btn) {
-            // Сброс
             btn.className = 'btn-primary';
-            btn.style.color = ""; 
+            btn.style.color = "#ffffff"; 
             btn.style.backgroundColor = "";
             btn.disabled = false;
             btn.onclick = null;
@@ -1345,7 +1333,6 @@ async function loadProductDetails(id) {
             const isJoined = item.is_joined; 
             const pStatus = item.payment_status; 
 
-            // Логика по статусам
             if (item.status === 'draft' || item.status === 'scheduled') {
                 btn.innerText = "Скоро публикация";
                 btn.className = 'btn-secondary';
@@ -1381,7 +1368,7 @@ async function loadProductDetails(id) {
                 }
             }
             else if (item.status === 'completed') {
-                // ЛОГИКА ЗАВЕРШЕННЫХ (ИСПРАВЛЕННАЯ)
+                // ЛОГИКА ЗАВЕРШЕННЫХ
                 if (isJoined && pStatus === 'paid') {
                     btn.innerText = "Получить файлы";
                     btn.className = 'btn-success';
@@ -1389,7 +1376,6 @@ async function loadProductDetails(id) {
                     btn.onclick = () => getFiles(item.id);
                 } 
                 else {
-                    // Проверка даты и статуса
                     let diffDays = 999;
                     const endDateVal = item.end_at || item.completed_at || item.created_at; 
                     if (endDateVal) {
@@ -1398,7 +1384,7 @@ async function loadProductDetails(id) {
                          diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
                     }
 
-                    // Разрешаем если: УЧАСТНИК или ОПЫТНЫЙ (через 10 дней)
+                    // Разрешаем если УЧАСТНИК или ОПЫТНЫЙ (10+ дней)
                     const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
 
                     if (canPay) {
@@ -1409,7 +1395,6 @@ async function loadProductDetails(id) {
                     } else {
                         btn.className = 'btn-secondary';
                         btn.style.color = "#ffffff";
-                        
                         if (window.currentUserStatus !== 'Опытный') {
                              btn.innerText = "Завершена (Нужен статус Опытный)";
                              btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
@@ -1423,11 +1408,9 @@ async function loadProductDetails(id) {
         }
 
     } catch (e) {
-        console.error("Ошибка загрузки товара:", e);
-        // Показываем ошибку юзеру (обычным алертом, чтобы не закрылось молча)
+        console.error(e);
         alert("Ошибка: " + e.message); 
     } finally {
-        // ВАЖНО: Убираем крутилку в любом случае!
         showPreloader(false);
     }
 }
@@ -1496,4 +1479,4 @@ function sendAltPayRequest() {
     tg.sendData(`manual_pay:${window.currentItemId}`);
 }
 
-<script src="script.js?v=150"></script>
+<script src="script.js?v=160"></script>
