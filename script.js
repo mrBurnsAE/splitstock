@@ -1246,12 +1246,13 @@ async function loadProductDetails(id) {
 
     const container = document.getElementById('product-view-container');
     if (container) {
+        // Очищаем старое
         const title = document.getElementById('product-title');
-        if(title) title.innerText = 'Загрузка...';
+        if (title) title.innerText = 'Загрузка...';
         const btn = document.getElementById('product-action-btn');
-        if(btn) btn.disabled = true;
+        if (btn) btn.disabled = true;
     }
-    
+
     switchView('product');
 
     try {
@@ -1262,10 +1263,10 @@ async function loadProductDetails(id) {
 
         const r = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: headers });
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-        
+
         const item = await r.json();
 
-        // UI
+        // UI Заполнение
         const coverEl = document.getElementById('product-cover');
         if (coverEl) coverEl.src = item.cover_url || 'placeholder.jpg';
         
@@ -1277,7 +1278,8 @@ async function loadProductDetails(id) {
         
         const descEl = document.getElementById('product-desc');
         if (descEl) descEl.innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : '';
-        
+
+        // Тэги
         const tagsContainer = document.getElementById('product-tags');
         if (tagsContainer) {
             tagsContainer.innerHTML = '';
@@ -1291,37 +1293,37 @@ async function loadProductDetails(id) {
             }
         }
 
+        // Прогресс
         const current = item.current_participants || 0;
         const needed = item.needed_participants || 1;
         const percent = Math.min(100, Math.round((current / needed) * 100));
-        
         const fillEl = document.getElementById('progress-fill');
         if (fillEl) fillEl.style.width = `${percent}%`;
-        
         const countEl = document.getElementById('participants-count');
         if (countEl) countEl.innerText = `${current} / ${needed}`;
-        
+
+        // Цена
         let displayPrice = item.price;
         if (item.status === 'completed') displayPrice = 200;
         if (item.status === 'fundraising') displayPrice = 100;
-        
         const priceEl = document.getElementById('product-price');
         if (priceEl) priceEl.innerText = `${displayPrice}₽`;
-
+        
+        // Видео
         const videoContainer = document.getElementById('product-video-container');
         if (videoContainer) {
-            videoContainer.innerHTML = '';
-            if (item.videos && Object.keys(item.videos).length > 0) {
-                videoContainer.style.display = 'block';
-            } else {
-                videoContainer.style.display = 'none';
-            }
+             videoContainer.innerHTML = '';
+             if (item.videos && Object.keys(item.videos).length > 0) {
+                 videoContainer.style.display = 'block';
+             } else {
+                 videoContainer.style.display = 'none';
+             }
         }
 
         // КНОПКИ
         const btn = document.getElementById('product-action-btn');
         const leaveBtn = document.getElementById('product-leave-btn');
-        
+
         if (btn) {
             btn.className = 'btn-primary';
             btn.style.color = "#ffffff"; 
@@ -1333,37 +1335,32 @@ async function loadProductDetails(id) {
             const isJoined = item.is_joined; 
             const pStatus = item.payment_status; 
 
+            // Логика статусов
             if (item.status === 'draft' || item.status === 'scheduled') {
                 btn.innerText = "Скоро публикация";
                 btn.className = 'btn-secondary';
-                btn.style.color = "#ffffff";
             }
             else if (item.status === 'published' || item.status === 'fundraising_scheduled') {
                 if (isJoined) {
                     btn.innerText = "Вы записаны";
                     btn.className = 'btn-success';
-                    btn.style.color = "#ffffff";
                     if (leaveBtn) leaveBtn.style.display = 'flex'; 
                 } else {
                     btn.innerText = "Записаться";
-                    btn.style.color = "#ffffff";
                     btn.onclick = () => joinItem(item.id);
                 }
             }
             else if (item.status === 'fundraising') {
                 if (isJoined) {
                     if (pStatus === 'paid') {
-                        btn.innerText = "Оплачено (Ждем завершения)";
+                        btn.innerText = "Оплачено";
                         btn.className = 'btn-success';
-                        btn.style.color = "#ffffff";
                     } else {
                         btn.innerText = "Оплатить взнос (100₽)";
-                        btn.style.color = "#ffffff";
                         btn.onclick = () => openPaymentModal('pay');
                     }
                 } else {
-                    btn.innerText = "Записаться (Сбор идет)";
-                    btn.style.color = "#ffffff";
+                    btn.innerText = "Записаться";
                     btn.onclick = () => joinItem(item.id);
                 }
             }
@@ -1372,7 +1369,6 @@ async function loadProductDetails(id) {
                 if (isJoined && pStatus === 'paid') {
                     btn.innerText = "Получить файлы";
                     btn.className = 'btn-success';
-                    btn.style.color = "#ffffff";
                     btn.onclick = () => getFiles(item.id);
                 } 
                 else {
@@ -1384,20 +1380,17 @@ async function loadProductDetails(id) {
                          diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
                     }
 
-                    // Разрешаем если УЧАСТНИК или ОПЫТНЫЙ (10+ дней)
                     const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
 
                     if (canPay) {
                         btn.innerText = "Купить (200₽)";
                         btn.className = 'btn-primary';
-                        btn.style.color = "#ffffff";
                         btn.onclick = () => openPaymentModal('buy');
                     } else {
                         btn.className = 'btn-secondary';
-                        btn.style.color = "#ffffff";
                         if (window.currentUserStatus !== 'Опытный') {
                              btn.innerText = "Завершена (Нужен статус Опытный)";
-                             btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
+                             btn.onclick = () => showToast("Нужен статус 'Опытный'");
                         } else {
                              btn.innerText = "Архив откроется позже";
                              btn.onclick = () => showToast(`Доступно через ${Math.ceil(10 - diffDays)} дн.`);
@@ -1406,7 +1399,6 @@ async function loadProductDetails(id) {
                 }
             }
         }
-
     } catch (e) {
         console.error(e);
         alert("Ошибка: " + e.message); 
@@ -1479,4 +1471,4 @@ function sendAltPayRequest() {
     tg.sendData(`manual_pay:${window.currentItemId}`);
 }
 
-<script src="script.js?v=160"></script>
+<script src="script.js?v=170"></script>
