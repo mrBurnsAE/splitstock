@@ -558,11 +558,6 @@ async function openProduct(id) {
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         
         const item = await r.json();
-
-        // --- 🔍 ДИАГНОСТИКА ---
-        // Сделайте скриншот этого окна и пришлите мне!
-        alert("ДАННЫЕ ТОВАРА:\n" + JSON.stringify(item, null, 2));
-        // -----------------------
         
         document.getElementById('product-header-title').innerText = item.name;
         document.getElementById('product-desc').innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : 'Описание отсутствует';
