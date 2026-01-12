@@ -525,7 +525,7 @@ function formatDate(isoString) {
 }
 
 // ============================================================
-// openProduct: СЧЕТЧИК ОК, КНОПКА ОК, КАРТИНКИ - КАК РАНЬШЕ
+// openProduct С ДИАГНОСТИКОЙ (Покажет сырые данные)
 // ============================================================
 async function openProduct(id) {
     const bottomNav = document.querySelector('.bottom-nav');
@@ -539,7 +539,6 @@ async function openProduct(id) {
     const viewProduct = document.getElementById('view-product');
     viewProduct.classList.add('active');
     window.scrollTo(0, 0);
-    
     setTimeout(() => viewProduct.classList.add('loaded'), 10);
     
     document.getElementById('product-header-title').innerText = "Загрузка...";
@@ -559,6 +558,11 @@ async function openProduct(id) {
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         
         const item = await r.json();
+
+        // --- 🔍 ДИАГНОСТИКА ---
+        // Сделайте скриншот этого окна и пришлите мне!
+        alert("ДАННЫЕ ТОВАРА:\n" + JSON.stringify(item, null, 2));
+        // -----------------------
         
         document.getElementById('product-header-title').innerText = item.name;
         document.getElementById('product-desc').innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : 'Описание отсутствует';
@@ -593,12 +597,10 @@ async function openProduct(id) {
         const contribution = (item.status === 'completed') ? "200₽" : "100₽";
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        // Участники (Фикс undefined)
         const currentPart = item.current_participants || 0;
         const neededPart = item.needed_participants || item.participants_needed || 1; 
         document.getElementById('participants-count').innerText = `${currentPart}/${neededPart}`;
 
-        // Прогресс
         const bar = document.getElementById('product-progress-fill');
         bar.className = 'progress-fill';
         let percent = 0;
@@ -610,15 +612,14 @@ async function openProduct(id) {
         }
         bar.style.width = Math.min(100, percent) + "%";
 
-        // --- КАРТИНКА: ВЕРНУЛИ ПРОСТУЮ ЛОГИКУ ---
+        // --- УМНАЯ ЗАГРУЗКА КАРТИНКИ ---
         const coverImg = document.getElementById('product-cover-img'); 
         if (coverImg) {
-            // Если ссылка есть - ставим её. Если нет - заглушку.
-            // Никаких проверок на http, никаких блокировок.
-            coverImg.src = item.cover_url || "icons/Ничего нет без фона.png";
+            // Пытаемся найти хоть какое-то поле с картинкой
+            const imgSrc = item.cover_url || item.cover || item.image || item.photo_url || "icons/Ничего нет без фона.png";
+            coverImg.src = imgSrc;
         }
 
-        // Видео
         window.currentVideoLinks = item.videos || {};
         if (Object.keys(window.currentVideoLinks).length > 0) {
             document.getElementById('video-switchers').style.display = 'flex';
@@ -630,7 +631,6 @@ async function openProduct(id) {
             switchVideo('none');
         }
 
-        // Логика кнопок (Фикс стиля)
         const btn = document.getElementById('product-action-btn');
         const leaveBtn = document.getElementById('product-leave-btn');
         const statusText = document.getElementById('product-status-text');
