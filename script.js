@@ -525,7 +525,7 @@ function formatDate(isoString) {
 }
 
 // ============================================================
-// ИСПРАВЛЕННАЯ ФУНКЦИЯ openProduct (Заменяет старую)
+// ИСПРАВЛЕННАЯ ВЕРСИЯ openProduct (Фикс картинок, цифр и кнопки)
 // ============================================================
 async function openProduct(id) {
     // 1. Скрываем нижнее меню и готовим экран
@@ -541,7 +541,6 @@ async function openProduct(id) {
     viewProduct.classList.add('active');
     window.scrollTo(0, 0);
     
-    // Анимация появления
     setTimeout(() => viewProduct.classList.add('loaded'), 10);
     
     // Сбрасываем старые данные
@@ -550,20 +549,18 @@ async function openProduct(id) {
     switchVideo('none');
     window.currentItemId = id;
     
-    showPreloader(true); // Теперь эта функция существует!
+    showPreloader(true);
 
     try {
-        // 2. Запрос к серверу с ID пользователя
         const headers = getHeaders();
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             headers['X-Telegram-User-Id'] = window.Telegram.WebApp.initDataUnsafe.user.id;
         }
 
-        // Добавляем timestamp для обхода кэша
-        const response = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: headers });
-        if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+        const r = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: headers });
+        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         
-        const item = await response.json();
+        const item = await r.json();
         
         // 3. Заполняем интерфейс
         document.getElementById('product-header-title').innerText = item.name;
@@ -573,27 +570,17 @@ async function openProduct(id) {
         if(linkEl) linkEl.onclick = (e) => { e.preventDefault(); tg.openLink(item.link); };
         
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
-        document.getElementById('product-tags').innerHTML = ''; // Очистка тегов
-        if (item.tags && item.tags.length > 0) {
-            const tagsContainer = document.getElementById('product-tags');
-            if (tagsContainer) {
-                tagsContainer.innerHTML = ''; // Очистка
+        
+        // --- ТЕГИ (Безопасно) ---
+        const tagsContainer = document.getElementById('product-tags');
+        if (tagsContainer) {
+            tagsContainer.innerHTML = '';
+            let tagsList = [];
+            if (Array.isArray(item.tags)) tagsList = item.tags;
+            else if (typeof item.tags === 'string' && item.tags.trim() !== '') tagsList = item.tags.split(',').map(t => t.trim());
             
-                // Превращаем что угодно в массив
-                let tagsList = [];
-            
-                if (Array.isArray(item.tags)) {
-                // Если это уже массив — отлично
-                tagsList = item.tags;
-                } else if (typeof item.tags === 'string' && item.tags.trim() !== '') {
-                // Если это строка — разбиваем по запятой
-                tagsList = item.tags.split(',').map(t => t.trim());
-            }
-
-            // Рисуем теги, только если список не пустой
             if (tagsList.length > 0) {
                 tagsList.forEach(tag => {
-                    // Убираем лишние кавычки или скобки, если они есть
                     const cleanTag = tag.replace(/[\[\]"']/g, ''); 
                     if (cleanTag) {
                         const sp = document.createElement('span');
@@ -604,28 +591,35 @@ async function openProduct(id) {
                 });
             }
         }
-        }
         
         document.getElementById('product-price-orig').innerText = "$" + item.price;
         const contribution = (item.status === 'completed') ? "200₽" : "100₽";
         document.getElementById('product-price-contrib').innerText = contribution;
         
-        document.getElementById('participants-count').innerText = `${item.current_participants}/${item.needed_participants}`;
+        // --- ИСПРАВЛЕНО: УЧАСТНИКИ (undefined) ---
+        // Берем или needed_participants, или participants_needed (как прислал сервер)
+        const currentPart = item.current_participants || 0;
+        const neededPart = item.needed_participants || item.participants_needed || 1; 
+        document.getElementById('participants-count').innerText = `${currentPart}/${neededPart}`;
 
         // Прогресс-бар
         const bar = document.getElementById('product-progress-fill');
         bar.className = 'progress-fill';
         let percent = 0;
-        if (item.needed_participants > 0) {
-            const current = (item.status === 'fundraising') ? (item.paid_participants || 0) : item.current_participants;
-            percent = (current / item.needed_participants) * 100;
+        if (neededPart > 0) {
+            const cur = (item.status === 'fundraising') ? (item.paid_participants || 0) : currentPart;
+            percent = (cur / neededPart) * 100;
             if (item.status === 'fundraising') bar.classList.add('blue');
             else bar.classList.add('gradient');
         }
         bar.style.width = Math.min(100, percent) + "%";
 
-        const coverImg = document.getElementById('product-cover-img');
-        coverImg.src = item.cover_url || "icons/Ничего нет без фона.png";
+        // --- ИСПРАВЛЕНО: КАРТИНКА (ID) ---
+        // В твоем HTML id="product-cover-img", а не "product-cover"
+        const coverImg = document.getElementById('product-cover-img'); 
+        if (coverImg) {
+            coverImg.src = item.cover_url || "icons/Ничего нет без фона.png";
+        }
 
         // Видео
         window.currentVideoLinks = item.videos || {};
@@ -639,7 +633,7 @@ async function openProduct(id) {
             switchVideo('none');
         }
 
-        // --- ЛОГИКА КНОПОК И СТАТУСОВ (ВМЕСТО updateProductStatusUI) ---
+        // --- ЛОГИКА КНОПОК ---
         const btn = document.getElementById('product-action-btn');
         const leaveBtn = document.getElementById('product-leave-btn');
         const statusText = document.getElementById('product-status-text');
@@ -651,19 +645,21 @@ async function openProduct(id) {
         // Сброс кнопки
         btn.disabled = false;
         btn.style.opacity = "1";
-        btn.className = 'btn-primary';
-        btn.style.backgroundColor = "";
+        btn.className = 'btn-primary'; // Всегда используем btn-primary как базу
+        btn.style.backgroundColor = ""; // Сбрасываем цвет
         btn.onclick = null;
 
         const isJoined = item.is_joined;
         const pStatus = item.payment_status;
 
-        // 1. Активная / Опубликована
+        // 1. Активная
         if (['published', 'active', 'scheduled'].includes(item.status)) {
             statusText.innerText = "Активная складчина";
             if (isJoined) {
                 btn.innerText = "Вы записаны";
-                btn.className = 'btn-success';
+                // --- ИСПРАВЛЕНО: СТИЛЬ КНОПКИ ---
+                // Не меняем className на btn-success (его нет в css), а красим btn-primary
+                btn.style.backgroundColor = "#2ecc71"; // Зеленый
                 if(leaveBtn) leaveBtn.style.display = 'flex';
             } else {
                 btn.innerText = "Записаться";
@@ -675,15 +671,15 @@ async function openProduct(id) {
             statusText.innerText = `Идёт сбор средств до ${formatDate(item.end_at)}`;
             if (fundLabel) fundLabel.style.display = 'flex';
             if(document.getElementById('fundraising-count')) 
-                document.getElementById('fundraising-count').innerText = `${item.paid_participants || 0}/${item.needed_participants}`;
+                document.getElementById('fundraising-count').innerText = `${item.paid_participants || 0}/${neededPart}`;
 
             if (isJoined) {
                 if (pStatus === 'paid') {
                     btn.innerText = "Оплачено";
-                    btn.className = 'btn-success';
+                    btn.style.backgroundColor = "#2ecc71"; // Зеленый
                 } else {
                     btn.innerText = "Оплатить взнос";
-                    // Если штрафник - модалка штрафа, иначе оплата
+                    btn.style.backgroundColor = "#0984e3"; // Синий
                     btn.onclick = () => {
                         if (window.currentUserStatus === 'Штрафник') {
                             updateStatusModal('Штрафник', 0);
@@ -695,19 +691,18 @@ async function openProduct(id) {
                 }
             } else {
                 btn.innerText = "Набор закрыт";
-                btn.className = 'btn-secondary';
+                btn.className = 'btn-secondary'; // Это можно оставить, если класс есть
             }
         }
-        // 3. Завершена (ТОТ САМЫЙ БЛОК)
+        // 3. Завершена
         else if (item.status === 'completed') {
             statusText.innerText = "Складчина завершена";
             
             if (isJoined && pStatus === 'paid') {
                 btn.innerText = "Получить файлы";
-                btn.className = 'btn-success';
+                btn.style.backgroundColor = "#2ecc71"; // Зеленый
                 btn.onclick = () => getFiles();
             } else {
-                // Логика доступа к архиву
                 let diffDays = 999;
                 if (item.end_at || item.created_at) {
                     const endDate = new Date(item.end_at || item.created_at);
@@ -715,12 +710,12 @@ async function openProduct(id) {
                     diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
                 }
 
-                // Разрешаем, если Участник (долг) ИЛИ Опытный (архив)
                 const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
 
                 if (canPay) {
                     btn.innerText = "Купить (200₽)";
-                    btn.className = 'btn-primary';
+                    btn.style.backgroundColor = "#fdcb6e"; // Желтый/Оранжевый для покупки
+                    btn.style.color = "#ffffff";
                     btn.onclick = () => {
                          if (window.currentUserStatus === 'Штрафник') {
                             updateStatusModal('Штрафник', 0);
@@ -744,7 +739,6 @@ async function openProduct(id) {
 
     } catch (e) {
         console.error(e);
-        // ВАЖНО: Больше не закрываем окно, а показываем ошибку!
         showCustomAlert("Ошибка: " + e.message, "Ошибка WebApp");
     } finally {
         showPreloader(false);
