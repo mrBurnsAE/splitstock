@@ -1360,48 +1360,58 @@ async function loadProductDetails(id) {
             return;
         }
 
-        // 4. COMPLETED (Завершена)
+        // 4. COMPLETED (Завершена) - ВЕРСИЯ С ОТЛАДКОЙ
         if (item.status === 'completed') {
-            if (isJoined && pStatus === 'paid') {
-                btn.innerText = "Получить файлы";
-                btn.className = 'btn-success';
-                btn.onclick = () => getFiles(item.id);
-            } 
-            else {
-                // Считаем дни (на случай если это покупка из архива)
-                const endDate = new Date(item.end_at);
-                const now = new Date();
-                const diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
+            try {
+                // ПРОВЕРКА: Если isJoined или pStatus не определены — объявим их
+                // (На случай, если в твоем коде они называются иначе)
+                const _isJoined = (typeof isJoined !== 'undefined') ? isJoined : (item.is_joined || false);
+                const _pStatus = (typeof pStatus !== 'undefined') ? pStatus : (item.payment_status || null);
 
-                // --- ЛОГИКА ДОСТУПА ---
-                // 1. isJoined: Если вы участник (даже с долгом) — пускаем всегда.
-                // 2. Archive: Если Опытный И прошло 10 дней — пускаем.
-                
-                const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
+                if (_isJoined && _pStatus === 'paid') {
+                    btn.innerText = "Получить файлы";
+                    btn.className = 'btn-success';
+                    btn.onclick = () => getFiles(item.id);
+                } 
+                else {
+                    // Пробуем получить дату завершения
+                    let endDateVal = item.end_at || item.completed_at || item.created_at; 
+                    if (!endDateVal) throw new Error("Нет даты завершения (item.end_at)");
 
-                if (canPay) {
-                    btn.innerText = "Купить (200₽)";
-                    btn.className = 'btn-primary';
-                    btn.style.color = "#ffffff";
-                    btn.onclick = () => openPaymentModal('buy');
-                } else {
-                    // Блокировка
-                    btn.className = 'btn-secondary';
-                    btn.style.color = "#ffffff";
-                    
-                    if (window.currentUserStatus !== 'Опытный') {
-                         btn.innerText = "Завершена (Нужен статус Опытный)";
-                         btn.onclick = () => {
-                             // ВРЕМЕННАЯ ОТЛАДКА: Посмотрим, почему не пускает
-                             // Если увидишь isJoined: false — значит проблема в базе данных
-                             alert(`Debug:\nJoined: ${isJoined}\nStatus: ${window.currentUserStatus}`);
-                             showToast("Нужен статус 'Опытный' для покупки из архива");
-                         };
+                    const endDate = new Date(endDateVal);
+                    const now = new Date();
+                    const diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
+
+                    // Логика доступа
+                    const canPay = _isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
+
+                    if (canPay) {
+                        btn.innerText = "Купить (200₽)";
+                        btn.className = 'btn-primary';
+                        btn.style.color = "#ffffff";
+                        // Проверяем, существует ли функция открытия модалки
+                        if (typeof openPaymentModal === 'function') {
+                            btn.onclick = () => openPaymentModal('buy');
+                        } else {
+                            btn.onclick = () => alert("Ошибка: функция openPaymentModal не найдена!");
+                        }
                     } else {
-                         btn.innerText = "Архив откроется позже";
-                         btn.onclick = () => showToast(`Покупка доступна через 10 дней (прошло ${Math.floor(diffDays)})`);
+                        btn.className = 'btn-secondary';
+                        btn.style.color = "#ffffff";
+                        
+                        if (window.currentUserStatus !== 'Опытный') {
+                             btn.innerText = "Завершена (Нужен статус Опытный)";
+                             btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
+                        } else {
+                             btn.innerText = "Архив откроется позже";
+                             btn.onclick = () => showToast(`Доступно через ${Math.ceil(10 - diffDays)} дн.`);
+                        }
                     }
                 }
+            } catch (err) {
+                // ВОТ ЭТО ПОКАЖЕТ НАМ ОШИБКУ
+                alert("JS ERROR: " + err.message + "\n" + err.stack);
+                console.error(err);
             }
             return;
         }
