@@ -561,7 +561,7 @@ function updateProductStatusUI(status, isJoined, paymentStatus, startAt, endAt) 
 
             if (diffDays > 10) {
                 actionBtn.innerText = "Купить (200₽)";
-                actionBtn.style.backgroundColor = "#fdcb6e"; actionBtn.style.color = "#2d3436";
+                actionBtn.style.backgroundColor = "#ffffff"; actionBtn.style.color = "#2d3436";
                 actionBtn.disabled = false;
                 actionBtn.onclick = () => checkPenaltyAndPay();
             } else {
@@ -1315,6 +1315,7 @@ async function loadProductDetails(id) {
 
         // Сброс состояний
         btn.className = 'btn-primary';
+        btn.style.color = "";
         btn.disabled = false;
         btn.onclick = null;
         if (leaveBtn) leaveBtn.style.display = 'none';

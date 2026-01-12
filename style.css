@@ -1076,3 +1076,13 @@ h1, h2, h3, p { margin: 0; }
     background: rgba(0, 184, 148, 0.1);
     transform: scale(0.98);
 }
+
+/* --- ФИКС ЦВЕТА КНОПОК НА МОБИЛЬНЫХ --- */
+.btn-primary, 
+.btn-success, 
+.btn-secondary,
+.banner-btn,
+button {
+    color: #ffffff !important; /* Принудительно белый */
+    -webkit-text-fill-color: #ffffff !important; /* Фикс для Safari/iOS */
+}
