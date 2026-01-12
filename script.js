@@ -1240,116 +1240,195 @@ async function loadBanners() {
     }
 }
 
-// Функция для записи в черное окно (вставь её перед loadProductDetails или в начало файла)
-function debugLog(msg) {
-    const consoleDiv = document.getElementById('debug-console');
-    if (consoleDiv) {
-        consoleDiv.innerHTML += `> ${msg}<br>`;
-        // Автопрокрутка вниз
-        consoleDiv.scrollTop = consoleDiv.scrollHeight;
-    }
-    console.log(msg); // Дублируем в обычную консоль
-}
-
 // ============================================================
-// ОТЛАДОЧНАЯ ВЕРСИЯ loadProductDetails
+// ФИНАЛЬНАЯ ВЕРСИЯ loadProductDetails (Без Debug, чистая)
 // ============================================================
 async function loadProductDetails(id) {
-    debugLog(`--- START loadProductDetails(${id}) ---`);
+    showPreloader(true); // Показываем спиннер
+    window.currentItemId = id;
+
+    // Очистка контейнера перед показом
+    const container = document.getElementById('product-view-container');
+    if (container) {
+        const title = document.getElementById('product-title');
+        if(title) title.innerText = 'Загрузка...';
+        
+        const btn = document.getElementById('product-action-btn');
+        if(btn) btn.disabled = true;
+    }
     
+    switchView('product');
+
     try {
-        const container = document.getElementById('product-view-container');
-        if (!container) {
-            debugLog("ERROR: Container not found!");
-            return;
-        }
-
-        // 1. Показываем экран (если тут закроется - значит switchView виноват)
-        debugLog("Switching view...");
-        switchView('product');
-        window.currentItemId = id;
-
-        // 2. Готовим заголовки
-        debugLog("Preparing headers...");
+        // 1. Формируем заголовки
         const headers = getHeaders();
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             headers['X-Telegram-User-Id'] = window.Telegram.WebApp.initDataUnsafe.user.id;
-            debugLog(`User ID found: ${headers['X-Telegram-User-Id']}`);
-        } else {
-            debugLog("User ID NOT found in WebApp data");
         }
 
-        // 3. Делаем запрос (самое опасное место)
-        debugLog(`Fetching URL: ${API_BASE_URL}/api/items/${id}`);
+        // 2. Запрос к серверу
         const r = await fetch(`${API_BASE_URL}/api/items/${id}`, { headers: headers });
-        
-        debugLog(`Response status: ${r.status}`);
-        
-        if (!r.ok) {
-            throw new Error(`Server returned ${r.status}`);
-        }
+        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         
         const item = await r.json();
-        debugLog("JSON parsed successfully");
-        debugLog(`Item Status: ${item.status}`);
-        debugLog(`Is Joined: ${item.is_joined}`);
-        debugLog(`User Status (Global): ${window.currentUserStatus}`);
 
-        // 4. Заполняем UI
-        document.getElementById('product-title').innerText = item.name;
+        // 3. Заполняем UI (Картинка, Текст, Теги)
+        const coverEl = document.getElementById('product-cover');
+        if (coverEl) coverEl.src = item.cover_url || 'placeholder.jpg';
         
-        // --- ЛОГИКА КНОПКИ (Упрощенная для теста) ---
-        const btn = document.getElementById('product-action-btn');
-        if (!btn) throw new Error("Button not found in DOM");
-
-        btn.disabled = false;
-        btn.onclick = null;
-        btn.style.display = 'block';
-
-        if (item.status === 'completed') {
-            debugLog("Processing COMPLETED logic...");
-            
-            // Расчет дней
-            let diffDays = 999;
-            const endDateVal = item.end_at || item.completed_at || item.created_at; 
-            if (endDateVal) {
-                 const diff = (new Date()) - (new Date(endDateVal));
-                 diffDays = diff / (1000 * 60 * 60 * 24);
-            }
-            debugLog(`Days passed: ${diffDays}`);
-
-            const canPay = item.is_joined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
-            debugLog(`Can Pay decision: ${canPay}`);
-
-            if (canPay) {
-                btn.innerText = "Купить (200₽) [DEBUG]";
-                btn.className = 'btn-primary';
-                btn.onclick = () => {
-                    debugLog("Click: Buying...");
-                    openPaymentModal('buy');
-                };
-            } else {
-                btn.innerText = "Недоступно [DEBUG]";
-                btn.className = 'btn-secondary';
-                btn.onclick = () => showToast("Недоступно (Debug Mode)");
-            }
-        } else {
-            debugLog("Not completed status, standard render.");
-            if (typeof updateProductStatusUI === 'function') {
-                updateProductStatusUI(item);
-            } else {
-                debugLog("Warning: updateProductStatusUI missing");
+        const catEl = document.getElementById('product-category');
+        if (catEl) catEl.innerText = item.category || 'Категория';
+        
+        const titleEl = document.getElementById('product-title');
+        if (titleEl) titleEl.innerText = item.name;
+        
+        const descEl = document.getElementById('product-desc');
+        if (descEl) descEl.innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : '';
+        
+        // Теги
+        const tagsContainer = document.getElementById('product-tags');
+        if (tagsContainer) {
+            tagsContainer.innerHTML = '';
+            if (item.tags && item.tags.length > 0) {
+                item.tags.forEach(tag => {
+                    const sp = document.createElement('span');
+                    sp.className = 'tag';
+                    sp.innerText = tag;
+                    tagsContainer.appendChild(sp);
+                });
             }
         }
+
+        // Прогресс бар
+        const current = item.current_participants || 0;
+        const needed = item.needed_participants || 1;
+        const percent = Math.min(100, Math.round((current / needed) * 100));
         
-        debugLog("--- END SUCCESS ---");
+        const fillEl = document.getElementById('progress-fill');
+        if (fillEl) fillEl.style.width = `${percent}%`;
+        
+        const countEl = document.getElementById('participants-count');
+        if (countEl) countEl.innerText = `${current} / ${needed}`;
+        
+        // Цена
+        let displayPrice = item.price;
+        if (item.status === 'completed') displayPrice = 200;
+        if (item.status === 'fundraising') displayPrice = 100;
+        
+        const priceEl = document.getElementById('product-price');
+        if (priceEl) priceEl.innerText = `${displayPrice}₽`;
+
+        // Видео
+        const videoContainer = document.getElementById('product-video-container');
+        if (videoContainer) {
+            videoContainer.innerHTML = '';
+            if (item.videos && Object.keys(item.videos).length > 0) {
+                videoContainer.style.display = 'block';
+            } else {
+                videoContainer.style.display = 'none';
+            }
+        }
+
+        // --- ЛОГИКА КНОПОК ---
+        const btn = document.getElementById('product-action-btn');
+        const leaveBtn = document.getElementById('product-leave-btn');
+        
+        if (btn) {
+            // Сброс
+            btn.className = 'btn-primary';
+            btn.style.color = ""; 
+            btn.style.backgroundColor = "";
+            btn.disabled = false;
+            btn.onclick = null;
+            if (leaveBtn) leaveBtn.style.display = 'none';
+
+            const isJoined = item.is_joined; 
+            const pStatus = item.payment_status; 
+
+            // Логика по статусам
+            if (item.status === 'draft' || item.status === 'scheduled') {
+                btn.innerText = "Скоро публикация";
+                btn.className = 'btn-secondary';
+                btn.style.color = "#ffffff";
+            }
+            else if (item.status === 'published' || item.status === 'fundraising_scheduled') {
+                if (isJoined) {
+                    btn.innerText = "Вы записаны";
+                    btn.className = 'btn-success';
+                    btn.style.color = "#ffffff";
+                    if (leaveBtn) leaveBtn.style.display = 'flex'; 
+                } else {
+                    btn.innerText = "Записаться";
+                    btn.style.color = "#ffffff";
+                    btn.onclick = () => joinItem(item.id);
+                }
+            }
+            else if (item.status === 'fundraising') {
+                if (isJoined) {
+                    if (pStatus === 'paid') {
+                        btn.innerText = "Оплачено (Ждем завершения)";
+                        btn.className = 'btn-success';
+                        btn.style.color = "#ffffff";
+                    } else {
+                        btn.innerText = "Оплатить взнос (100₽)";
+                        btn.style.color = "#ffffff";
+                        btn.onclick = () => openPaymentModal('pay');
+                    }
+                } else {
+                    btn.innerText = "Записаться (Сбор идет)";
+                    btn.style.color = "#ffffff";
+                    btn.onclick = () => joinItem(item.id);
+                }
+            }
+            else if (item.status === 'completed') {
+                // ЛОГИКА ЗАВЕРШЕННЫХ (ИСПРАВЛЕННАЯ)
+                if (isJoined && pStatus === 'paid') {
+                    btn.innerText = "Получить файлы";
+                    btn.className = 'btn-success';
+                    btn.style.color = "#ffffff";
+                    btn.onclick = () => getFiles(item.id);
+                } 
+                else {
+                    // Проверка даты и статуса
+                    let diffDays = 999;
+                    const endDateVal = item.end_at || item.completed_at || item.created_at; 
+                    if (endDateVal) {
+                         const endDate = new Date(endDateVal);
+                         const now = new Date();
+                         diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
+                    }
+
+                    // Разрешаем если: УЧАСТНИК или ОПЫТНЫЙ (через 10 дней)
+                    const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
+
+                    if (canPay) {
+                        btn.innerText = "Купить (200₽)";
+                        btn.className = 'btn-primary';
+                        btn.style.color = "#ffffff";
+                        btn.onclick = () => openPaymentModal('buy');
+                    } else {
+                        btn.className = 'btn-secondary';
+                        btn.style.color = "#ffffff";
+                        
+                        if (window.currentUserStatus !== 'Опытный') {
+                             btn.innerText = "Завершена (Нужен статус Опытный)";
+                             btn.onclick = () => showToast("Нужен статус 'Опытный' для покупки из архива");
+                        } else {
+                             btn.innerText = "Архив откроется позже";
+                             btn.onclick = () => showToast(`Доступно через ${Math.ceil(10 - diffDays)} дн.`);
+                        }
+                    }
+                }
+            }
+        }
 
     } catch (e) {
-        debugLog(`!!! CRITICAL ERROR !!!`);
-        debugLog(`${e.name}: ${e.message}`);
-        debugLog(`${e.stack}`);
-        // ВАЖНО: Мы НЕ вызываем closeProduct(), мы просто смотрим на ошибку.
-        alert("ОШИБКА: " + e.message); 
+        console.error("Ошибка загрузки товара:", e);
+        // Показываем ошибку юзеру (обычным алертом, чтобы не закрылось молча)
+        alert("Ошибка: " + e.message); 
+    } finally {
+        // ВАЖНО: Убираем крутилку в любом случае!
+        showPreloader(false);
     }
 }
 
@@ -1417,4 +1496,4 @@ function sendAltPayRequest() {
     tg.sendData(`manual_pay:${window.currentItemId}`);
 }
 
-<script src="script.js?v=112"></script>
+<script src="script.js?v=150"></script>
