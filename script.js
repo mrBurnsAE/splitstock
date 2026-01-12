@@ -524,13 +524,28 @@ function formatDate(isoString) {
     } catch(e) { return ""; }
 }
 
-// ============================================================
-// openProduct С ДИАГНОСТИКОЙ (Покажет сырые данные)
-// ============================================================
 async function openProduct(id) {
     const bottomNav = document.querySelector('.bottom-nav');
     if(bottomNav) bottomNav.style.display = 'none';
     
+    // 1. ОЧИСТКА ДАННЫХ (Чтобы не было видно текста с прошлой складчины)
+    document.getElementById('product-header-title').innerText = ""; 
+    document.getElementById('product-desc').innerHTML = ""; 
+    document.getElementById('product-price-orig').innerText = "";
+    document.getElementById('product-price-contrib').innerText = "";
+    document.getElementById('product-cover-img').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // Пустая прозрачная картинка
+    
+    // Сбрасываем кнопку
+    const btn = document.getElementById('product-action-btn');
+    btn.innerText = ""; 
+    btn.disabled = true;
+    
+    // Скрываем теги и статус
+    const tagsContainer = document.getElementById('product-tags');
+    if(tagsContainer) tagsContainer.innerHTML = '';
+    document.getElementById('product-status-text').innerText = '';
+
+    // 2. ПЕРЕКЛЮЧЕНИЕ ЭКРАНА
     document.querySelectorAll('.view').forEach(el => {
         el.classList.remove('active');
         el.classList.remove('loaded');
@@ -539,13 +554,11 @@ async function openProduct(id) {
     const viewProduct = document.getElementById('view-product');
     viewProduct.classList.add('active');
     window.scrollTo(0, 0);
+    
+    // Анимация появления
     setTimeout(() => viewProduct.classList.add('loaded'), 10);
     
-    document.getElementById('product-header-title').innerText = "Загрузка...";
-    document.getElementById('product-action-btn').disabled = true;
-    switchVideo('none');
     window.currentItemId = id;
-    
     showPreloader(true);
 
     try {
@@ -554,21 +567,22 @@ async function openProduct(id) {
             headers['X-Telegram-User-Id'] = window.Telegram.WebApp.initDataUnsafe.user.id;
         }
 
+        // Запрос (теперь он будет быстрым благодаря правке в main.py)
         const r = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: headers });
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         
         const item = await r.json();
         
+        // 3. ЗАПОЛНЕНИЕ ДАННЫХ
         document.getElementById('product-header-title').innerText = item.name;
         document.getElementById('product-desc').innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : 'Описание отсутствует';
         
         const linkEl = document.getElementById('product-link-ext');
-        if(linkEl) linkEl.onclick = (e) => { e.preventDefault(); tg.openLink(item.link); };
+        linkEl.onclick = (e) => { e.preventDefault(); tg.openLink(item.link); };
         
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
         
         // Теги
-        const tagsContainer = document.getElementById('product-tags');
         if (tagsContainer) {
             tagsContainer.innerHTML = '';
             let tagsList = [];
@@ -588,14 +602,17 @@ async function openProduct(id) {
             }
         }
         
+        // Цены
         document.getElementById('product-price-orig').innerText = "$" + item.price;
         const contribution = (item.status === 'completed') ? "200₽" : "100₽";
         document.getElementById('product-price-contrib').innerText = contribution;
         
+        // Участники
         const currentPart = item.current_participants || 0;
         const neededPart = item.needed_participants || item.participants_needed || 1; 
         document.getElementById('participants-count').innerText = `${currentPart}/${neededPart}`;
 
+        // Прогресс
         const bar = document.getElementById('product-progress-fill');
         bar.className = 'progress-fill';
         let percent = 0;
@@ -607,14 +624,15 @@ async function openProduct(id) {
         }
         bar.style.width = Math.min(100, percent) + "%";
 
-        // --- УМНАЯ ЗАГРУЗКА КАРТИНКИ ---
+        // КАРТИНКА (Простая логика: что сервер дал, то и ставим)
         const coverImg = document.getElementById('product-cover-img'); 
         if (coverImg) {
-            // Пытаемся найти хоть какое-то поле с картинкой
-            const imgSrc = item.cover_url || item.cover || item.image || item.photo_url || "icons/Ничего нет без фона.png";
-            coverImg.src = imgSrc;
+            coverImg.onerror = null;
+            // Если сервер вернул url - отлично. Если нет - заглушка.
+            coverImg.src = item.cover_url || "icons/Ничего нет без фона.png";
         }
 
+        // Видео
         window.currentVideoLinks = item.videos || {};
         if (Object.keys(window.currentVideoLinks).length > 0) {
             document.getElementById('video-switchers').style.display = 'flex';
@@ -626,7 +644,7 @@ async function openProduct(id) {
             switchVideo('none');
         }
 
-        const btn = document.getElementById('product-action-btn');
+        // Кнопки и статусы
         const leaveBtn = document.getElementById('product-leave-btn');
         const statusText = document.getElementById('product-status-text');
         const fundLabel = document.getElementById('fundraising-label-row');
@@ -643,6 +661,7 @@ async function openProduct(id) {
         const isJoined = item.is_joined;
         const pStatus = item.payment_status;
 
+        // Логика кнопок
         if (['published', 'active', 'scheduled'].includes(item.status)) {
             statusText.innerText = "Активная складчина";
             if (isJoined) {
