@@ -1399,8 +1399,12 @@ function requestHelp() {
     // (на самом деле sendData и так часто закрывает окно, но для надежности)
 }
 
-// --- ТЕПЕРЬ АЛЬТЕРНАТИВА РАБОТАЕТ КАК ОБЫЧНАЯ ОПЛАТА (ЧЕРЕЗ API) ---
+// --- ВЕРНУЛИ СТАРЫЙ СПОСОБ (ОТКРЫВАЕТ МЕНЮ В БОТЕ) ---
 function sendAltPayRequest() {
-    // Просто используем метод 'manual', который мы добавили в main.py
-    selectPaymentMethod('manual');
+    if (window.currentItemId) {
+        // Это закроет WebApp и отправит сообщение боту, который покажет меню
+        tg.sendData("manual_pay:" + window.currentItemId);
+    } else {
+        showCustomAlert("Ошибка: ID товара не найден", "Ошибка");
+    }
 }
