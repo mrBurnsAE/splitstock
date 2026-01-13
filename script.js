@@ -1399,14 +1399,8 @@ function requestHelp() {
     // (на самом деле sendData и так часто закрывает окно, но для надежности)
 }
 
-// --- ФУНКЦИЯ ОТПРАВКИ ЗАПРОСА НА АЛЬТЕРНАТИВНУЮ ОПЛАТУ ---
+// --- ТЕПЕРЬ АЛЬТЕРНАТИВА РАБОТАЕТ КАК ОБЫЧНАЯ ОПЛАТА (ЧЕРЕЗ API) ---
 function sendAltPayRequest() {
-    if (!window.currentItemId) return;
-    
-    // Вибрация для тактильного отклика
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-    
-    // Закрываем WebApp и отправляем данные боту
-    // Формат: manual_pay:<item_id>
-    tg.sendData(`manual_pay:${window.currentItemId}`);
+    // Просто используем метод 'manual', который мы добавили в main.py
+    selectPaymentMethod('manual');
 }
