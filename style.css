@@ -1081,7 +1081,6 @@ h1, h2, h3, p { margin: 0; }
 .btn-primary, 
 .btn-success, 
 .btn-secondary,
-.banner-btn,
 button {
     color: #ffffff !important; /* Принудительно белый */
     -webkit-text-fill-color: #ffffff !important; /* Фикс для Safari/iOS */
