@@ -1085,3 +1085,8 @@ button {
     color: #ffffff !important; /* Принудительно белый */
     -webkit-text-fill-color: #ffffff !important; /* Фикс для Safari/iOS */
 }
+
+.banner-btn {
+    color: #2d3436 !important;
+    -webkit-text-fill-color: #2d3436 !important;
+}
