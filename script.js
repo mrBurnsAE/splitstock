@@ -235,16 +235,35 @@ function closeAlertModal() {
 }
 
 function openModal() { document.getElementById('modal-status').classList.add('open'); }
-function closeModal() { document.getElementById('modal-status').classList.remove('open'); }
+// Функция закрытия статуса
+async function closeModal() { 
+    document.getElementById('modal-status').classList.remove('open');
+    // Тоже проверяем, не изменился ли статус
+    await loadUserProfile(); 
+    
+    if (document.getElementById('view-product').classList.contains('active') && window.currentItemId) {
+        openProduct(window.currentItemId);
+    }
+}
 
 function openPaymentModal(type) {
     window.pendingPaymentType = type;
     document.getElementById('modal-payment').classList.add('open');
 }
 
-function closePaymentModal() {
+// Функция закрытия оплаты
+async function closePaymentModal() {
     document.getElementById('modal-payment').classList.remove('open');
     window.pendingPaymentType = null;
+    
+    // Обновляем статус пользователя, вдруг он оплатил
+    await loadUserProfile(); 
+    
+    // Обновляем кнопку товара, если мы на нём
+    if (document.getElementById('view-product').classList.contains('active') && window.currentItemId) {
+        // Вызываем открытие заново - это быстро обновит данные
+        openProduct(window.currentItemId);
+    }
 }
 
 function openMyItems(type) {
@@ -816,13 +835,31 @@ async function selectPaymentMethod(method) {
     if (!window.pendingPaymentType) return;
     const modalContent = document.querySelector('#modal-payment .modal-content');
     modalContent.style.opacity = '0.5';
+    
     try {
-        const body = { user_id: USER_ID, method: method, type: window.pendingPaymentType, item_id: (window.pendingPaymentType === 'item') ? window.currentItemId : 0 };
+        // ИСПРАВЛЕНИЕ: Учитываем 'buy' и 'pay' как оплату товара
+        const isItemPayment = ['item', 'buy', 'pay'].includes(window.pendingPaymentType);
+        
+        const body = { 
+            user_id: USER_ID, 
+            method: method, 
+            type: window.pendingPaymentType, 
+            // Если это покупка или взнос — берем ID текущего товара, иначе 0 (для штрафа)
+            item_id: isItemPayment ? window.currentItemId : 0 
+        };
+        
         const response = await fetch(`${API_BASE_URL}/api/payment/init`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
         const result = await response.json();
+        
         if (result.success) tg.close(); 
-        else { showCustomAlert("Ошибка: " + result.error, "Ошибка"); modalContent.style.opacity = '1'; }
-    } catch (error) { showCustomAlert("Ошибка соединения", "Ошибка"); modalContent.style.opacity = '1'; }
+        else { 
+            showCustomAlert("Ошибка: " + result.error, "Ошибка"); 
+            modalContent.style.opacity = '1'; 
+        }
+    } catch (error) { 
+        showCustomAlert("Ошибка соединения", "Ошибка"); 
+        modalContent.style.opacity = '1'; 
+    }
 }
 
 function updateStatusModal(status, completedCount) {
