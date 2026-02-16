@@ -484,24 +484,29 @@ function createItemCard(item) {
     }
     if (percent > 100) percent = 100;
 
-    if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
-        if (item.is_joined) statusText = "✅ Вы участвуете";
-    } else if (item.status === 'fundraising') {
-        const endDate = formatDate(item.end_at);
-        if (!item.is_joined) {
-            statusText = "Идёт сбор средств"; badgeColor = "#0984e3";
-        } else {
-            if (item.payment_status === 'paid') { statusText = "✅ Взнос оплачен"; badgeColor = "#2ecc71"; }
-            else { statusText = `⚠️ Оплатить до ${endDate}`; badgeColor = "#ff7675"; }
+    if (item.status_text) {
+        statusText = item.status_text;
+    } else {
+        // Fallback если вдруг API старое
+        if (item.status === 'published' || item.status === 'active' || item.status === 'scheduled') {
+            if (item.is_joined) statusText = "✅ Вы участвуете";
+        } else if (item.status === 'fundraising') {
+            const endDate = formatDate(item.end_at);
+            if (!item.is_joined) {
+                statusText = "Идёт сбор средств"; badgeColor = "#0984e3";
+            } else {
+                if (item.payment_status === 'paid') { statusText = "✅ Взнос оплачен"; badgeColor = "#2ecc71"; }
+                else { statusText = `⚠️ Оплатить до ${endDate}`; badgeColor = "#ff7675"; }
+            }
+        } else if (item.status === 'scheduled_fundraising') {
+            const dateStr = formatDate(item.start_at);
+            barClass = "progress-fill blue"; percent = 0;
+            if (item.is_joined) { statusText = `✅ Сбор с ${dateStr}`; badgeColor = "#2ecc71"; }
+            else { statusText = `⚠️ Сбор с ${dateStr}`; badgeColor = "#ff7675"; }
+        } else if (item.status === 'completed') {
+            statusText = "Завершена"; barClass = "progress-fill blue"; badgeColor = "#a2a5b9"; percent = 100;
+            if (item.payment_status === 'paid') { statusText = "✅ Доступно"; badgeColor = "#2ecc71"; }
         }
-    } else if (item.status === 'fundraising_scheduled') {
-        const dateStr = formatDate(item.start_at);
-        barClass = "progress-fill blue"; percent = 0;
-        if (item.is_joined) { statusText = `✅ Сбор с ${dateStr}`; badgeColor = "#2ecc71"; }
-        else { statusText = `⚠️ Сбор с ${dateStr}`; badgeColor = "#ff7675"; }
-    } else if (item.status === 'completed') {
-        statusText = "Завершена"; barClass = "progress-fill blue"; badgeColor = "#a2a5b9"; percent = 100;
-        if (item.payment_status === 'paid') { statusText = "✅ Доступно"; badgeColor = "#2ecc71"; }
     }
 
     const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
@@ -680,6 +685,59 @@ async function openProduct(id) {
         const isJoined = item.is_joined;
         const pStatus = item.payment_status;
 
+        // --- НОВАЯ ЛОГИКА: Используем конфиг с сервера (api.py) ---
+        if (item.button_config) {
+            const cfg = item.button_config;
+            btn.innerText = cfg.text;
+            btn.disabled = cfg.disabled;
+            if (cfg.disabled) btn.style.opacity = "0.6";
+            
+            // Цвета кнопок
+            if (cfg.text === "Вы записаны" || cfg.text === "Оплачено" || cfg.text === "Открыть файлы") {
+                btn.style.backgroundColor = "#2ecc71"; // Зеленый
+            } else if (cfg.text === "Оплатить" || cfg.text === "Оплатить взнос") {
+                btn.style.backgroundColor = "#0984e3"; // Синий
+            } else if (cfg.text === "Купить" || cfg.text === "Купить запись") {
+                btn.style.backgroundColor = "#fdcb6e"; // Желтый
+                btn.style.color = "#ffffff";
+            } else if (cfg.text === "Набор закрыт" || cfg.disabled) {
+                // btn.className = 'btn-secondary'; // Оставляем primary но с серым если disabled
+            }
+
+            // Действия
+            if (cfg.action === 'join') {
+                btn.onclick = () => handleProductAction();
+            } else if (cfg.action === 'pay' || cfg.action === 'buy' || cfg.action === 'join_pay') {
+                btn.onclick = () => {
+                    if (window.currentUserStatus === 'Штрафник') {
+                        updateStatusModal('Штрафник', 0);
+                        openModal();
+                    } else {
+                        openPaymentModal(cfg.action === 'buy' ? 'buy' : 'pay');
+                    }
+                };
+            } else if (cfg.action === 'files') {
+                btn.onclick = () => getFiles();
+            }
+        }
+
+        if (item.status_text) {
+            statusText.innerText = item.status_text;
+        }
+
+        // Доп. элементы для специфичных статусов
+        if (item.status === 'active' || item.status === 'published' || item.status === 'scheduled' || item.status === 'scheduled_fundraising') {
+             if (isJoined && leaveBtn) leaveBtn.style.display = 'flex';
+        }
+
+        if (item.status === 'fundraising') {
+            if (fundLabel) fundLabel.style.display = 'flex';
+            if (document.getElementById('fundraising-count')) 
+                document.getElementById('fundraising-count').innerText = `${item.paid_count || 0}/${neededPart}`;
+        }
+        
+        // --- СТАРАЯ ЛОГИКА (DISABLE) ---
+        /*
         // Логика кнопок
         if (['published', 'active', 'scheduled'].includes(item.status)) {
             statusText.innerText = "Активная складчина";
@@ -692,71 +750,8 @@ async function openProduct(id) {
                 btn.onclick = () => handleProductAction();
             }
         }
-        else if (item.status === 'fundraising') {
-            statusText.innerText = `Идёт сбор средств до ${formatDate(item.end_at)}`;
-            if (fundLabel) fundLabel.style.display = 'flex';
-            if(document.getElementById('fundraising-count')) 
-                document.getElementById('fundraising-count').innerText = `${item.paid_participants || 0}/${neededPart}`;
-
-            if (isJoined) {
-                if (pStatus === 'paid') {
-                    btn.innerText = "Оплачено";
-                    btn.style.backgroundColor = "#2ecc71";
-                } else {
-                    btn.innerText = "Оплатить взнос";
-                    btn.style.backgroundColor = "#0984e3";
-                    btn.onclick = () => {
-                        if (window.currentUserStatus === 'Штрафник') {
-                            updateStatusModal('Штрафник', 0);
-                            openModal();
-                        } else {
-                            openPaymentModal('pay');
-                        }
-                    };
-                }
-            } else {
-                btn.innerText = "Набор закрыт";
-                btn.className = 'btn-secondary';
-            }
-        }
-        else if (item.status === 'completed') {
-            statusText.innerText = "Складчина завершена";
-            if (isJoined && pStatus === 'paid') {
-                btn.innerText = "Получить файлы";
-                btn.style.backgroundColor = "#2ecc71";
-                btn.onclick = () => getFiles();
-            } else {
-                let diffDays = 999;
-                if (item.end_at || item.created_at) {
-                    const endDate = new Date(item.end_at || item.created_at);
-                    const now = new Date();
-                    diffDays = (now - endDate) / (1000 * 60 * 60 * 24);
-                }
-                const canPay = isJoined || (window.currentUserStatus === 'Опытный' && diffDays > 10);
-                if (canPay) {
-                    btn.innerText = "Купить (200₽)";
-                    btn.style.backgroundColor = "#fdcb6e";
-                    btn.style.color = "#ffffff";
-                    btn.onclick = () => {
-                         if (window.currentUserStatus === 'Штрафник') {
-                            updateStatusModal('Штрафник', 0);
-                            openModal();
-                        } else {
-                            openPaymentModal('buy');
-                        }
-                    };
-                } else {
-                    btn.className = 'btn-secondary';
-                    if (window.currentUserStatus !== 'Опытный') {
-                        btn.innerText = "Завершена (Нужен статус Опытный)";
-                        btn.onclick = () => showCustomAlert("Нужен статус 'Опытный' для покупки из архива");
-                    } else {
-                        btn.innerText = "Архив откроется позже";
-                        btn.onclick = () => showCustomAlert(`Доступно через ${Math.ceil(10 - diffDays)} дн.`);
-                    }
-                }
-            }
-        }
+        ...
+        */
     } catch (e) {
         console.error(e);
         showCustomAlert("Ошибка: " + e.message, "Ошибка WebApp");
