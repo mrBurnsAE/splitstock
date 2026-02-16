@@ -39,7 +39,7 @@ console.log("WebApp initialized. User ID:", USER_ID, "Start Item:", startItemId)
 window.currentVideoLinks = {};
 window.currentSearchQuery = "";
 window.pendingPaymentType = null;
-window.currentUserStatus = null; 
+window.currentUserStatus = null;
 window.currentCategoryDetailsId = null;
 window.isMyItemsContext = false;
 window.currentMyItemsType = 'active';
@@ -51,10 +51,10 @@ window.currentCatalogTabType = 'active'; // <--- ДОБАВИТЬ ЭТУ СТР�
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         console.log("DOM Loaded. Starting App Initialization...");
-        
+
         // Показываем прелоадер (хотя он и так есть в HTML, для надежности)
         const preloader = document.getElementById('preloader');
-        if(preloader) preloader.style.opacity = '1';
+        if (preloader) preloader.style.opacity = '1';
 
         // 1. Сначала железно загружаем профиль, чтобы знать статус (Новичок/Опытный)
         await loadUserProfile();
@@ -87,23 +87,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         // Все загружено, скрываем прелоадер
-        if(preloader) {
+        if (preloader) {
             preloader.style.opacity = '0';
             setTimeout(() => {
                 preloader.style.display = 'none';
-                
+
                 // Плавно показываем основной вид
                 const activeView = document.querySelector('.view.active');
-                if(activeView) activeView.classList.add('loaded');
-                
+                if (activeView) activeView.classList.add('loaded');
+
             }, 300); // Ждем пока пройдет анимация opacity
         }
 
-    } catch (e) { 
+    } catch (e) {
         console.error("Init error:", e);
         // Даже если ошибка, убираем прелоадер, чтобы не висел вечно
         const preloader = document.getElementById('preloader');
-        if(preloader) preloader.style.display = 'none';
+        if (preloader) preloader.style.display = 'none';
         showCustomAlert("Ошибка загрузки данных. Проверьте интернет.", "Ошибка");
     }
 });
@@ -135,7 +135,7 @@ async function getFiles() {
             body: JSON.stringify({ user_id: USER_ID, item_id: window.currentItemId })
         });
         const result = await response.json();
-        
+
         if (result.success) {
             showCustomAlert("Файлы отправлены вам в личные сообщения ботом.", "Успешно");
             tg.close();
@@ -156,7 +156,7 @@ function switchView(viewName) {
         el.classList.remove('active');
         el.classList.remove('loaded');
     });
-    
+
     // 2. Активируем нужный экран
     const target = document.getElementById(`view-${viewName}`);
     if (target) {
@@ -164,12 +164,12 @@ function switchView(viewName) {
         // Небольшая задержка для анимации opacity
         setTimeout(() => target.classList.add('loaded'), 10);
     }
-    
+
     // 3. Управление видимостью нижнего меню
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) {
         // Скрываем меню на внутренних страницах
-        if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
+        if (['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
             bottomNav.style.display = 'none';
         } else {
             bottomNav.style.display = 'flex';
@@ -202,20 +202,20 @@ function updateBottomNav(activeView) {
     const iconHome = document.getElementById('icon-home');
     const iconCatalog = document.getElementById('icon-catalog');
     const iconProfile = document.getElementById('icon-profile');
-    
-    if(iconHome) iconHome.src = 'icons/home.svg';
-    if(iconCatalog) iconCatalog.src = 'icons/apps.svg';
-    if(iconProfile) iconProfile.src = 'icons/user.svg';
 
-    if(activeView === 'home') {
+    if (iconHome) iconHome.src = 'icons/home.svg';
+    if (iconCatalog) iconCatalog.src = 'icons/apps.svg';
+    if (iconProfile) iconProfile.src = 'icons/user.svg';
+
+    if (activeView === 'home') {
         document.querySelector('.nav-item:nth-child(2)')?.classList.add('active');
-        if(iconHome) iconHome.src = 'icons/home active.svg';
-    } else if(activeView === 'catalog') {
+        if (iconHome) iconHome.src = 'icons/home active.svg';
+    } else if (activeView === 'catalog') {
         document.querySelector('.nav-item:nth-child(1)')?.classList.add('active');
-        if(iconCatalog) iconCatalog.src = 'icons/apps active.svg';
-    } else if(activeView === 'profile') {
+        if (iconCatalog) iconCatalog.src = 'icons/apps active.svg';
+    } else if (activeView === 'profile') {
         document.querySelector('.nav-item:nth-child(3)')?.classList.add('active');
-        if(iconProfile) iconProfile.src = 'icons/user active.svg';
+        if (iconProfile) iconProfile.src = 'icons/user active.svg';
     }
 }
 
@@ -223,24 +223,24 @@ function showCustomAlert(msg, title = "SplitStockBot") {
     const el = document.getElementById('modal-alert');
     const titleEl = document.getElementById('modal-alert-title');
     const msgEl = document.getElementById('modal-alert-msg');
-    
-    if(titleEl) titleEl.innerText = title;
-    if(msgEl) msgEl.innerText = msg;
-    if(el) el.classList.add('open');
+
+    if (titleEl) titleEl.innerText = title;
+    if (msgEl) msgEl.innerText = msg;
+    if (el) el.classList.add('open');
 }
 
 function closeAlertModal() {
     const el = document.getElementById('modal-alert');
-    if(el) el.classList.remove('open');
+    if (el) el.classList.remove('open');
 }
 
 function openModal() { document.getElementById('modal-status').classList.add('open'); }
 // Функция закрытия статуса
-async function closeModal() { 
+async function closeModal() {
     document.getElementById('modal-status').classList.remove('open');
     // Тоже проверяем, не изменился ли статус
-    await loadUserProfile(); 
-    
+    await loadUserProfile();
+
     if (document.getElementById('view-product').classList.contains('active') && window.currentItemId) {
         openProduct(window.currentItemId);
     }
@@ -255,10 +255,10 @@ function openPaymentModal(type) {
 async function closePaymentModal() {
     document.getElementById('modal-payment').classList.remove('open');
     window.pendingPaymentType = null;
-    
+
     // Обновляем статус пользователя, вдруг он оплатил
-    await loadUserProfile(); 
-    
+    await loadUserProfile();
+
     // Обновляем кнопку товара, если мы на нём
     if (document.getElementById('view-product').classList.contains('active') && window.currentItemId) {
         // Вызываем открытие заново - это быстро обновит данные
@@ -270,10 +270,10 @@ function openMyItems(type) {
     window.isMyItemsContext = true;
     window.currentCategoryDetailsId = null;
     window.currentMyItemsType = type;
-    
+
     // --- ДОБАВЛЕНО: Кнопка "Назад" ведет в Профиль ---
     const backBtn = document.querySelector('#view-my-items .back-btn');
-    if(backBtn) backBtn.onclick = () => switchView('profile');
+    if (backBtn) backBtn.onclick = () => switchView('profile');
     // -------------------------------------------------
 
     const titleEl = document.getElementById('my-items-title');
@@ -289,7 +289,7 @@ function openMyItems(type) {
 // --- НОВАЯ ФУНКЦИЯ ДЛЯ БАННЕРА ---
 async function openHotItems() {
     // Используем тот же экран, что и для "Моих складчин", но меняем контент
-    window.isMyItemsContext = true; 
+    window.isMyItemsContext = true;
     window.currentMyItemsType = 'hot'; // Специальный тип, чтобы знать, что обновлять
 
     // 1. Настраиваем заголовок и кнопку "Назад"
@@ -298,7 +298,7 @@ async function openHotItems() {
 
     const backBtn = document.querySelector('#view-my-items .back-btn');
     // Важно: кнопка "Назад" должна возвращать на ГЛАВНУЮ, где был баннер
-    if(backBtn) backBtn.onclick = () => switchView('home');
+    if (backBtn) backBtn.onclick = () => switchView('home');
 
     switchView('my-items');
 
@@ -352,36 +352,36 @@ async function loadUserProfile() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/user/${USER_ID}?t=${Date.now()}`, { headers: getHeaders() });
         const user = await response.json();
-        
+
         window.currentUserStatus = user.status;
-        
+
         const ids = ['header-username', 'profile-username'];
-        ids.forEach(id => { 
-            const el = document.getElementById(id); 
-            if(el) el.innerText = user.first_name || user.username || "Пользователь"; 
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = user.first_name || user.username || "Пользователь";
         });
-        
-        const els = { 
-            'profile-status-text': user.status, 
-            'profile-active-count': user.active_count, 
-            'profile-completed-count': user.completed_count 
+
+        const els = {
+            'profile-status-text': user.status,
+            'profile-active-count': user.active_count,
+            'profile-completed-count': user.completed_count
         };
-        for (const [id, val] of Object.entries(els)) { 
-            const el = document.getElementById(id); 
-            if(el) el.innerText = val; 
+        for (const [id, val] of Object.entries(els)) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val;
         }
-        
+
         const dateEl = document.getElementById('profile-join-date');
-        if(dateEl && user.registration_date) { 
-            const d = new Date(user.registration_date); 
-            dateEl.innerText = `Участник с ${d.toLocaleDateString('ru-RU')}`; 
+        if (dateEl && user.registration_date) {
+            const d = new Date(user.registration_date);
+            dateEl.innerText = `Участник с ${d.toLocaleDateString('ru-RU')}`;
         }
-        
+
         if (user.avatar_url) {
             const headerAvatar = document.getElementById('header-avatar');
             const profileAvatar = document.getElementById('profile-avatar');
             const avatarSrc = `${user.avatar_url}?v=${new Date().getTime()}`;
-            
+
             if (headerAvatar) {
                 headerAvatar.src = avatarSrc;
                 headerAvatar.style.opacity = '1';
@@ -429,7 +429,7 @@ async function loadCategoryItems(type) {
 
 async function loadItems(type) {
     const container = document.querySelector('#view-catalog .item-container');
-    if(!container) return;
+    if (!container) return;
     container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
     try {
         let url = `${API_BASE_URL}/api/items?type=${type}&page=1`;
@@ -449,8 +449,8 @@ function renderItems(container, items) {
     container.innerHTML = '';
     if (items.length === 0) {
         let img = "icons/Ничего нет без фона.png";
-        if(window.currentSearchQuery) img = "icons/Поиск без фона.png";
-        
+        if (window.currentSearchQuery) img = "icons/Поиск без фона.png";
+
         // ИЗМЕНЕНИЕ: width увеличили с 140px до 210px
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; height:50vh;">
@@ -467,7 +467,7 @@ function createItemCard(item) {
     const card = document.createElement('div');
     card.className = 'big-card';
     card.onclick = () => openProduct(item.id);
-    
+
     let statusText = "Активная складчина";
     let badgeColor = "#00cec9";
     let percent = 0;
@@ -475,7 +475,7 @@ function createItemCard(item) {
 
     if (item.needed_participants > 0) {
         if (item.status === 'fundraising') {
-            percent = (item.paid_participants / item.needed_participants) * 100;
+            percent = (item.paid_count / item.needed_participants) * 100;
             barClass += " blue";
         } else {
             percent = (item.current_participants / item.needed_participants) * 100;
@@ -509,8 +509,8 @@ function createItemCard(item) {
         }
     }
 
-    const imgSrc = item.cover_url || "icons/Ничего нет без фона.png"; 
-    
+    const imgSrc = item.cover_url || "icons/Ничего нет без фона.png";
+
     card.innerHTML = `
         <div class="card-media">
             <img src="${imgSrc}" style="width:100%; height:auto; display:block; border-radius: 16px 16px 0 0;">
@@ -532,7 +532,7 @@ function createItemCard(item) {
 }
 
 function formatDate(isoString) {
-    if(!isoString) return "";
+    if (!isoString) return "";
     try {
         const d = new Date(isoString);
         const mskOffset = 3 * 60 * 60 * 1000;
@@ -543,30 +543,30 @@ function formatDate(isoString) {
         const year = mskDate.getUTCFullYear();
         const hours = String(mskDate.getUTCHours()).padStart(2, '0');
         const minutes = String(mskDate.getUTCMinutes()).padStart(2, '0');
-        
+
         return `${hours}:${minutes} ${day}.${month}.${year}`;
-    } catch(e) { return ""; }
+    } catch (e) { return ""; }
 }
 
 async function openProduct(id) {
     const bottomNav = document.querySelector('.bottom-nav');
-    if(bottomNav) bottomNav.style.display = 'none';
-    
+    if (bottomNav) bottomNav.style.display = 'none';
+
     // 1. ОЧИСТКА ДАННЫХ (Чтобы не было видно текста с прошлой складчины)
-    document.getElementById('product-header-title').innerText = ""; 
-    document.getElementById('product-desc').innerHTML = ""; 
+    document.getElementById('product-header-title').innerText = "";
+    document.getElementById('product-desc').innerHTML = "";
     document.getElementById('product-price-orig').innerText = "";
     document.getElementById('product-price-contrib').innerText = "";
     document.getElementById('product-cover-img').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // Пустая прозрачная картинка
-    
+
     // Сбрасываем кнопку
     const btn = document.getElementById('product-action-btn');
-    btn.innerText = ""; 
+    btn.innerText = "";
     btn.disabled = true;
-    
+
     // Скрываем теги и статус
     const tagsContainer = document.getElementById('product-tags');
-    if(tagsContainer) tagsContainer.innerHTML = '';
+    if (tagsContainer) tagsContainer.innerHTML = '';
     document.getElementById('product-status-text').innerText = '';
 
     // 2. ПЕРЕКЛЮЧЕНИЕ ЭКРАНА
@@ -574,14 +574,14 @@ async function openProduct(id) {
         el.classList.remove('active');
         el.classList.remove('loaded');
     });
-    
+
     const viewProduct = document.getElementById('view-product');
     viewProduct.classList.add('active');
     window.scrollTo(0, 0);
-    
+
     // Анимация появления
     setTimeout(() => viewProduct.classList.add('loaded'), 10);
-    
+
     window.currentItemId = id;
     showPreloader(true);
 
@@ -594,46 +594,46 @@ async function openProduct(id) {
         // Запрос (теперь он будет быстрым благодаря правке в main.py)
         const r = await fetch(`${API_BASE_URL}/api/items/${id}?t=${Date.now()}`, { headers: headers });
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-        
+
         const item = await r.json();
-        
+
         // 3. ЗАПОЛНЕНИЕ ДАННЫХ
         document.getElementById('product-header-title').innerText = item.name;
         document.getElementById('product-desc').innerHTML = item.description ? item.description.replace(/\n/g, '<br>') : 'Описание отсутствует';
-        
+
         const linkEl = document.getElementById('product-link-ext');
         linkEl.onclick = (e) => { e.preventDefault(); tg.openLink(item.link); };
-        
+
         document.getElementById('product-category').innerText = item.category ? "#" + item.category : "";
-        
+
         // Теги
         if (tagsContainer) {
             tagsContainer.innerHTML = '';
             let tagsList = [];
             if (Array.isArray(item.tags)) tagsList = item.tags;
             else if (typeof item.tags === 'string' && item.tags.trim() !== '') tagsList = item.tags.split(',').map(t => t.trim());
-            
+
             if (tagsList.length > 0) {
                 tagsList.forEach(tag => {
-                    const cleanTag = tag.replace(/[\[\]"']/g, ''); 
+                    const cleanTag = tag.replace(/[\[\]"']/g, '');
                     if (cleanTag) {
                         const sp = document.createElement('span');
-                        sp.className = 'tag-list'; 
+                        sp.className = 'tag-list';
                         sp.innerText = "#" + cleanTag + " ";
                         tagsContainer.appendChild(sp);
                     }
                 });
             }
         }
-        
+
         // Цены
         document.getElementById('product-price-orig').innerText = "$" + item.price;
         const contribution = (item.status === 'completed') ? "200₽" : "100₽";
         document.getElementById('product-price-contrib').innerText = contribution;
-        
+
         // Участники
         const currentPart = item.current_participants || 0;
-        const neededPart = item.needed_participants || item.participants_needed || 1; 
+        const neededPart = item.needed_participants || item.participants_needed || 1;
         document.getElementById('participants-count').innerText = `${currentPart}/${neededPart}`;
 
         // Прогресс
@@ -641,7 +641,7 @@ async function openProduct(id) {
         bar.className = 'progress-fill';
         let percent = 0;
         if (neededPart > 0) {
-            const cur = (item.status === 'fundraising') ? (item.paid_participants || 0) : currentPart;
+            const cur = (item.status === 'fundraising') ? (item.paid_count || 0) : currentPart;
             percent = (cur / neededPart) * 100;
             if (item.status === 'fundraising') bar.classList.add('blue');
             else bar.classList.add('gradient');
@@ -649,7 +649,7 @@ async function openProduct(id) {
         bar.style.width = Math.min(100, percent) + "%";
 
         // КАРТИНКА (Простая логика: что сервер дал, то и ставим)
-        const coverImg = document.getElementById('product-cover-img'); 
+        const coverImg = document.getElementById('product-cover-img');
         if (coverImg) {
             coverImg.onerror = null;
             // Если сервер вернул url - отлично. Если нет - заглушка.
@@ -675,11 +675,11 @@ async function openProduct(id) {
 
         if (fundLabel) fundLabel.style.display = 'none';
         if (leaveBtn) leaveBtn.style.display = 'none';
-        
+
         btn.disabled = false;
         btn.style.opacity = "1";
-        btn.className = 'btn-primary'; 
-        btn.style.backgroundColor = ""; 
+        btn.className = 'btn-primary';
+        btn.style.backgroundColor = "";
         btn.onclick = null;
 
         const isJoined = item.is_joined;
@@ -691,7 +691,7 @@ async function openProduct(id) {
             btn.innerText = cfg.text;
             btn.disabled = cfg.disabled;
             if (cfg.disabled) btn.style.opacity = "0.6";
-            
+
             // Цвета кнопок
             if (cfg.text === "Вы записаны" || cfg.text === "Оплачено" || cfg.text === "Открыть файлы") {
                 btn.style.backgroundColor = "#2ecc71"; // Зеленый
@@ -727,15 +727,15 @@ async function openProduct(id) {
 
         // Доп. элементы для специфичных статусов
         if (item.status === 'active' || item.status === 'published' || item.status === 'scheduled' || item.status === 'scheduled_fundraising') {
-             if (isJoined && leaveBtn) leaveBtn.style.display = 'flex';
+            if (isJoined && leaveBtn) leaveBtn.style.display = 'flex';
         }
 
         if (item.status === 'fundraising') {
             if (fundLabel) fundLabel.style.display = 'flex';
-            if (document.getElementById('fundraising-count')) 
+            if (document.getElementById('fundraising-count'))
                 document.getElementById('fundraising-count').innerText = `${item.paid_count || 0}/${neededPart}`;
         }
-        
+
         // --- СТАРАЯ ЛОГИКА (DISABLE) ---
         /*
         // Логика кнопок
@@ -764,29 +764,29 @@ function closeProduct() {
     // Останавливаем видео
     document.getElementById('main-video-frame').src = "";
 
-    if(window.isMyItemsContext) { 
+    if (window.isMyItemsContext) {
         // Если пришли из профиля или из списка "Горящие"
-        switchView('my-items'); 
-        
+        switchView('my-items');
+
         // Если это был список Hot Items - перезагружаем его спец. функцией
         if (window.currentMyItemsType === 'hot') {
-            openHotItems(); 
+            openHotItems();
         } else {
-            loadMyItems(window.currentMyItemsType); 
+            loadMyItems(window.currentMyItemsType);
         }
     }
-    else if(window.currentCategoryDetailsId) { 
+    else if (window.currentCategoryDetailsId) {
         // Если пришли из категории
-        switchView('category-details'); 
+        switchView('category-details');
     }
-    else if(window.isHomeContext) { 
+    else if (window.isHomeContext) {
         // --- НОВОЕ: Если пришли с Главной (Топ 5) ---
         switchView('home');
     }
-    else { 
+    else {
         // Иначе (по умолчанию) в Каталог
-        switchView('catalog'); 
-        loadItems(window.currentCatalogTabType || 'active'); 
+        switchView('catalog');
+        loadItems(window.currentCatalogTabType || 'active');
     }
 }
 
@@ -818,7 +818,7 @@ async function leaveProduct() {
         }).then(r => r.json()).then(result => {
             if (result.success) openProduct(window.currentItemId);
             else {
-                if(result.error === 'locked') showCustomAlert('После объявления сбора средств выйти нельзя.', 'Внимание');
+                if (result.error === 'locked') showCustomAlert('После объявления сбора средств выйти нельзя.', 'Внимание');
                 else showCustomAlert(result.error || "Ошибка выхода", "Ошибка");
                 btn.disabled = false;
             }
@@ -830,30 +830,30 @@ async function selectPaymentMethod(method) {
     if (!window.pendingPaymentType) return;
     const modalContent = document.querySelector('#modal-payment .modal-content');
     modalContent.style.opacity = '0.5';
-    
+
     try {
         // ИСПРАВЛЕНИЕ: Учитываем 'buy' и 'pay' как оплату товара
         const isItemPayment = ['item', 'buy', 'pay'].includes(window.pendingPaymentType);
-        
-        const body = { 
-            user_id: USER_ID, 
-            method: method, 
-            type: window.pendingPaymentType, 
+
+        const body = {
+            user_id: USER_ID,
+            method: method,
+            type: window.pendingPaymentType,
             // Если это покупка или взнос — берем ID текущего товара, иначе 0 (для штрафа)
-            item_id: isItemPayment ? window.currentItemId : 0 
+            item_id: isItemPayment ? window.currentItemId : 0
         };
-        
+
         const response = await fetch(`${API_BASE_URL}/api/payment/init`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
         const result = await response.json();
-        
-        if (result.success) tg.close(); 
-        else { 
-            showCustomAlert("Ошибка: " + result.error, "Ошибка"); 
-            modalContent.style.opacity = '1'; 
+
+        if (result.success) tg.close();
+        else {
+            showCustomAlert("Ошибка: " + result.error, "Ошибка");
+            modalContent.style.opacity = '1';
         }
-    } catch (error) { 
-        showCustomAlert("Ошибка соединения", "Ошибка"); 
-        modalContent.style.opacity = '1'; 
+    } catch (error) {
+        showCustomAlert("Ошибка соединения", "Ошибка");
+        modalContent.style.opacity = '1';
     }
 }
 
@@ -863,16 +863,16 @@ function updateStatusModal(status, completedCount) {
     const img = document.getElementById('modal-status-img');
     const okBtn = document.getElementById('modal-status-ok-btn');
     const penaltyBtns = document.getElementById('modal-status-penalty-btns');
-    if(title) title.innerText = status;
-    if(okBtn) okBtn.style.display = 'block';
-    if(penaltyBtns) penaltyBtns.style.display = 'none';
+    if (title) title.innerText = status;
+    if (okBtn) okBtn.style.display = 'block';
+    if (penaltyBtns) penaltyBtns.style.display = 'none';
     if (status === 'Новичок') {
         const needed = Math.max(0, 10 - completedCount);
-        if(desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
-        if(img) img.src = "icons/Новичок Без фона.png";
+        if (desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
+        if (img) img.src = "icons/Новичок Без фона.png";
     } else if (status === 'Опытный') {
-        if(desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
-        if(img) {
+        if (desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
+        if (img) {
             img.src = "icons/Супермэн без фона.png";
             // --- ПЕРСОНАЛЬНЫЕ НАСТРОЙКИ ДЛЯ РОБОТА ---
             img.style.width = "242px";        // +10%
@@ -880,10 +880,10 @@ function updateStatusModal(status, completedCount) {
             img.style.transform = "translateX(30px)"; // Сдвиг вправо
         }
     } else if (status === 'Штрафник') {
-        if(desc) desc.innerText = "Вы не можете записываться в новые складчины и оплачивать взносы, пока не оплатите штраф";
-        if(img) img.src = "icons/Штрафник без фона.png";
-        if(okBtn) okBtn.style.display = 'none';
-        if(penaltyBtns) penaltyBtns.style.display = 'flex';
+        if (desc) desc.innerText = "Вы не можете записываться в новые складчины и оплачивать взносы, пока не оплатите штраф";
+        if (img) img.src = "icons/Штрафник без фона.png";
+        if (okBtn) okBtn.style.display = 'none';
+        if (penaltyBtns) penaltyBtns.style.display = 'flex';
     }
 }
 
@@ -894,7 +894,7 @@ function switchVideo(platform) {
     const btns = document.querySelectorAll('.platform-btn');
     btns.forEach(b => b.classList.remove('active'));
     const btn = document.getElementById(`btn-${platform}`);
-    if(btn) btn.classList.add('active');
+    if (btn) btn.classList.add('active');
     let videoUrl = "";
     if (window.currentVideoLinks) {
         if (platform === 'youtube') videoUrl = window.currentVideoLinks.youtube;
@@ -931,24 +931,24 @@ function showPlaceholder() {
 function selectTab(el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
-    
+
     let type = 'active';
     if (el.innerText.includes('Завершённые')) type = 'completed';
     else if (el.innerText.includes('Мои')) type = 'all'; // "Мои складчины" в общем каталоге
-    
+
     // Запоминаем выбор
     window.currentCatalogTabType = type;
-    
+
     loadItems(type);
 }
 function selectCategoryInnerTab(type) {
     // 1. Переключаем визуальный класс active
     const tabActive = document.getElementById('tab-cat-active');
     const tabCompleted = document.getElementById('tab-cat-completed');
-    
+
     if (tabActive) tabActive.classList.remove('active');
     if (tabCompleted) tabCompleted.classList.remove('active');
-    
+
     if (type === 'active' && tabActive) {
         tabActive.classList.add('active');
     } else if (type === 'completed' && tabCompleted) {
@@ -960,7 +960,7 @@ function selectCategoryInnerTab(type) {
 }
 function selectTabByName(name) {
     const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(t => { if(t.innerText.includes(name)) selectTab(t); });
+    tabs.forEach(t => { if (t.innerText.includes(name)) selectTab(t); });
 }
 function selectSort(sort, btn) {
     window.filterState.sort = sort;
@@ -969,25 +969,25 @@ function selectSort(sort, btn) {
 }
 function toggleCategory(id, btn) {
     const idx = window.filterState.categories.indexOf(id);
-    if(idx===-1) { window.filterState.categories.push(id); btn.classList.add('active'); }
-    else { window.filterState.categories.splice(idx,1); btn.classList.remove('active'); }
+    if (idx === -1) { window.filterState.categories.push(id); btn.classList.add('active'); }
+    else { window.filterState.categories.splice(idx, 1); btn.classList.remove('active'); }
 }
 function toggleTag(tag, btn) {
     const idx = window.filterState.tags.indexOf(tag);
-    if(idx===-1) { window.filterState.tags.push(tag); btn.classList.add('active'); }
-    else { window.filterState.tags.splice(idx,1); btn.classList.remove('active'); }
+    if (idx === -1) { window.filterState.tags.push(tag); btn.classList.add('active'); }
+    else { window.filterState.tags.splice(idx, 1); btn.classList.remove('active'); }
 }
 function resetFilter() {
-    window.filterState = {sort:'new', categories:[], tags:[]};
-    document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+    window.filterState = { sort: 'new', categories: [], tags: [] };
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('.sort-btn').classList.add('active');
-    document.querySelectorAll('.chip-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
 }
 function applyFilter() {
     closeFilter();
     let type = 'active';
     const activeTab = document.querySelector('.tab.active');
-    if(activeTab && activeTab.innerText.includes('Завершённые')) type = 'completed';
+    if (activeTab && activeTab.innerText.includes('Завершённые')) type = 'completed';
     loadItems(type);
 }
 async function loadCategories() {
@@ -998,41 +998,41 @@ async function loadCategories() {
         if (homeGrid) {
             homeGrid.innerHTML = '';
             cats.slice(0, 4).forEach(c => {
-                const d = document.createElement('div'); d.className='category-card'; d.innerText=c.name;
-                d.onclick=()=>{ openCategoryDetails(c.id, c.name); };
+                const d = document.createElement('div'); d.className = 'category-card'; d.innerText = c.name;
+                d.onclick = () => { openCategoryDetails(c.id, c.name); };
                 homeGrid.appendChild(d);
             });
         }
         const filterCont = document.getElementById('filter-categories-container');
-        if(filterCont) {
-            filterCont.innerHTML='';
-            cats.forEach(c=>{
-                const b=document.createElement('div'); b.className='chip-btn'; b.innerText=c.name;
-                b.onclick=()=>toggleCategory(c.id, b);
+        if (filterCont) {
+            filterCont.innerHTML = '';
+            cats.forEach(c => {
+                const b = document.createElement('div'); b.className = 'chip-btn'; b.innerText = c.name;
+                b.onclick = () => toggleCategory(c.id, b);
                 filterCont.appendChild(b);
             });
         }
-    } catch(e){ console.error(e); }
+    } catch (e) { console.error(e); }
 }
 async function loadTags() {
     try {
         const r = await fetch(`${API_BASE_URL}/api/tags`, { headers: getHeaders() });
         const tags = await r.json();
         const cont = document.getElementById('filter-tags-container');
-        if(cont) {
-            cont.innerHTML='';
-            tags.forEach(t=>{
-                const b=document.createElement('div'); b.className='chip-btn'; b.innerText=t;
-                b.onclick=()=>toggleTag(t,b);
+        if (cont) {
+            cont.innerHTML = '';
+            tags.forEach(t => {
+                const b = document.createElement('div'); b.className = 'chip-btn'; b.innerText = t;
+                b.onclick = () => toggleTag(t, b);
                 cont.appendChild(b);
             });
         }
-    } catch(e){ console.error(e); }
+    } catch (e) { console.error(e); }
 }
 async function loadHomeItems() {
     // 1. Загружаем НОВЫЕ (Active)
     loadCompactList('active', 'home-new-container');
-    
+
     // 2. Загружаем ЗАВЕРШЕННЫЕ (Completed)
     loadCompactList('completed', 'home-completed-container');
 }
@@ -1046,9 +1046,9 @@ async function loadCompactList(type, containerId) {
         // Запрашиваем топ-5, сортировка по новизне
         const r = await fetch(`${API_BASE_URL}/api/items?type=${type}&page=1&sort=new`, { headers: getHeaders() });
         const items = await r.json();
-        
+
         container.innerHTML = '';
-        
+
         if (items.length === 0) {
             container.innerHTML = '<div style="padding:10px; color:#a2a5b9; font-size:14px;">Пока пусто...</div>';
             return;
@@ -1058,7 +1058,7 @@ async function loadCompactList(type, containerId) {
         items.slice(0, 5).forEach(item => {
             container.appendChild(createCompactCard(item));
         });
-        
+
     } catch (e) {
         console.error(e);
         container.innerHTML = '<div style="padding:10px; color:#ff7675; font-size:14px;">Ошибка загрузки</div>';
@@ -1069,7 +1069,7 @@ async function loadCompactList(type, containerId) {
 function createCompactCard(item) {
     const card = document.createElement('div');
     card.className = 'compact-card';
-    
+
     // Ставим флаг, что открываем с Главной
     card.onclick = () => {
         window.isHomeContext = true;
@@ -1083,12 +1083,12 @@ function createCompactCard(item) {
     if (item.status === 'completed') {
         metaText = "Завершена • Файлы доступны";
         statusColor = "#fdcb6e"; // Желтый
-        if(item.payment_status === 'paid') {
-             statusColor = "#2ecc71"; // Зеленый
-             metaText = "Куплено вами";
+        if (item.payment_status === 'paid') {
+            statusColor = "#2ecc71"; // Зеленый
+            metaText = "Куплено вами";
         }
     } else if (item.status === 'fundraising') {
-        metaText = `Участников: ${item.paid_participants}/${item.needed_participants}`;
+        metaText = `Участников: ${item.paid_count}/${item.needed_participants}`;
         statusColor = "#0984e3"; // Синий
     } else {
         // Active / Published
@@ -1108,7 +1108,7 @@ function createCompactCard(item) {
             </div>
         </div>
     `;
-    
+
     return card;
 }
 
@@ -1136,7 +1136,7 @@ async function loadFullCategoriesList() {
             row.onclick = () => openCategoryDetails(cat.id, cat.name);
             container.appendChild(row);
         });
-    } catch(e){ console.error(e); }
+    } catch (e) { console.error(e); }
 }
 
 // ==========================================
@@ -1148,13 +1148,13 @@ async function loadBanners() {
     if (!container) return;
     container.innerHTML = '';
 
-    const DEBUG_MODE = false; 
+    const DEBUG_MODE = false;
 
     // 1. Получаем статус пользователя (если еще не загрузился, считаем Новичком)
     const status = window.currentUserStatus || 'Новичок';
-    
+
     // Заглушка для подписки (пока считаем, что не подписан)
-    const isSubscriber = false; 
+    const isSubscriber = false;
 
     // 2. ПРОВЕРКА: Неоплаченные складчины
     let hasUnpaidItems = false;
@@ -1323,7 +1323,7 @@ async function loadBanners() {
 
     rotationPool.push(allBanners['payment_info']);
     rotationPool.push(allBanners['help_promo']);
-    
+
     if (!isSubscriber) {
         rotationPool.push(allBanners['subscribe']);
     }
@@ -1354,16 +1354,16 @@ function switchView(viewName) {
         el.classList.remove('active');
         el.classList.remove('loaded');
     });
-    
+
     const target = document.getElementById(`view-${viewName}`);
     if (target) {
         target.classList.add('active');
         setTimeout(() => target.classList.add('loaded'), 10);
     }
-    
+
     const bottomNav = document.querySelector('.bottom-nav');
     if (bottomNav) {
-        if(['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
+        if (['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
             bottomNav.style.display = 'none';
         } else {
             bottomNav.style.display = 'flex';
