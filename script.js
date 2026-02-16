@@ -868,7 +868,7 @@ function updateStatusModal(status, completedCount) {
     if (penaltyBtns) penaltyBtns.style.display = 'none';
     if (status === 'Новичок') {
         const needed = Math.max(0, 10 - completedCount);
-        if (desc) desc.innerText = `Для получения статуса "Опытный" осталось завершить ещё ${needed} складчин`;
+        if (desc) desc.innerText = `Для получения статуса «Опытный» осталось завершить ещё ${needed} складчин.`;
         if (img) img.src = "icons/Новичок Без фона.png";
     } else if (status === 'Опытный') {
         if (desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
