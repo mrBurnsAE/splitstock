@@ -249,6 +249,9 @@ async function closeModal() {
 
 function openPaymentModal(type) {
     window.pendingPaymentType = type;
+    if (type === 'penalty') {
+        window.currentItemId = 0;
+    }
     document.getElementById('modal-payment').classList.add('open');
 }
 
@@ -1436,9 +1439,12 @@ function requestHelp() {
 
 // --- ВЕРНУЛИ СТАРЫЙ СПОСОБ (ОТКРЫВАЕТ МЕНЮ В БОТЕ) ---
 function sendAltPayRequest() {
-    if (window.currentItemId) {
+    const isPenalty = window.pendingPaymentType === 'penalty';
+    const itemId = isPenalty ? 0 : window.currentItemId;
+
+    if (itemId !== undefined && itemId !== null) {
         // Это закроет WebApp и отправит сообщение боту, который покажет меню
-        tg.sendData("manual_pay:" + window.currentItemId);
+        tg.sendData("manual_pay:" + itemId);
     } else {
         showCustomAlert("Ошибка: ID товара не найден", "Ошибка");
     }
