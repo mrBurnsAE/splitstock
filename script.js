@@ -43,7 +43,7 @@ window.currentUserStatus = null;
 window.currentCategoryDetailsId = null;
 window.isMyItemsContext = false;
 window.currentMyItemsType = 'active';
-window.filterState = { sort: 'new', categories: [], tags: [] };
+window.filterState = { sort: 'new', categories: [], tags: [], programs: [] };
 window.isHomeContext = false; // Флаг перехода с Главной
 window.currentCatalogTabType = 'active'; // <--- ДОБАВИТЬ ЭТУ СТРОКУ
 
@@ -63,6 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await Promise.all([
             loadBanners(),
             loadCategories(),
+            loadPrograms(),
             loadTags(),
             loadHomeItems(),
             loadItems('active')
@@ -436,6 +437,7 @@ async function loadItems(type) {
         if (type === 'all') url += '&joined=true';
         if (window.filterState.categories.length > 0) url += `&cat=${window.filterState.categories.join(',')}`;
         if (window.filterState.tags.length > 0) url += `&tags=${window.filterState.tags.join(',')}`;
+        if (window.filterState.programs.length > 0) url += `&programs=${window.filterState.programs.join(',')}`;
         url += `&sort=${window.filterState.sort}`;
         if (window.currentSearchQuery) url += `&q=${encodeURIComponent(window.currentSearchQuery)}`;
         url += `&t=${Date.now()}`;
@@ -612,6 +614,21 @@ async function openProduct(id) {
             let tagsList = [];
             if (Array.isArray(item.tags)) tagsList = item.tags;
             else if (typeof item.tags === 'string' && item.tags.trim() !== '') tagsList = item.tags.split(',').map(t => t.trim());
+
+            // Программы --- отображаем перед тегами
+            let progsList = [];
+            if (Array.isArray(item.programs)) progsList = item.programs;
+            else if (typeof item.programs === 'string' && item.programs.trim() !== '') progsList = item.programs.split(',').map(p => p.trim());
+
+            progsList.forEach(prog => {
+                if (prog) {
+                    const sp = document.createElement('span');
+                    sp.className = 'tag-list';
+                    sp.style.fontWeight = '600';
+                    sp.innerText = '#' + prog + ' ';
+                    tagsContainer.appendChild(sp);
+                }
+            });
 
             if (tagsList.length > 0) {
                 tagsList.forEach(tag => {
@@ -977,8 +994,13 @@ function toggleTag(tag, btn) {
     if (idx === -1) { window.filterState.tags.push(tag); btn.classList.add('active'); }
     else { window.filterState.tags.splice(idx, 1); btn.classList.remove('active'); }
 }
+function toggleProgram(prog, btn) {
+    const idx = window.filterState.programs.indexOf(prog);
+    if (idx === -1) { window.filterState.programs.push(prog); btn.classList.add('active'); }
+    else { window.filterState.programs.splice(idx, 1); btn.classList.remove('active'); }
+}
 function resetFilter() {
-    window.filterState = { sort: 'new', categories: [], tags: [] };
+    window.filterState = { sort: 'new', categories: [], tags: [], programs: [] };
     document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('.sort-btn').classList.add('active');
     document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
@@ -1024,6 +1046,21 @@ async function loadTags() {
             tags.forEach(t => {
                 const b = document.createElement('div'); b.className = 'chip-btn'; b.innerText = t;
                 b.onclick = () => toggleTag(t, b);
+                cont.appendChild(b);
+            });
+        }
+    } catch (e) { console.error(e); }
+}
+async function loadPrograms() {
+    try {
+        const r = await fetch(`${API_BASE_URL}/api/programs`, { headers: getHeaders() });
+        const programs = await r.json();
+        const cont = document.getElementById('filter-programs-container');
+        if (cont) {
+            cont.innerHTML = '';
+            programs.forEach(p => {
+                const b = document.createElement('div'); b.className = 'chip-btn'; b.innerText = p;
+                b.onclick = () => toggleProgram(p, b);
                 cont.appendChild(b);
             });
         }
