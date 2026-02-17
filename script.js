@@ -818,7 +818,10 @@ async function handleProductAction() {
         const result = await response.json();
         if (result.success) { openProduct(window.currentItemId); }
         else {
-            if (result.error === 'penalty') { updateStatusModal('Штрафник', 0); openModal(); }
+            if (result.error === 'penalty') {
+                updateStatusModal('Штрафник', 0);
+                openModal();
+            }
             else { showCustomAlert(result.message || "Не удалось", "Ошибка"); }
             btn.innerText = originalText; btn.disabled = false;
         }
@@ -883,11 +886,11 @@ function updateStatusModal(status, completedCount) {
     if (title) title.innerText = status;
     if (okBtn) okBtn.style.display = 'block';
     if (penaltyBtns) penaltyBtns.style.display = 'none';
-    if (status === 'Новичок') {
+    if (status === 'Новичок' || status === 'Novice') {
         const needed = Math.max(0, 10 - completedCount);
         if (desc) desc.innerText = `Для получения статуса «Опытный» осталось завершить ещё ${needed} складчин.`;
         if (img) img.src = "icons/Новичок Без фона.png";
-    } else if (status === 'Опытный') {
+    } else if (status === 'Опытный' || status === 'Experienced') {
         if (desc) desc.innerText = "Теперь вы можете оплачивать взносы в завершённых складчинах";
         if (img) {
             img.src = "icons/Супермэн без фона.png";
@@ -896,7 +899,7 @@ function updateStatusModal(status, completedCount) {
             img.style.height = "242px";
             img.style.transform = "translateX(30px)"; // Сдвиг вправо
         }
-    } else if (status === 'Штрафник') {
+    } else if (status === 'Штрафник' || status === 'Penalty' || status === 'Shrafnik') {
         if (desc) desc.innerText = "Вы не можете записываться в новые складчины и оплачивать взносы, пока не оплатите штраф";
         if (img) img.src = "icons/Штрафник без фона.png";
         if (okBtn) okBtn.style.display = 'none';
