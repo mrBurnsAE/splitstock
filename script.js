@@ -717,11 +717,12 @@ async function openProduct(id) {
                 btn.style.backgroundColor = "#2ecc71"; // Зеленый
             } else if (cfg.text === "Оплатить" || cfg.text === "Оплатить взнос") {
                 btn.style.backgroundColor = "#0984e3"; // Синий
-            } else if (cfg.text === "Купить" || cfg.text === "Купить запись") {
+            } else if (cfg.text === "Купить" || cfg.text === "Купить запись" || cfg.text === "Купить (200₽)") {
                 btn.style.backgroundColor = "#fdcb6e"; // Желтый
                 btn.style.color = "#ffffff";
-            } else if (cfg.text === "Набор закрыт" || cfg.disabled) {
-                // btn.className = 'btn-secondary'; // Оставляем primary но с серым если disabled
+            } else if (cfg.action.startsWith('alert_')) {
+                btn.style.opacity = "0.6";
+                btn.style.backgroundColor = "var(--text-secondary)";
             }
 
             // Действия
@@ -733,9 +734,14 @@ async function openProduct(id) {
                         updateStatusModal('Штрафник', 0);
                         openModal();
                     } else {
+                        // Для buy и pay открываем модалку оплаты
                         openPaymentModal(cfg.action === 'buy' ? 'buy' : 'pay');
                     }
                 };
+            } else if (cfg.action === 'alert_novice') {
+                btn.onclick = () => tg.showAlert("Покупка материалов в завершённых складчинах доступна только ОПЫТНЫМ пользователям");
+            } else if (cfg.action === 'alert_wait') {
+                btn.onclick = () => tg.showAlert("Оплатить взнос в завершённой складчине можно будет через неделю после её завершения");
             } else if (cfg.action === 'files') {
                 btn.onclick = () => getFiles();
             }
