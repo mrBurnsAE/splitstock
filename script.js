@@ -698,8 +698,8 @@ async function openProduct(id) {
         window.currentVideoLinks = item.videos || {};
         if (Object.keys(window.currentVideoLinks).length > 0) {
             document.getElementById('video-switchers').style.display = 'flex';
-            if (window.currentVideoLinks.youtube) switchVideo('youtube');
-            else if (window.currentVideoLinks.vk) switchVideo('vk');
+            if (window.currentVideoLinks.vk) switchVideo('vk');
+            else if (window.currentVideoLinks.youtube) switchVideo('youtube');
             else switchVideo('rutube');
         } else {
             document.getElementById('video-switchers').style.display = 'none';
