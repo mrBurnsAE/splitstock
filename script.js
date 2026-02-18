@@ -708,28 +708,34 @@ async function openProduct(id) {
         // --- НОВАЯ ЛОГИКА: Используем конфиг с сервера (api.py) ---
         if (item.button_config) {
             const cfg = item.button_config;
+            console.log("Button Config received:", cfg);
             btn.innerText = cfg.text;
             btn.disabled = cfg.disabled;
             if (cfg.disabled) btn.style.opacity = "0.6";
 
+            // Очищаем старые обработчики
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            const activeBtn = document.getElementById('product-action-btn');
+
             // Цвета кнопок
             if (cfg.text === "Вы записаны" || cfg.text === "Оплачено" || cfg.text === "Открыть файлы") {
-                btn.style.backgroundColor = "#2ecc71"; // Зеленый
+                activeBtn.style.backgroundColor = "#2ecc71"; // Зеленый
             } else if (cfg.text === "Оплатить" || cfg.text === "Оплатить взнос") {
-                btn.style.backgroundColor = "#0984e3"; // Синий
+                activeBtn.style.backgroundColor = "#0984e3"; // Синий
             } else if (cfg.text === "Купить" || cfg.text === "Купить запись" || cfg.text === "Купить (200₽)") {
-                btn.style.backgroundColor = "#fdcb6e"; // Желтый
-                btn.style.color = "#ffffff";
+                activeBtn.style.backgroundColor = "#fdcb6e"; // Желтый
+                activeBtn.style.color = "#ffffff";
             } else if (cfg.action.startsWith('alert_')) {
-                btn.style.opacity = "0.6";
-                btn.style.backgroundColor = "var(--text-secondary)";
+                activeBtn.style.opacity = "0.6";
+                activeBtn.style.backgroundColor = "var(--text-secondary)";
             }
 
             // Действия
             if (cfg.action === 'join') {
-                btn.onclick = () => handleProductAction();
+                activeBtn.onclick = () => handleProductAction();
             } else if (cfg.action === 'pay' || cfg.action === 'buy' || cfg.action === 'join_pay') {
-                btn.onclick = () => {
+                activeBtn.onclick = () => {
                     if (window.currentUserStatus === 'Штрафник') {
                         updateStatusModal('Штрафник', 0);
                         openModal();
@@ -739,12 +745,14 @@ async function openProduct(id) {
                     }
                 };
             } else if (cfg.action === 'alert_novice') {
-                btn.onclick = () => tg.showAlert("Покупка материалов в завершённых складчинах доступна только ОПЫТНЫМ пользователям");
+                activeBtn.onclick = () => tg.showAlert("Покупка материалов в завершённых складчинах доступна только ОПЫТНЫМ пользователям");
             } else if (cfg.action === 'alert_wait') {
-                btn.onclick = () => tg.showAlert("Оплатить взнос в завершённой складчине можно будет через неделю после её завершения");
+                activeBtn.onclick = () => tg.showAlert("Оплатить взнос в завершённой складчине можно будет через неделю после её завершения");
             } else if (cfg.action === 'files') {
-                btn.onclick = () => getFiles();
+                activeBtn.onclick = () => getFiles();
             }
+        } else {
+            console.warn("No button_config in item details!");
         }
 
         if (item.status_text) {

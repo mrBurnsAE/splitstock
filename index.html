@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -8,6 +9,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <meta name="referrer" content="no-referrer">
 </head>
+
 <body>
 
     <div id="preloader">
@@ -18,7 +20,8 @@
     <div id="view-home" class="view active">
         <div class="header">
             <div class="user-info">
-                <img src="icons/Logo Telegram.svg" alt="Avatar" class="user-avatar" id="header-avatar" style="opacity: 0; transition: opacity 0.3s;">
+                <img src="icons/Logo Telegram.svg" alt="Avatar" class="user-avatar" id="header-avatar"
+                    style="opacity: 0; transition: opacity 0.3s;">
                 <div class="user-name" id="header-username"></div>
             </div>
         </div>
@@ -46,9 +49,9 @@
             </div>
             <div class="compact-list" id="home-completed-container"></div>
         </div>
-        
+
         <div style="height: 20px;"></div>
-        </div>
+    </div>
     </div>
 
     <div id="view-categories" class="view">
@@ -73,7 +76,7 @@
                 </div>
                 <button class="filter-btn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+                        <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" />
                     </svg>
                 </button>
             </div>
@@ -92,7 +95,8 @@
 
     <div id="view-profile" class="view">
         <div class="section" style="text-align: center; padding-top: 40px;">
-            <img src="icons/Logo Telegram.svg" class="user-avatar" id="profile-avatar" style="width: 80px; height: 80px; margin-bottom: 10px; opacity: 0; transition: opacity 0.3s;">
+            <img src="icons/Logo Telegram.svg" class="user-avatar" id="profile-avatar"
+                style="width: 80px; height: 80px; margin-bottom: 10px; opacity: 0; transition: opacity 0.3s;">
             <h2 style="font-size: 22px; font-weight: 700;" id="profile-username"></h2>
             <p style="color: var(--text-secondary); font-size: 14px;" id="profile-join-date"></p>
         </div>
@@ -136,12 +140,13 @@
 
         <div class="media-container">
             <div class="video-wrapper" id="video-wrapper-el">
-                <iframe id="main-video-frame" src="" frameborder="0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                <iframe id="main-video-frame" src="" frameborder="0"
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
                 <div id="no-video-placeholder" style="display:none;">
                     <img id="product-cover-img" src="" style="width:100%; display:block;">
                 </div>
             </div>
-            
+
             <div class="platform-switcher" id="video-switchers">
                 <button class="platform-btn active" onclick="switchVideo('youtube')" id="btn-youtube">
                     <img src="icons/youtube.svg" alt="YouTube">
@@ -191,16 +196,16 @@
         </div>
 
         <div class="product-action-bar">
-            <button class="btn-primary" id="product-action-btn" onclick="handleProductAction()">Записаться</button>
+            <button class="btn-primary" id="product-action-btn">Записаться</button>
             <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
                 <img src="icons/cross.svg" width="24">
             </button>
         </div>
     </div>
-            <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
-                <img src="icons/cross.svg" width="24">
-            </button>
-        </div>
+    <button class="btn-close-square" id="product-leave-btn" style="display: none;" onclick="leaveProduct()">
+        <img src="icons/cross.svg" width="24">
+    </button>
+    </div>
     </div>
 
     <nav class="bottom-nav">
@@ -226,7 +231,8 @@
             <div class="modal-text" id="modal-status-desc"></div>
             <button class="btn-primary" id="modal-status-ok-btn" onclick="closeModal()">OK</button>
             <div id="modal-status-penalty-btns" style="display: none; gap: 10px; margin-top: 15px;">
-                <button class="btn-primary" style="background: linear-gradient(90deg, #ff4757 0%, #ff6b81 100%);" onclick="closeModal(); openPaymentModal('penalty')">Оплатить штраф</button>
+                <button class="btn-primary" style="background: linear-gradient(90deg, #ff4757 0%, #ff6b81 100%);"
+                    onclick="closeModal(); openPaymentModal('penalty')">Оплатить штраф</button>
                 <button class="btn-secondary" onclick="closeModal()">Назад</button>
             </div>
         </div>
@@ -236,7 +242,7 @@
         <div class="modal-content">
             <img src="icons/Оплата Без фона.png" class="payment-img" alt="Payment">
             <div class="payment-title">Выберите способ оплаты</div>
-            
+
             <div class="payment-buttons">
                 <button class="pay-method-btn yoo" onclick="selectPaymentMethod('yoomoney')">
                     <img src="icons/ЮMoney.svg" alt="ЮMoney">
@@ -317,13 +323,15 @@
 
     <div class="modal-overlay" id="modal-alert">
         <div class="modal-content">
-            <img src="icons/info.svg" class="modal-img" id="modal-alert-img" style="width: 80px !important; height: 80px !important; margin-bottom: 15px;">
+            <img src="icons/info.svg" class="modal-img" id="modal-alert-img"
+                style="width: 80px !important; height: 80px !important; margin-bottom: 15px;">
             <div class="modal-title" id="modal-alert-title">SplitStockBot</div>
             <div class="modal-text" id="modal-alert-msg">Сообщение</div>
             <button class="btn-primary" onclick="closeAlertModal()">Понятно</button>
         </div>
     </div>
 
-    <script src="script.js?v=260"></script>
+    <script src="script.js?v=261"></script>
 </body>
+
 </html>
