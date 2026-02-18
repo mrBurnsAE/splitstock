@@ -719,7 +719,7 @@ async function openProduct(id) {
             const activeBtn = document.getElementById('product-action-btn');
 
             // Цвета кнопок
-            if (cfg.text === "Вы записаны" || cfg.text === "Оплачено" || cfg.text === "Открыть файлы") {
+            if (cfg.text === "Вы записаны" || cfg.text === "Оплачено" || cfg.text === "Получить файлы") {
                 activeBtn.style.backgroundColor = "#2ecc71"; // Зеленый
             } else if (cfg.text === "Оплатить" || cfg.text === "Оплатить взнос") {
                 activeBtn.style.backgroundColor = "#0984e3"; // Синий
