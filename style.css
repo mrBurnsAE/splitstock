@@ -51,10 +51,13 @@ a { text-decoration: none; color: inherit; }
 h1, h2, h3, p { margin: 0; }
 
 /* --- Header --- */
-.header { padding: 16px; display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-color); position: sticky; top: 0; z-index: 100; }
+.header { padding: 16px; display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-color); position: sticky; top: 0; z-index: 100; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.header.scrolled { padding: 8px 16px; background: rgba(28, 31, 46, 0.95); backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
 .user-info { display: flex; align-items: center; gap: 12px; }
-.user-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
-.user-name { font-weight: 700; font-size: 18px; }
+.user-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; transition: all 0.3s ease; }
+.header.scrolled .user-avatar { width: 32px; height: 32px; }
+.user-name { font-weight: 700; font-size: 18px; transition: all 0.3s ease; }
+.header.scrolled .user-name { font-size: 16px; }
 
 /* --- Search --- */
 .search-bar { display: flex; gap: 10px; width: 100%; }
@@ -221,14 +224,16 @@ h1, h2, h3, p { margin: 0; }
 #view-product { padding-bottom: 110px; background: var(--bg-color); min-height: 100vh; position: relative; z-index: 200; }
 #view-product.active { display: flex; flex-direction: column; }
 
-.product-header { display: flex; align-items: center; padding: 15px 20px; background: var(--bg-color); gap: 15px; position: sticky; top: 0; z-index: 50; flex-shrink: 0; }
+.product-header { display: flex; align-items: center; padding: 15px 20px; background: var(--bg-color); gap: 15px; position: sticky; top: 0; z-index: 250; flex-shrink: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.product-header.scrolled { padding: 8px 20px; background: rgba(28, 31, 46, 0.95); backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
 .back-btn { background: transparent; border: none; padding: 0; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
 .back-btn img {
     width: 22px;  /* Было 28px, уменьшили на ~20% */
     height: 22px;
     display: block;
 }
-.header-title { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-title { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.3s ease; }
+.product-header.scrolled .header-title { font-size: 15px; }
 
 /* --- МЕДИА БЛОК --- */
 .media-container { background: #000; width: 100%; }
@@ -391,6 +396,23 @@ h1, h2, h3, p { margin: 0; }
     position: sticky;
     top: 0;
     z-index: 50;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-header.scrolled {
+    padding: 8px 20px;
+    background: rgba(28, 31, 46, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.filter-header.scrolled .back-btn {
+    width: 32px;
+    height: 32px;
+}
+
+.filter-header.scrolled .filter-title {
+    font-size: 15px;
 }
 
 /* ИСКЛЮЧЕНИЕ: На странице фильтра убираем отступы у заголовка, 

@@ -109,6 +109,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+// --- ЛОГИКА ДИНАМИЧЕСКОЙ ШАПКИ (STICKY SCROLLED) ---
+window.addEventListener('scroll', () => {
+    const isScrolled = window.scrollY > 10;
+    const activeView = document.querySelector('.view.active');
+    if (activeView) {
+        // Ищем любую шапку в активном экране
+        const header = activeView.querySelector('.header, .filter-header, .product-header');
+        if (header) {
+            header.classList.toggle('scrolled', isScrolled);
+        }
+    }
+}, { passive: true });
+
 function getHeaders() {
     const uidStr = USER_ID ? USER_ID.toString() : "0";
     return { 'Content-Type': 'application/json', 'X-Telegram-User-Id': uidStr };
@@ -196,6 +209,11 @@ function switchView(viewName) {
         window.currentCategoryDetailsId = null;
         window.currentMyItemsType = null;
     }
+
+    // --- СБРОС СОСТОЯНИЯ ШАПКИ ПРИ ПЕРЕХОДЕ ---
+    document.querySelectorAll('.header, .filter-header, .product-header').forEach(h => {
+        h.classList.remove('scrolled');
+    });
 }
 
 function updateBottomNav(activeView) {
