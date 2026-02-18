@@ -766,6 +766,8 @@ async function openProduct(id) {
                 activeBtn.onclick = () => tg.showAlert("Покупка материалов в завершённых складчинах доступна только ОПЫТНЫМ пользователям");
             } else if (cfg.action === 'alert_wait') {
                 activeBtn.onclick = () => tg.showAlert("Оплатить взнос в завершённой складчине можно будет через неделю после её завершения");
+            } else if (cfg.action === 'alert_closed') {
+                activeBtn.onclick = () => tg.showAlert("Записываться в складчины можно только до начала сбора средств!");
             } else if (cfg.action === 'files') {
                 activeBtn.onclick = () => getFiles();
             }
