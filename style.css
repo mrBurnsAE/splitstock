@@ -103,7 +103,6 @@ p {
 }
 
 .header.scrolled {
-    padding: 8px 16px;
     background: rgba(28, 31, 46, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -123,19 +122,10 @@ p {
     transition: all 0.3s ease;
 }
 
-.header.scrolled .user-avatar {
-    width: 32px;
-    height: 32px;
-}
-
 .user-name {
     font-weight: 700;
     font-size: 18px;
     transition: all 0.3s ease;
-}
-
-.header.scrolled .user-name {
-    font-size: 16px;
 }
 
 /* --- Search --- */
@@ -582,7 +572,6 @@ p {
 }
 
 .product-header.scrolled {
-    padding: 8px 20px;
     background: rgba(28, 31, 46, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -614,10 +603,6 @@ p {
     overflow: hidden;
     text-overflow: ellipsis;
     transition: all 0.3s ease;
-}
-
-.product-header.scrolled .header-title {
-    font-size: 15px;
 }
 
 /* --- МЕДИА БЛОК --- */
