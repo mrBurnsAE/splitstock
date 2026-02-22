@@ -987,20 +987,11 @@ p {
 }
 
 .filter-header.scrolled {
-    padding: 8px 20px;
     background: rgba(28, 31, 46, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-.filter-header.scrolled .back-btn {
-    width: 32px;
-    height: 32px;
-}
-
-.filter-header.scrolled .filter-title {
-    font-size: 15px;
-}
 
 /* ИСКЛЮЧЕНИЕ: На странице фильтра убираем отступы у заголовка, 
    так как там уже есть отступы у самого контейнера страницы */
