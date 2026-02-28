@@ -1471,15 +1471,79 @@ function requestHelp() {
     // (на самом деле sendData и так часто закрывает окно, но для надежности)
 }
 
-// --- ВЕРНУЛИ СТАРЫЙ СПОСОБ (ОТКРЫВАЕТ МЕНЮ В БОТЕ) ---
-function sendAltPayRequest() {
+// --- ОТКРЫТИЕ МЕНЮ БОТА (НОВЫЙ ЕДИНЫЙ СПОСОБ) ---
+async function selectPaymentMethod(method) {
+    if (!USER_ID) return;
+
     const isPenalty = window.pendingPaymentType === 'penalty';
     const itemId = isPenalty ? 0 : window.currentItemId;
+    const payType = isPenalty ? 'penalty' : 'item';
 
-    if (itemId !== undefined && itemId !== null) {
-        // Это закроет WebApp и отправит сообщение боту, который покажет меню
-        tg.sendData("manual_pay:" + itemId);
-    } else {
+    if (itemId === undefined || itemId === null) {
         showCustomAlert("Ошибка: ID товара не найден", "Ошибка");
+        return;
     }
+
+    // Показываем индикатор загрузки на кнопке
+    let btn;
+    if (method === 'yoomoney') btn = document.querySelector('.pay-method-btn.yoo');
+    else if (method === 'crypto') btn = document.querySelector('.pay-method-btn.crypto');
+    else if (method === 'manual') btn = document.querySelector('.pay-method-btn.manual');
+
+    let ogText = "";
+    if (btn) {
+        ogText = btn.innerHTML;
+        btn.innerHTML = '<span>⏳...</span>';
+        btn.disabled = true;
+    }
+
+    try {
+        const payload = {
+            user_id: USER_ID,
+            method: method,
+            type: payType,
+            item_id: itemId
+        };
+
+        const res = await fetch(`${API_BASE_URL}/api/payment/init`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'telegram-data': tg.initData || ''
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (btn) {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
+
+        if (data.success) {
+            tg.close();
+        } else {
+            if (data.error === 'novice_restriction') {
+                showCustomAlert("Покупка в завершённых складчинах доступна только Опытным пользователям.", "Внимание");
+                closePaymentModal();
+            } else if (data.error === 'wait_restriction') {
+                showCustomAlert("Оплатить взнос в завершённой складчине можно будет через неделю.", "Внимание");
+                closePaymentModal();
+            } else {
+                showCustomAlert(data.error || "Ошибка инициализации оплаты", "Ошибка");
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        if (btn) {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
+        showCustomAlert("Произошла ошибка при обращении к серверу", "Ошибка");
+    }
+}
+
+function sendAltPayRequest() {
+    selectPaymentMethod('manual');
 }
