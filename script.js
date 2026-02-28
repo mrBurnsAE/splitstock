@@ -739,7 +739,7 @@ async function openProduct(id) {
             // Цвета кнопок
             if (cfg.text === "Вы записаны" || cfg.text === "Оплачено" || cfg.text === "Получить файлы") {
                 activeBtn.style.backgroundColor = "#2ecc71"; // Зеленый
-            } else if (cfg.text === "Оплатить" || cfg.text === "Оплатить взнос") {
+            } else if (cfg.text === "Оплатить" || cfg.text === "Оплатить взнос" || cfg.text === "Оплатить (200₽)") {
                 activeBtn.style.backgroundColor = "#0984e3"; // Синий
             } else if (cfg.text === "Купить" || cfg.text === "Купить запись" || cfg.text === "Купить (200₽)") {
                 activeBtn.style.backgroundColor = "#fdcb6e"; // Желтый
