@@ -965,7 +965,7 @@ function switchVideo(platform) {
     } else if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
         if (videoUrl.includes('watch?v=')) videoUrl = videoUrl.replace('watch?v=', 'embed/').split('&')[0];
         else if (videoUrl.includes('youtu.be/')) videoUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
-    } else if (videoUrl.includes('vk.com/video')) {
+    } else if (videoUrl.includes('vk.com/video') || videoUrl.includes('vkvideo.ru/video')) {
         const match = videoUrl.match(/video(-?\d+)_(\d+)/);
         if (match) videoUrl = `https://vk.com/video_ext.php?oid=${match[1]}&id=${match[2]}&hd=2`;
     } else if (videoUrl.includes('rutube.ru/video/')) {
