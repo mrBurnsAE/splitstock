@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     restored = true;
                 } else if (state.view === 'category-details' && state.catId) {
                     window.isHomeContext = state.isHome;
-                    openCategoryDetails(state.catId, state.catName || ""); // Имя подтянется из заголовка или будет пустым до загрузки
+                    openCategoryDetails(state.catId, state.catName || "", state.catTab || 'active');
                     restored = true;
                 } else if (state.view === 'my-items' && state.myItemsType) {
                     openMyItems(state.myItemsType);
@@ -204,6 +204,7 @@ function saveNavState(viewName) {
         itemId: window.currentItemId,
         catId: window.currentCategoryDetailsId,
         catName: document.getElementById('cat-details-title')?.innerText || "",
+        catTab: window.currentCategoryTabType || 'active',
         myItemsType: window.currentMyItemsType,
         isHome: window.isHomeContext,
         isMyItems: window.isMyItemsContext,
@@ -401,8 +402,9 @@ async function openHotItems() {
     }
 }
 
-function openCategoryDetails(id, name) {
+function openCategoryDetails(id, name, tabType = 'active') {
     window.currentCategoryDetailsId = id;
+    window.currentCategoryTabType = tabType;
     window.isMyItemsContext = false;
     const titleEl = document.getElementById('cat-details-title');
     if (titleEl) titleEl.innerText = name;
@@ -418,9 +420,11 @@ function openCategoryDetails(id, name) {
     }
 
     document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-cat-active').classList.add('active');
+    const targetTab = document.getElementById(tabType === 'completed' ? 'tab-cat-completed' : 'tab-cat-active');
+    if (targetTab) targetTab.classList.add('active');
+
     switchView('category-details');
-    loadCategoryItems('active');
+    loadCategoryItems(tabType);
 }
 
 function openFilter() { switchView('filter'); }
@@ -654,19 +658,11 @@ async function openProduct(id) {
     document.getElementById('product-status-text').innerText = '';
 
     // 2. ПЕРЕКЛЮЧЕНИЕ ЭКРАНА
-    document.querySelectorAll('.view').forEach(el => {
-        el.classList.remove('active');
-        el.classList.remove('loaded');
-    });
-
-    const viewProduct = document.getElementById('view-product');
-    viewProduct.classList.add('active');
+    switchView('product');
     window.scrollTo(0, 0);
 
-    // Анимация появления
-    setTimeout(() => viewProduct.classList.add('loaded'), 10);
-
     window.currentItemId = id;
+    saveNavState('product'); // Явно сохраняем после установки ID
     showPreloader(true);
 
     try {
@@ -1146,6 +1142,9 @@ function selectCategoryInnerTab(type) {
     } else if (type === 'completed' && tabCompleted) {
         tabCompleted.classList.add('active');
     }
+
+    window.currentCategoryTabType = type;
+    saveNavState('category-details');
 
     // 2. Загружаем данные
     loadCategoryItems(type);
