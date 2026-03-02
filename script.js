@@ -200,14 +200,12 @@ function switchView(viewName) {
         loadFullCategoriesList();
     }
 
-    // --- ИСПРАВЛЕНИЕ НАВИГАЦИИ (Твой баг) ---
-    // Если мы нажали в нижнем меню на "Главная" или "Складчины",
-    // мы должны забыть, что до этого смотрели "Мои складчины" или "Детали категории".
-    // Иначе кнопка "Назад" будет пытаться вернуть нас в Профиль.
+    // --- ИСПРАВЛЕНИЕ НАВИГАЦИИ ---
     if (viewName === 'catalog' || viewName === 'home') {
         window.isMyItemsContext = false;
         window.currentCategoryDetailsId = null;
         window.currentMyItemsType = null;
+        window.isHomeContext = false; // <-- ДОБАВЛЕНО ИЗ ВТОРОЙ ВЕРСИИ
     }
 
     // --- СБРОС СОСТОЯНИЯ ШАПКИ ПРИ ПЕРЕХОДЕ ---
@@ -866,51 +864,125 @@ async function handleProductAction() {
 }
 
 async function leaveProduct() {
-    tg.showConfirm("Точно хотите выйти из складчины?", (ok) => {
+    console.log("leaveProduct called for item:", window.currentItemId);
+    if (!window.currentItemId) {
+        showCustomAlert("Критическая ошибка: ID складчины не найден.", "Ошибка");
+        return;
+    }
+
+    if (!tg) {
+        console.error("Telegram WebApp object not found!");
+        return;
+    }
+
+    tg.showConfirm("Точно хотите выйти из складчины?", async (ok) => {
         if (!ok) return;
+
         const btn = document.getElementById('product-leave-btn');
-        btn.disabled = true;
-        fetch(`${API_BASE_URL}/api/leave`, {
-            method: 'POST', headers: getHeaders(), body: JSON.stringify({ user_id: USER_ID, item_id: window.currentItemId })
-        }).then(r => r.json()).then(result => {
-            if (result.success) openProduct(window.currentItemId);
-            else {
-                if (result.error === 'locked') showCustomAlert('После объявления сбора средств выйти нельзя.', 'Внимание');
-                else showCustomAlert(result.error || "Ошибка выхода", "Ошибка");
-                btn.disabled = false;
+        if (btn) btn.disabled = true;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/leave`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({
+                    user_id: USER_ID,
+                    item_id: window.currentItemId
+                })
+            });
+
+            const result = await response.json();
+            console.log("Leave result:", result);
+
+            if (result.success) {
+                // Пытаемся перезагрузить данные товара для обновления UI
+                await openProduct(window.currentItemId);
+            } else {
+                if (result.error === 'locked') {
+                    showCustomAlert('После объявления сбора средств выйти нельзя.', 'Внимание');
+                } else {
+                    showCustomAlert(result.error || "Ошибка выхода", "Ошибка");
+                }
+                if (btn) btn.disabled = false;
             }
-        }).catch(e => { showCustomAlert("Ошибка соединения"); btn.disabled = false; });
+        } catch (e) {
+            console.error("Leave error:", e);
+            showCustomAlert("Ошибка соединения", "Ошибка");
+            if (btn) btn.disabled = false;
+        }
     });
 }
 
+// --- ОТКРЫТИЕ МЕНЮ БОТА (ЕДИНЫЙ СПОСОБ) ---
 async function selectPaymentMethod(method) {
-    if (!window.pendingPaymentType) return;
-    const modalContent = document.querySelector('#modal-payment .modal-content');
-    modalContent.style.opacity = '0.5';
+    if (!USER_ID) return;
+
+    const isPenalty = window.pendingPaymentType === 'penalty';
+    const itemId = isPenalty ? 0 : window.currentItemId;
+    const payType = isPenalty ? 'penalty' : 'item';
+
+    if (itemId === undefined || itemId === null) {
+        showCustomAlert("Ошибка: ID товара не найден", "Ошибка");
+        return;
+    }
+
+    // Показываем индикатор загрузки на кнопке
+    let btn;
+    if (method === 'yoomoney') btn = document.querySelector('.pay-method-btn.yoo');
+    else if (method === 'crypto') btn = document.querySelector('.pay-method-btn.crypto');
+    else if (method === 'manual') btn = document.querySelector('.pay-method-btn.manual');
+
+    let ogText = "";
+    if (btn) {
+        ogText = btn.innerHTML;
+        btn.innerHTML = '<span>⏳...</span>';
+        btn.disabled = true;
+    }
 
     try {
-        // ИСПРАВЛЕНИЕ: Учитываем 'buy' и 'pay' как оплату товара
-        const isItemPayment = ['item', 'buy', 'pay'].includes(window.pendingPaymentType);
-
-        const body = {
+        const payload = {
             user_id: USER_ID,
             method: method,
-            type: window.pendingPaymentType,
-            // Если это покупка или взнос — берем ID текущего товара, иначе 0 (для штрафа)
-            item_id: isItemPayment ? window.currentItemId : 0
+            type: payType,
+            item_id: itemId
         };
 
-        const response = await fetch(`${API_BASE_URL}/api/payment/init`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
-        const result = await response.json();
+        const res = await fetch(`${API_BASE_URL}/api/payment/init`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'telegram-data': tg.initData || ''
+            },
+            body: JSON.stringify(payload)
+        });
 
-        if (result.success) tg.close();
-        else {
-            showCustomAlert("Ошибка: " + result.error, "Ошибка");
-            modalContent.style.opacity = '1';
+        const data = await res.json();
+
+        if (btn) {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
         }
-    } catch (error) {
-        showCustomAlert("Ошибка соединения", "Ошибка");
-        modalContent.style.opacity = '1';
+
+        if (data.success) {
+            tg.close();
+        } else {
+            if (data.error === 'novice_restriction') {
+                showCustomAlert("Покупка в завершённых складчинах доступна только Опытным пользователям.", "Внимание");
+                closePaymentModal();
+            } else if (data.error === 'wait_restriction') {
+                showCustomAlert("Оплатить взнос в завершённой складчине можно будет через неделю.", "Внимание");
+                closePaymentModal();
+            } else {
+                showCustomAlert(data.error || "Ошибка инициализации оплаты", "Ошибка");
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        if (btn) {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
+        showCustomAlert("Произошла ошибка при обращении к серверу", "Ошибка");
     }
 }
 
@@ -1426,122 +1498,12 @@ function renderOneBanner(container, bannerData) {
     container.appendChild(div);
 }
 
-function switchView(viewName) {
-    document.querySelectorAll('.view').forEach(el => {
-        el.classList.remove('active');
-        el.classList.remove('loaded');
-    });
-
-    const target = document.getElementById(`view-${viewName}`);
-    if (target) {
-        target.classList.add('active');
-        setTimeout(() => target.classList.add('loaded'), 10);
-    }
-
-    const bottomNav = document.querySelector('.bottom-nav');
-    if (bottomNav) {
-        if (['product', 'filter', 'categories', 'category-details', 'my-items'].includes(viewName)) {
-            bottomNav.style.display = 'none';
-        } else {
-            bottomNav.style.display = 'flex';
-        }
-    }
-
-    if (['home', 'catalog', 'profile'].includes(viewName)) {
-        updateBottomNav(viewName);
-    }
-
-    if (viewName === 'categories') {
-        loadFullCategoriesList();
-    }
-
-    // Сброс контекстов навигации при переходе в главные разделы
-    if (viewName === 'catalog' || viewName === 'home') {
-        window.isMyItemsContext = false;
-        window.currentCategoryDetailsId = null;
-        window.currentMyItemsType = null;
-        window.isHomeContext = false; // <-- СБРОС ФЛАГА ГЛАВНОЙ
-    }
-}
 
 function requestHelp() {
     // Отправляем данные боту
     tg.sendData("cmd_help");
     // Закрываем окно
     // (на самом деле sendData и так часто закрывает окно, но для надежности)
-}
-
-// --- ОТКРЫТИЕ МЕНЮ БОТА (НОВЫЙ ЕДИНЫЙ СПОСОБ) ---
-async function selectPaymentMethod(method) {
-    if (!USER_ID) return;
-
-    const isPenalty = window.pendingPaymentType === 'penalty';
-    const itemId = isPenalty ? 0 : window.currentItemId;
-    const payType = isPenalty ? 'penalty' : 'item';
-
-    if (itemId === undefined || itemId === null) {
-        showCustomAlert("Ошибка: ID товара не найден", "Ошибка");
-        return;
-    }
-
-    // Показываем индикатор загрузки на кнопке
-    let btn;
-    if (method === 'yoomoney') btn = document.querySelector('.pay-method-btn.yoo');
-    else if (method === 'crypto') btn = document.querySelector('.pay-method-btn.crypto');
-    else if (method === 'manual') btn = document.querySelector('.pay-method-btn.manual');
-
-    let ogText = "";
-    if (btn) {
-        ogText = btn.innerHTML;
-        btn.innerHTML = '<span>⏳...</span>';
-        btn.disabled = true;
-    }
-
-    try {
-        const payload = {
-            user_id: USER_ID,
-            method: method,
-            type: payType,
-            item_id: itemId
-        };
-
-        const res = await fetch(`${API_BASE_URL}/api/payment/init`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'telegram-data': tg.initData || ''
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-
-        if (btn) {
-            btn.innerHTML = ogText;
-            btn.disabled = false;
-        }
-
-        if (data.success) {
-            tg.close();
-        } else {
-            if (data.error === 'novice_restriction') {
-                showCustomAlert("Покупка в завершённых складчинах доступна только Опытным пользователям.", "Внимание");
-                closePaymentModal();
-            } else if (data.error === 'wait_restriction') {
-                showCustomAlert("Оплатить взнос в завершённой складчине можно будет через неделю.", "Внимание");
-                closePaymentModal();
-            } else {
-                showCustomAlert(data.error || "Ошибка инициализации оплаты", "Ошибка");
-            }
-        }
-    } catch (e) {
-        console.error(e);
-        if (btn) {
-            btn.innerHTML = ogText;
-            btn.disabled = false;
-        }
-        showCustomAlert("Произошла ошибка при обращении к серверу", "Ошибка");
-    }
 }
 
 function sendAltPayRequest() {
