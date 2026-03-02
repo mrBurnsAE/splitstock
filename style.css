@@ -313,7 +313,7 @@ p {
     background: var(--card-bg);
     border-radius: 16px;
     overflow: hidden;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     transition: all 0.3s ease;
     cursor: pointer;
 }
@@ -357,7 +357,7 @@ p {
 }
 
 .card-content {
-    padding: 18px;
+    padding: 14px 16px;
 }
 
 .item-name {
@@ -558,7 +558,7 @@ p {
 
 /* --- PRODUCT PAGE --- */
 #view-product {
-    padding-bottom: 110px;
+    padding-bottom: 90px;
     background: var(--bg-color);
     min-height: 100vh;
     position: relative;
@@ -727,7 +727,7 @@ p {
 
 /* --- INFO BLOCK --- */
 .product-info {
-    padding: 32px 20px 20px 20px;
+    padding: 24px 20px 10px 20px;
     background: var(--bg-color);
     flex: 1;
 }
@@ -736,7 +736,7 @@ p {
     font-size: 16px;
     line-height: 1.6;
     color: #d1d3e0;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .btn-subtle {
@@ -750,7 +750,7 @@ p {
     font-size: 15px;
     font-weight: 600;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 24px;
+    margin-bottom: 15px;
     transition: background 0.2s;
     text-decoration: none;
     width: fit-content;
@@ -768,7 +768,7 @@ p {
 }
 
 .tags-block {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .tag-category {
@@ -789,7 +789,7 @@ p {
     gap: 24px;
     font-size: 16px;
     color: var(--text-secondary);
-    margin-bottom: 24px;
+    margin-bottom: 15px;
 }
 
 .price-block span {
@@ -799,7 +799,7 @@ p {
 }
 
 .progress-section-large {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .progress-labels {
@@ -833,7 +833,7 @@ p {
     width: 100%;
     background: var(--card-bg);
     padding: 16px 20px;
-    padding-bottom: 34px;
+    padding-bottom: 18px;
     border-top: 1px solid #2c3e50;
     display: flex;
     gap: 12px;
