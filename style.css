@@ -50,6 +50,7 @@
 /* --- ИСПРАВЛЕНИЕ ПРЫГАЮЩЕГО МЕНЮ --- */
 html {
     scroll-behavior: smooth;
+    overflow-y: scroll;
 }
 
 * {
