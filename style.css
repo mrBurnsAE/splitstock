@@ -220,6 +220,12 @@ p {
     justify-content: center;
     min-height: 64px;
     color: #8e92a8;
+    transition: all 0.3s ease;
+}
+
+.category-card:hover {
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
+    color: white;
 }
 
 /* --- Banner --- */
@@ -306,6 +312,11 @@ p {
     border-radius: 16px;
     overflow: hidden;
     margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.big-card:hover {
+    box-shadow: 0 0 20px rgba(108, 92, 231, 0.4);
 }
 
 /* --- ИСПРАВЛЕНИЕ: КАРТИНКИ В КАТАЛОГЕ --- */
@@ -849,10 +860,11 @@ p {
     margin-bottom: 12px;
     cursor: pointer;
     color: var(--text-main);
+    transition: all 0.3s ease;
 }
 
 .profile-btn:hover {
-    background-color: #3d4258;
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
 }
 
 .profile-btn-icon {
@@ -1120,7 +1132,11 @@ p {
     align-items: center;
     gap: 16px;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: all 0.3s ease;
+}
+
+.category-row:hover {
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.3);
 }
 
 .category-row:active {
@@ -1256,8 +1272,12 @@ p {
     padding: 10px;
     border-radius: 12px;
     gap: 14px;
-    transition: transform 0.1s;
+    transition: all 0.3s ease;
     cursor: pointer;
+}
+
+.compact-card:hover {
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
 }
 
 .compact-card:active {
