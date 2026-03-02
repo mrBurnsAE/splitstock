@@ -82,9 +82,43 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         if (filterBtn) filterBtn.onclick = openFilter;
 
-        // Если есть стартовый товар - открываем его
+        // Пытаемся восстановить состояние после рефреша
+        let restored = false;
+        const savedStateStr = sessionStorage.getItem('ss_nav_state');
+
+        // Если ЕСТЬ стартовый товар из URL (Deep Link) - он в приоритете!
         if (window.currentItemId) {
             await openProduct(window.currentItemId);
+            restored = true;
+        }
+        // Иначе пытаемся восстановить из sessionStorage
+        else if (savedStateStr) {
+            try {
+                const state = JSON.parse(savedStateStr);
+                console.log("Restoring state:", state);
+
+                if (state.tabType) window.currentCatalogTabType = state.tabType;
+
+                if (state.view === 'product' && state.itemId) {
+                    window.isHomeContext = state.isHome;
+                    window.isMyItemsContext = state.isMyItems;
+                    window.currentMyItemsType = state.myItemsType;
+                    await openProduct(state.itemId);
+                    restored = true;
+                } else if (state.view === 'category-details' && state.catId) {
+                    window.isHomeContext = state.isHome;
+                    openCategoryDetails(state.catId, state.catName || ""); // Имя подтянется из заголовка или будет пустым до загрузки
+                    restored = true;
+                } else if (state.view === 'my-items' && state.myItemsType) {
+                    openMyItems(state.myItemsType);
+                    restored = true;
+                } else if (state.view && state.view !== 'home') {
+                    switchView(state.view);
+                    restored = true;
+                }
+            } catch (e) {
+                console.error("Restore state error:", e);
+            }
         }
 
         // Все загружено, скрываем прелоадер
@@ -164,6 +198,21 @@ async function getFiles() {
     }
 }
 
+function saveNavState(viewName) {
+    const state = {
+        view: viewName,
+        itemId: window.currentItemId,
+        catId: window.currentCategoryDetailsId,
+        catName: document.getElementById('cat-details-title')?.innerText || "",
+        myItemsType: window.currentMyItemsType,
+        isHome: window.isHomeContext,
+        isMyItems: window.isMyItemsContext,
+        tabType: window.currentCatalogTabType
+    };
+    sessionStorage.setItem('ss_nav_state', JSON.stringify(state));
+    console.log("Nav state saved:", state);
+}
+
 function switchView(viewName) {
     // 1. Сбрасываем активные классы у всех экранов
     document.querySelectorAll('.view').forEach(el => {
@@ -212,6 +261,9 @@ function switchView(viewName) {
     document.querySelectorAll('.header, .filter-header, .product-header').forEach(h => {
         h.classList.remove('scrolled');
     });
+
+    // Сохраняем состояние для восстановления после рефреша
+    saveNavState(viewName);
 }
 
 function updateBottomNav(activeView) {
