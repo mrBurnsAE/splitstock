@@ -354,6 +354,17 @@ function openCategoryDetails(id, name) {
     window.isMyItemsContext = false;
     const titleEl = document.getElementById('cat-details-title');
     if (titleEl) titleEl.innerText = name;
+
+    // Настраиваем кнопку "Назад" в зависимости от того, откуда пришли
+    const backBtn = document.getElementById('cat-details-back-btn');
+    if (backBtn) {
+        if (window.isHomeContext) {
+            backBtn.onclick = () => switchView('home');
+        } else {
+            backBtn.onclick = () => switchView('categories');
+        }
+    }
+
     document.querySelectorAll('#view-category-details .tab').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-cat-active').classList.add('active');
     switchView('category-details');
@@ -1133,7 +1144,10 @@ async function loadCategories() {
             homeGrid.innerHTML = '';
             cats.slice(0, 4).forEach(c => {
                 const d = document.createElement('div'); d.className = 'category-card'; d.innerText = c.name;
-                d.onclick = () => { openCategoryDetails(c.id, c.name); };
+                d.onclick = () => {
+                    window.isHomeContext = true;
+                    openCategoryDetails(c.id, c.name);
+                };
                 homeGrid.appendChild(d);
             });
         }
@@ -1282,7 +1296,10 @@ async function loadFullCategoriesList() {
                     </div>
                 </div>
             `;
-            row.onclick = () => openCategoryDetails(cat.id, cat.name);
+            row.onclick = () => {
+                window.isHomeContext = false;
+                openCategoryDetails(cat.id, cat.name);
+            };
             container.appendChild(row);
         });
     } catch (e) { console.error(e); }
