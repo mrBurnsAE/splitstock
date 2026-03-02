@@ -222,6 +222,7 @@ p {
     min-height: 64px;
     color: #8e92a8;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .category-card:hover {
@@ -314,6 +315,7 @@ p {
     overflow: hidden;
     margin-bottom: 16px;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .big-card:hover {
