@@ -430,6 +430,17 @@ function openCategoryDetails(id, name, tabType = 'active') {
 function openFilter() { switchView('filter'); }
 function closeFilter() { switchView('catalog'); }
 
+function performSearch(query) {
+    const cleanQuery = query ? query.trim() : "";
+    window.currentSearchQuery = cleanQuery;
+
+    // Переходим в каталог, если мы были на другом экране
+    switchView('catalog');
+
+    // Загружаем товары с учетом нового поиска
+    loadItems(window.currentCatalogTabType || 'active');
+}
+
 // ==========================================
 // ЧАСТЬ 2: ЗАГРУЗКА И UI
 // ==========================================
