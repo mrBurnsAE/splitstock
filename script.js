@@ -53,6 +53,7 @@ window.currentCategoryDetailsId = null;
 window.isMyItemsContext = false;
 window.currentMyItemsType = 'active';
 window.filterState = { sort: 'new', categories: [], tags: [], programs: [] };
+window.tempFilterState = { sort: 'new', categories: [], tags: [], programs: [] };
 window.isHomeContext = false; // Флаг перехода с Главной
 window.currentCatalogTabType = 'active'; // <--- ДОБАВИТЬ ЭТУ СТРОКУ
 
@@ -450,8 +451,47 @@ function openCategoryDetails(id, name, tabType = 'active') {
     loadCategoryItems(tabType);
 }
 
-function openFilter() { switchView('filter'); }
+function openFilter() {
+    // Копируем текущее состояние во временное
+    window.tempFilterState = JSON.parse(JSON.stringify(window.filterState));
+    syncFilterUI();
+    switchView('filter');
+}
 function closeFilter() { switchView('catalog'); }
+
+function syncFilterUI() {
+    const s = window.tempFilterState;
+
+    // Сортировка
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        const onclick = btn.getAttribute('onclick');
+        if (!onclick) return;
+        const match = onclick.match(/'([^']+)'/);
+        if (match && s.sort === match[1]) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    // Категории
+    document.querySelectorAll('#filter-categories-container .chip-btn').forEach(btn => {
+        const id = parseInt(btn.getAttribute('data-id'));
+        if (s.categories.includes(id)) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    // Теги
+    document.querySelectorAll('#filter-tags-container .chip-btn').forEach(btn => {
+        const val = btn.getAttribute('data-val');
+        if (s.tags.includes(val)) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    // Программы
+    document.querySelectorAll('#filter-programs-container .chip-btn').forEach(btn => {
+        const val = btn.getAttribute('data-val');
+        if (s.programs.includes(val)) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+}
 
 function performSearch(query) {
     const cleanQuery = query ? query.trim() : "";
@@ -1188,36 +1228,33 @@ function selectTabByName(name) {
     tabs.forEach(t => { if (t.innerText.includes(name)) selectTab(t); });
 }
 function selectSort(sort, btn) {
-    window.filterState.sort = sort;
+    window.tempFilterState.sort = sort;
     document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 }
 function toggleCategory(id, btn) {
-    const idx = window.filterState.categories.indexOf(id);
-    if (idx === -1) { window.filterState.categories.push(id); btn.classList.add('active'); }
-    else { window.filterState.categories.splice(idx, 1); btn.classList.remove('active'); }
+    const idx = window.tempFilterState.categories.indexOf(id);
+    if (idx === -1) { window.tempFilterState.categories.push(id); btn.classList.add('active'); }
+    else { window.tempFilterState.categories.splice(idx, 1); btn.classList.remove('active'); }
 }
 function toggleTag(tag, btn) {
-    const idx = window.filterState.tags.indexOf(tag);
-    if (idx === -1) { window.filterState.tags.push(tag); btn.classList.add('active'); }
-    else { window.filterState.tags.splice(idx, 1); btn.classList.remove('active'); }
+    const idx = window.tempFilterState.tags.indexOf(tag);
+    if (idx === -1) { window.tempFilterState.tags.push(tag); btn.classList.add('active'); }
+    else { window.tempFilterState.tags.splice(idx, 1); btn.classList.remove('active'); }
 }
 function toggleProgram(prog, btn) {
-    const idx = window.filterState.programs.indexOf(prog);
-    if (idx === -1) { window.filterState.programs.push(prog); btn.classList.add('active'); }
-    else { window.filterState.programs.splice(idx, 1); btn.classList.remove('active'); }
+    const idx = window.tempFilterState.programs.indexOf(prog);
+    if (idx === -1) { window.tempFilterState.programs.push(prog); btn.classList.add('active'); }
+    else { window.tempFilterState.programs.splice(idx, 1); btn.classList.remove('active'); }
 }
 function resetFilter() {
-    window.filterState = { sort: 'new', categories: [], tags: [], programs: [] };
-    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.sort-btn').classList.add('active');
-    document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+    window.tempFilterState = { sort: 'new', categories: [], tags: [], programs: [] };
+    syncFilterUI();
 }
 function applyFilter() {
+    window.filterState = JSON.parse(JSON.stringify(window.tempFilterState));
     closeFilter();
-    let type = 'active';
-    const activeTab = document.querySelector('.tab.active');
-    if (activeTab && activeTab.innerText.includes('Завершённые')) type = 'completed';
+    let type = window.currentCatalogTabType || 'active';
     loadItems(type);
 }
 async function loadCategories() {
@@ -1241,6 +1278,7 @@ async function loadCategories() {
             filterCont.innerHTML = '';
             cats.forEach(c => {
                 const b = document.createElement('div'); b.className = 'chip-btn'; b.innerText = c.name;
+                b.setAttribute('data-id', c.id);
                 b.onclick = () => toggleCategory(c.id, b);
                 filterCont.appendChild(b);
             });
@@ -1256,6 +1294,7 @@ async function loadTags() {
             cont.innerHTML = '';
             tags.forEach(t => {
                 const b = document.createElement('div'); b.className = 'chip-btn'; b.innerText = t;
+                b.setAttribute('data-val', t);
                 b.onclick = () => toggleTag(t, b);
                 cont.appendChild(b);
             });
@@ -1271,6 +1310,7 @@ async function loadPrograms() {
             cont.innerHTML = '';
             programs.forEach(p => {
                 const b = document.createElement('div'); b.className = 'chip-btn'; b.innerText = p;
+                b.setAttribute('data-val', p);
                 b.onclick = () => toggleProgram(p, b);
                 cont.appendChild(b);
             });
