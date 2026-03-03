@@ -14,6 +14,15 @@ function showPreloader(state) {
     if (p) p.style.display = state ? 'flex' : 'none';
 }
 
+// Утилита для задержки вызова функции (дебаунс)
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
 // --- ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ И ПАРАМЕТРОВ ---
 const urlParams = new URLSearchParams(window.location.search);
 
@@ -73,6 +82,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         const filterBtn = document.querySelector('.filter-btn');
 
         if (searchInput) {
+            const debouncedSearch = debounce((val) => performSearch(val), 1500);
+
+            searchInput.addEventListener('input', function () {
+                const val = this.value.trim();
+                // Если мы на главной, переключаем в каталог только если введено > 2 символов
+                if (document.getElementById('view-home').classList.contains('active')) {
+                    if (val.length > 2) {
+                        debouncedSearch(val);
+                    }
+                } else {
+                    debouncedSearch(val);
+                }
+            });
+
             searchInput.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     performSearch(this.value);
