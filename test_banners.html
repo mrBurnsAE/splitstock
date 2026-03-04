@@ -51,57 +51,70 @@
 </head>
 
 <body>
-    <div class="controls">
-        <button class="btn-test" onclick="renderAll()">Показать все баннеры</button>
-    </div>
+    <!-- 
+    ========================================================
+    СТРАНИЦА ТЕСТИРОВАНИЯ БАННЕРОВ ВРЕМЕННО ОТКЛЮЧЕНА
+    Чтобы снова включить её отображение, удалите 
+    строку style="display: none;" у тега <div id="test-wrapper">
+    ниже, а также можете удалить это уведомление h2.
+    ========================================================
+    -->
+    <h2 style="color: #a2a5b9; padding: 20px; font-family: sans-serif;">Страница тестирования баннеров временно
+        отключена. (См. комментарий в коде)</h2>
 
-    <div class="test-section">
-        <div class="section-title">Все типы баннеров</div>
-        <div id="banner-container"></div>
-    </div>
+    <div id="test-wrapper" style="display: none;">
+        <div class="controls">
+            <button class="btn-test" onclick="renderAll()">Показать все баннеры</button>
+        </div>
 
-    <script>
-        // Имитация объекта из script.js для теста
-        const allBanners = {
-            'penalty': { type: 'penalty', title: 'Ты стал Штрафником' },
-            'unpaid': { type: 'unpaid', title: 'Не забудь оплатить!' },
-            'subscribe': { type: 'subscribe', title: 'Подписывайся на наш канал' },
-            'payment_info': { type: 'payment', title: 'Оплата картой или криптой' },
-            'help_promo': { type: 'info', title: 'Посмотри обучающие видео' },
-            'novice_tip': { type: 'success', title: 'Как стать Опытным пользователем?' },
-            'hot_items': { type: 'hot', title: 'Горящие складчины: осталось чуть-чуть' }
-        };
+        <div class="test-section">
+            <div class="section-title">Все типы баннеров</div>
+            <div id="banner-container"></div>
+        </div>
 
-        const imageMap = {
-            'penalty': 'icons/500 Без фона.png',
-            'unpaid': 'icons/Времени мало без фона.png',
-            'subscribe': 'icons/Телеграм без фона.png',
-            'payment': 'icons/Оплата Без фона.png',
-            'info': 'icons/Учитель без фона.png',
-            'success': 'icons/Супермэн 2 без фона.png',
-            'hot': 'icons/Загрузка-без-фона.png'
-        };
+        <script>
+            // Имитация объекта из script.js для теста
+            const allBanners = {
+                'penalty': { type: 'penalty', title: 'Ты стал Штрафником' },
+                'unpaid': { type: 'unpaid', title: 'Не забудь оплатить!' },
+                'subscribe': { type: 'subscribe', title: 'Подписывайся на наш канал' },
+                'payment_info': { type: 'payment', title: 'Оплата картой или криптой' },
+                'help_promo': { type: 'info', title: 'Посмотри обучающие видео' },
+                'novice_tip': { type: 'success', title: 'Как стать Опытным пользователем?' },
+                'hot_items': { type: 'hot', title: 'Горящие складчины: осталось чуть-чуть' }
+            };
 
-        function renderAll() {
-            const container = document.getElementById('banner-container');
-            container.innerHTML = '';
+            const imageMap = {
+                'penalty': 'icons/500 Без фона.png',
+                'unpaid': 'icons/Времени мало без фона.png',
+                'subscribe': 'icons/Телеграм без фона.png',
+                'payment': 'icons/Оплата Без фона.png',
+                'info': 'icons/Учитель без фона.png',
+                'success': 'icons/Супермэн 2 без фона.png',
+                'hot': 'icons/Загрузка-без-фона.png'
+            };
 
-            Object.values(allBanners).forEach(b => {
-                const div = document.createElement('div');
-                div.className = `banner ${b.type}`;
-                div.setAttribute('onclick', `alert('Клик по баннеру: ${b.type}')`);
-                div.innerHTML = `
+            function renderAll() {
+                const container = document.getElementById('banner-container');
+                container.innerHTML = '';
+
+                Object.values(allBanners).forEach(b => {
+                    const div = document.createElement('div');
+                    div.className = `banner ${b.type}`;
+                    div.setAttribute('onclick', `alert('Клик по баннеру: ${b.type}')`);
+                    div.innerHTML = `
                     <div class="banner-content">
                         <div class="banner-title">${b.title}</div>
                     </div>
                     <img src="${imageMap[b.type] || imageMap[b.type.split(' ')[0]]}" class="banner-img">
                 `;
-                container.appendChild(div);
-            });
-        }
+                    container.appendChild(div);
+                });
+            }
 
-        document.addEventListener('DOMContentLoaded', renderAll);
-    </script>
+            document.addEventListener('DOMContentLoaded', renderAll);
+        </script>
+    </div> <!-- Конец test-wrapper -->
 </body>
 
 </html>
