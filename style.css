@@ -267,10 +267,10 @@ p {
 }
 
 .banner-title {
-    font-size: 21px;
-    /* Увеличили на 50% (было 14px) */
+    font-size: 18px;
+    /* Чуть уменьшили, чтобы точно влезало в 1-2 строки */
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1.15;
     margin-bottom: 0;
 }
 
