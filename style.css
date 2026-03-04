@@ -243,15 +243,14 @@ p {
     margin: 0 16px;
     background: linear-gradient(135deg, #3b3e5b 0%, #1e1f2a 100%);
     border-radius: 16px;
-    padding: 6px 16px;
-    /* Еще меньше padding для супер-тонкого вида */
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     overflow: visible;
-    min-height: 40px;
-    /* Радикальное уменьшение высоты */
+    min-height: 65px;
+    /* Единая высота для всех баннеров */
     cursor: pointer;
 }
 
@@ -290,10 +289,10 @@ p {
 
 .banner-img {
     position: absolute;
-    right: 60px;
-    /* Радикальный отступ справа */
-    top: -40px;
-    /* Сильнее выступает из-за меньшей высоты баннера */
+    right: 90px;
+    /* Робот сдвинут левее */
+    top: -35px;
+    /* Оптимальная высота для 65px баннера */
     height: 95px;
     object-fit: contain;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));

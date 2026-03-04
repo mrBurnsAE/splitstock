@@ -1476,7 +1476,7 @@ async function loadBanners() {
             onClick: "openPaymentModal('penalty')",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Ты стал<br>Штрафником</div>
+                    <div class="banner-title">Ты стал Штрафником</div>
                 </div>
                 <img src="icons/500 Без фона.png" class="banner-img">
             `
@@ -1486,7 +1486,7 @@ async function loadBanners() {
             onClick: "openMyItems('unpaid')",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Не забудь<br>оплатить!</div>
+                    <div class="banner-title">Не забудь оплатить!</div>
                 </div>
                 <img src="icons/Времени мало без фона.png" class="banner-img">
             `
@@ -1496,7 +1496,7 @@ async function loadBanners() {
             onClick: "Telegram.WebApp.openTelegramLink('https://t.me/+iTqdmfAbMb41YTli')",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Не забудь<br>подписаться<br>на канал</div>
+                    <div class="banner-title">Подписывайся<br>на наш канал</div>
                 </div>
                 <img src="icons/Телеграм без фона.png" class="banner-img">
             `
@@ -1505,7 +1505,7 @@ async function loadBanners() {
             type: 'payment',
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Оплатить взнос<br>можно картой<br>или криптой</div>
+                    <div class="banner-title">Оплата: картой<br>или криптовалютой</div>
                 </div>
                 <img src="icons/Оплата Без фона.png" class="banner-img">
             `
@@ -1525,7 +1525,7 @@ async function loadBanners() {
             onClick: "openModal()",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Получи статус<br>Опытного<br>пользователя</div>
+                    <div class="banner-title">Как стать<br>Опытным пользователем</div>
                 </div>
                 <img src="icons/Супермэн 2 без фона.png" class="banner-img">
             `
@@ -1535,7 +1535,7 @@ async function loadBanners() {
             onClick: "openHotItems()",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Осталось совсем<br>чуть-чуть</div>
+                    <div class="banner-title">Горящие складчины:<br>осталось чуть-чуть</div>
                 </div>
                 <img src="icons/Загрузка-без-фона.png" class="banner-img">
             `
