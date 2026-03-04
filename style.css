@@ -243,17 +243,16 @@ p {
     margin: 0 16px;
     background: linear-gradient(135deg, #3b3e5b 0%, #1e1f2a 100%);
     border-radius: 16px;
-    padding: 10px 20px;
-    /* Еще меньше padding */
+    padding: 6px 16px;
+    /* Еще меньше padding для супер-тонкого вида */
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     overflow: visible;
-    min-height: 45px;
-    /* Уменьшили в 2 раза от предыдущего (80px -> 45px) */
+    min-height: 40px;
+    /* Радикальное уменьшение высоты */
     cursor: pointer;
-    /* Добавили курсор-указатель */
 }
 
 .banner-content {
@@ -291,12 +290,11 @@ p {
 
 .banner-img {
     position: absolute;
-    right: 40px;
-    /* Увеличили отступ справа, чтобы не "прилипал" */
-    top: -30px;
-    /* Чуть сильнее выступает сверху */
+    right: 60px;
+    /* Радикальный отступ справа */
+    top: -40px;
+    /* Сильнее выступает из-за меньшей высоты баннера */
     height: 95px;
-    /* Сохраняем размер робота заметным */
     object-fit: contain;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));
 }
