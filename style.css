@@ -249,14 +249,21 @@ p {
     align-items: center;
     position: relative;
     overflow: visible;
-    min-height: 76px;
-    /* Высота совпадает с карточками на главной */
+    height: 76px;
+    /* Жестко фиксированная высота (вместо min-height) */
+    box-sizing: border-box;
+    /* Чтобы высота 76px включала padding */
     cursor: pointer;
 }
 
 .banner-content {
     z-index: 2;
-    max-width: 65%;
+    flex: 1;
+    /* Занимает все свободное место */
+    padding-right: 15px;
+    /* Отступ от робота */
+    max-width: calc(100% - 90px);
+    /* Учитываем ширину робота, чтобы текст не залезал под него */
 }
 
 .banner-title {

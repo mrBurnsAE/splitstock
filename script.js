@@ -1496,7 +1496,7 @@ async function loadBanners() {
             onClick: "Telegram.WebApp.openTelegramLink('https://t.me/+iTqdmfAbMb41YTli')",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Подписывайся<br>на наш канал</div>
+                    <div class="banner-title">Подписывайся на наш канал</div>
                 </div>
                 <img src="icons/Телеграм без фона.png" class="banner-img">
             `
@@ -1505,7 +1505,7 @@ async function loadBanners() {
             type: 'payment',
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Оплата: картой<br>или криптовалютой</div>
+                    <div class="banner-title">Оплата картой или криптой</div>
                 </div>
                 <img src="icons/Оплата Без фона.png" class="banner-img">
             `
@@ -1515,7 +1515,7 @@ async function loadBanners() {
             onClick: "requestHelp()",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Посмотри<br>обучающие видео</div>
+                    <div class="banner-title">Посмотри обучающие видео</div>
                 </div>
                 <img src="icons/Учитель без фона.png" class="banner-img">
             `
@@ -1525,7 +1525,7 @@ async function loadBanners() {
             onClick: "openModal()",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Как стать<br>Опытным пользователем</div>
+                    <div class="banner-title">Как стать Опытным пользователем?</div>
                 </div>
                 <img src="icons/Супермэн 2 без фона.png" class="banner-img">
             `
@@ -1535,7 +1535,7 @@ async function loadBanners() {
             onClick: "openHotItems()",
             html: `
                 <div class="banner-content">
-                    <div class="banner-title">Горящие складчины:<br>осталось чуть-чуть</div>
+                    <div class="banner-title">Горящие складчины: осталось чуть-чуть</div>
                 </div>
                 <img src="icons/Загрузка-без-фона.png" class="banner-img">
             `
