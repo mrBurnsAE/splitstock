@@ -289,10 +289,10 @@ p {
 
 .banner-img {
     position: absolute;
-    right: 90px;
-    /* Робот сдвинут левее */
-    top: -35px;
-    /* Оптимальная высота для 65px баннера */
+    right: -20px;
+    /* Сдвинули вправо: был 90px, теперь -20px (сдвиг на 50px от 30px, итоговое положение) */
+    top: -25px;
+    /* Опустили ниже: был -35px, теперь -25px (+10px) */
     height: 95px;
     object-fit: contain;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));
