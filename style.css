@@ -260,12 +260,11 @@ p {
 }
 
 .banner-title {
-    font-size: 14px;
-    /* Еще чуть меньше для тонкого баннера */
+    font-size: 21px;
+    /* Увеличили на 50% (было 14px) */
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 0;
-    /* Убрали отступ, так как нет сабтитла */
 }
 
 .banner-subtitle {
@@ -291,8 +290,8 @@ p {
     position: absolute;
     right: 0px;
     /* Сдвинули влево на 20px (с -20px) */
-    top: -10px;
-    /* Опустили на 15px ниже (с -25px) */
+    top: -25px;
+    /* Подняли на 15px (с -10px) */
     height: 105px;
     /* Увеличили на 10% (с 95px) */
     object-fit: contain;
