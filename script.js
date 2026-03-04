@@ -1473,6 +1473,7 @@ async function loadBanners() {
     const allBanners = {
         'penalty': {
             type: 'penalty',
+            onClick: "openPaymentModal('penalty')",
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Ты стал<br>Штрафником</div>
@@ -1482,6 +1483,7 @@ async function loadBanners() {
         },
         'unpaid': {
             type: 'unpaid',
+            onClick: "openMyItems('unpaid')",
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Не забудь<br>оплатить!</div>
@@ -1491,6 +1493,7 @@ async function loadBanners() {
         },
         'subscribe': {
             type: 'subscribe',
+            onClick: "Telegram.WebApp.openTelegramLink('https://t.me/+iTqdmfAbMb41YTli')",
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Не забудь<br>подписаться<br>на канал</div>
@@ -1509,6 +1512,7 @@ async function loadBanners() {
         },
         'help_promo': {
             type: 'info',
+            onClick: "requestHelp()",
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Посмотри<br>обучающие видео</div>
@@ -1518,6 +1522,7 @@ async function loadBanners() {
         },
         'novice_tip': {
             type: 'success',
+            onClick: "openModal()",
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Получи статус<br>Опытного<br>пользователя</div>
@@ -1527,6 +1532,7 @@ async function loadBanners() {
         },
         'hot_items': {
             type: 'hot',
+            onClick: "openHotItems()",
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Осталось совсем<br>чуть-чуть</div>
@@ -1582,6 +1588,10 @@ async function loadBanners() {
 function renderOneBanner(container, bannerData) {
     const div = document.createElement('div');
     div.className = `banner ${bannerData.type}`;
+    if (bannerData.onClick) {
+        div.setAttribute('onclick', bannerData.onClick);
+        div.style.cursor = 'pointer';
+    }
     div.innerHTML = bannerData.html;
     container.appendChild(div);
 }
