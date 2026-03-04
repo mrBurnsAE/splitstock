@@ -289,11 +289,12 @@ p {
 
 .banner-img {
     position: absolute;
-    right: -20px;
-    /* Сдвинули вправо: был 90px, теперь -20px (сдвиг на 50px от 30px, итоговое положение) */
-    top: -25px;
-    /* Опустили ниже: был -35px, теперь -25px (+10px) */
-    height: 95px;
+    right: 0px;
+    /* Сдвинули влево на 20px (с -20px) */
+    top: -10px;
+    /* Опустили на 15px ниже (с -25px) */
+    height: 105px;
+    /* Увеличили на 10% (с 95px) */
     object-fit: contain;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));
 }
