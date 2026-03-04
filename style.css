@@ -252,6 +252,8 @@ p {
     overflow: visible;
     min-height: 45px;
     /* Уменьшили в 2 раза от предыдущего (80px -> 45px) */
+    cursor: pointer;
+    /* Добавили курсор-указатель */
 }
 
 .banner-content {
