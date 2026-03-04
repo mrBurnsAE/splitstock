@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест баннеров</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            padding: 20px 0;
+            background-color: #1c1f2e;
+        }
+
+        .test-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            padding: 0 16px;
+            margin-bottom: 10px;
+            color: #a2a5b9;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #banner-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Временные стили для кнопок переключения (имитация состояний) */
+        .controls {
+            padding: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-test {
+            background: #35394f;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="controls">
+        <button class="btn-test" onclick="renderAll()">Показать все баннеры</button>
+    </div>
+
+    <div class="test-section">
+        <div class="section-title">Все типы баннеров</div>
+        <div id="banner-container"></div>
+    </div>
+
+    <script>
+        // Имитация объекта из script.js для теста
+        const allBanners = {
+            'penalty': { type: 'penalty', title: 'Ты стал<br>Штрафником' },
+            'unpaid': { type: 'unpaid', title: 'Не забудь<br>оплатить!' },
+            'subscribe': { type: 'subscribe', title: 'Не забудь<br>подписаться<br>на канал' },
+            'payment_info': { type: 'payment', title: 'Оплатить взнос<br>можно картой<br>или криптой' },
+            'help_promo': { type: 'info', title: 'Посмотри<br>обучающие видео' },
+            'novice_tip': { type: 'success', title: 'Получи статус<br>Опытного<br>пользователя' },
+            'hot_items': { type: 'hot', title: 'Осталось совсем<br>чуть-чуть' }
+        };
+
+        const imageMap = {
+            'penalty': 'icons/500 Без фона.png',
+            'unpaid': 'icons/Времени мало без фона.png',
+            'subscribe': 'icons/Телеграм без фона.png',
+            'payment': 'icons/Оплата Без фона.png',
+            'info': 'icons/Учитель без фона.png',
+            'success': 'icons/Супермэн 2 без фона.png',
+            'hot': 'icons/Загрузка-без-фона.png'
+        };
+
+        function renderAll() {
+            const container = document.getElementById('banner-container');
+            container.innerHTML = '';
+
+            Object.values(allBanners).forEach(b => {
+                const div = document.createElement('div');
+                div.className = `banner ${b.type}`;
+                div.innerHTML = `
+                    <div class="banner-content">
+                        <div class="banner-title">${b.title}</div>
+                    </div>
+                    <img src="${imageMap[b.type] || imageMap[b.type.split(' ')[0]]}" class="banner-img">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderAll);
+    </script>
+</body>
+
+</html>

@@ -1476,14 +1476,6 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Ты стал<br>Штрафником</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        Оплати штраф 500₽,<br>
-                        чтобы продолжить<br>
-                        пользоваться ботом!
-                    </div>
-                    <button class="banner-btn" onclick="openPaymentModal('penalty')">
-                        Оплатить штраф
-                    </button>
                 </div>
                 <img src="icons/500 Без фона.png" class="banner-img">
             `
@@ -1493,14 +1485,6 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Не забудь<br>оплатить!</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        Оплати взнос,<br>
-                        чтобы не стать<br>
-                        Штрафником
-                    </div>
-                    <button class="banner-btn" onclick="openMyItems('unpaid')">
-                        Оплатить
-                    </button>
                 </div>
                 <img src="icons/Времени мало без фона.png" class="banner-img">
             `
@@ -1510,14 +1494,6 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Не забудь<br>подписаться<br>на канал</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        с новостями и<br>
-                        анонсами новых<br>
-                        складчин
-                    </div>
-                    <button class="banner-btn" onclick="Telegram.WebApp.openTelegramLink('https://t.me/+iTqdmfAbMb41YTli')">
-                        <img src="icons/tg.svg" width="18"> Подписаться
-                    </button>
                 </div>
                 <img src="icons/Телеграм без фона.png" class="banner-img">
             `
@@ -1527,13 +1503,6 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Оплатить взнос<br>можно картой<br>или криптой</div>
-                    <div class="banner-subtitle" style="line-height: 1.3; margin-bottom: 0;">
-                        Оплата картой<br>
-                        производится через<br>
-                        сервис ЮMoney,<br>
-                        а оплата криптовалютой<br>
-                        через Crypto Pay
-                    </div>
                 </div>
                 <img src="icons/Оплата Без фона.png" class="banner-img">
             `
@@ -1543,13 +1512,6 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Посмотри<br>обучающие видео</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        чтобы узнать как<br>
-                        пользоваться этим ботом
-                    </div>
-                    <button class="banner-btn" onclick="requestHelp()">
-                        Посмотреть
-                    </button>
                 </div>
                 <img src="icons/Учитель без фона.png" class="banner-img">
             `
@@ -1559,14 +1521,6 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Получи статус<br>Опытного<br>пользователя</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        чтобы оплачивать взносы<br>
-                        в завершённых<br>
-                        складчинах
-                    </div>
-                    <button class="banner-btn" onclick="openModal()">
-                        Проверить статус
-                    </button>
                 </div>
                 <img src="icons/Супермэн 2 без фона.png" class="banner-img">
             `
@@ -1576,14 +1530,6 @@ async function loadBanners() {
             html: `
                 <div class="banner-content">
                     <div class="banner-title">Осталось совсем<br>чуть-чуть</div>
-                    <div class="banner-subtitle" style="line-height: 1.3;">
-                        Посмотри складчины,<br>
-                        в которых уже собралось<br>
-                        90% участников.
-                    </div>
-                    <button class="banner-btn" onclick="openHotItems()">
-                        Смотреть
-                    </button>
                 </div>
                 <img src="icons/Загрузка-без-фона.png" class="banner-img">
             `

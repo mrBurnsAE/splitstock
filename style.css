@@ -231,16 +231,28 @@ p {
 }
 
 /* --- Banner --- */
+#banner-container {
+    margin-top: 25px;
+    /* Чтобы роботы не перекрывали контент сверху */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
 .banner {
     margin: 0 16px;
     background: linear-gradient(135deg, #3b3e5b 0%, #1e1f2a 100%);
     border-radius: 16px;
-    padding: 24px;
+    padding: 16px 20px;
+    /* Уменьшили padding */
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    /* Чтобы робот мог выступать */
+    min-height: 80px;
+    /* Фиксируем минимальную высоту */
 }
 
 .banner-content {
@@ -249,10 +261,12 @@ p {
 }
 
 .banner-title {
-    font-size: 20px;
+    font-size: 16px;
+    /* Уменьшили шрифт */
     font-weight: 700;
     line-height: 1.2;
-    margin-bottom: 6px;
+    margin-bottom: 0;
+    /* Убрали отступ, так как нет сабтитла */
 }
 
 .banner-subtitle {
@@ -276,10 +290,13 @@ p {
 
 .banner-img {
     position: absolute;
-    right: 10px;
-    bottom: 0;
-    height: 95%;
+    right: 15px;
+    top: -20px;
+    /* Робот выступает сверху */
+    height: 110px;
+    /* Фиксированная высота для контроля выступа */
     object-fit: contain;
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));
 }
 
 /* --- Tabs --- */
