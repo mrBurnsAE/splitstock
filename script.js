@@ -61,8 +61,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("DOM Loaded. Starting App Initialization...");
 
         // --- ПРОВЕРКА НА ТЕЛЕГРАМ ОВЕРОЛЕЙ ---
-        // Если initDataUnsafe или initData отсутствует/пуст - значит открыто в обычном браузере
-        if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+        // Проверяем платформу: если 'unknown', значит это обычный браузер
+        if (tg.platform === 'unknown') {
             console.warn("Opened outside of Telegram. Blocking access.");
 
             // Скрываем прелоадер
