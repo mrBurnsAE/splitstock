@@ -301,6 +301,11 @@ function switchView(viewName) {
         loadFullCategoriesList();
     }
 
+    // 6. Обновление страницы профиля при переходе
+    if (viewName === 'profile') {
+        loadUserProfile();
+    }
+
     // --- ИСПРАВЛЕНИЕ НАВИГАЦИИ ---
     if (viewName === 'catalog' || viewName === 'home') {
         window.isMyItemsContext = false;
