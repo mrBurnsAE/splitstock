@@ -27,8 +27,6 @@ function debounce(func, wait) {
 const urlParams = new URLSearchParams(window.location.search);
 
 let USER_ID = tg.initDataUnsafe?.user?.id;
-const debugId = urlParams.get('uid');
-if (debugId) USER_ID = parseInt(debugId);
 if (!USER_ID) USER_ID = 0;
 
 let startItemId = urlParams.get('item_id');
@@ -61,6 +59,35 @@ window.currentCatalogTabType = 'active'; // <--- ДОБАВИТЬ ЭТУ СТР�
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         console.log("DOM Loaded. Starting App Initialization...");
+
+        // --- ПРОВЕРКА НА ТЕЛЕГРАМ ОВЕРОЛЕЙ ---
+        // Если initData пустая строка - значит открыто в обычном браузере
+        if (!tg.initData) {
+            console.warn("Opened outside of Telegram. Blocking access.");
+
+            // Скрываем прелоадер
+            const p = document.getElementById('preloader');
+            if (p) p.style.display = 'none';
+
+            // Скрываем все views
+            document.querySelectorAll('.view').forEach(v => {
+                v.classList.remove('active', 'loaded');
+                v.style.display = 'none';
+            });
+
+            // Показываем заглушку
+            const botOverlay = document.getElementById('non-tg-overlay');
+            if (botOverlay) {
+                botOverlay.style.display = 'flex';
+                botOverlay.classList.add('active', 'loaded');
+            }
+
+            // Прячем меню
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (bottomNav) bottomNav.style.display = 'none';
+
+            return; // Прерываем загрузку данных
+        }
 
         // Показываем прелоадер (хотя он и так есть в HTML, для надежности)
         const preloader = document.getElementById('preloader');
