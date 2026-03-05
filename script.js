@@ -27,6 +27,10 @@ function debounce(func, wait) {
 const urlParams = new URLSearchParams(window.location.search);
 
 let USER_ID = tg.initDataUnsafe?.user?.id;
+if (!USER_ID) {
+    const uidFromUrl = urlParams.get('uid');
+    if (uidFromUrl) USER_ID = parseInt(uidFromUrl);
+}
 if (!USER_ID) USER_ID = 0;
 
 let startItemId = urlParams.get('item_id');
